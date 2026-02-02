@@ -1,4 +1,10 @@
 {
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "prettier.requireConfig": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "always"
+  },
   "files.watcherExclude": {
     "**/routeTree.gen.ts": true
   },
@@ -7,5 +13,34 @@
   },
   "files.readonlyInclude": {
     "**/routeTree.gen.ts": true
-  }
+  },
+  "cSpell.words": [
+    "Albon",
+    "Alonso",
+    "Antonelli",
+    "Arvid",
+    "Bearman",
+    "Bortoleto",
+    "Bottas",
+    "Colapinto",
+    "Gasly",
+    "Hadjar",
+    "Hülkenberg",
+    "Isack",
+    "Kimi",
+    "Lando",
+    "Leclerc",
+    "Lindblad",
+    "Nico",
+    "Ocon",
+    "Pérez",
+    "Piastri",
+    "Sainz",
+    "Sauber",
+    "tanstack",
+    "tanstackstart",
+    "Valtteri",
+    "Verstappen",
+    "vinxi"
+  ]
 }

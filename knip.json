@@ -1,0 +1,17 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["src/start.ts", "eslint.config.js", "instrument.server.mjs"],
+  "project": ["src/**/*.{ts,tsx}", "convex/**/*.ts"],
+  "ignoreFiles": ["src/routeTree.gen.ts", "convex/_generated"],
+  "ignoreDependencies": [
+    "@tanstack/router-plugin",
+    "tailwindcss"
+  ],
+  "ignoreBinaries": ["eslint"],
+  "ignoreIssues": {
+    "src/integrations/tanstack-query/root-provider.tsx": ["exports"]
+  },
+  "convex": {
+    "entry": ["convex/**/*.ts"]
+  }
+}

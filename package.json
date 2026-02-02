@@ -10,11 +10,12 @@
     "lint": "eslint",
     "format": "prettier",
     "check": "prettier --write . && eslint --fix",
+    "knip": "knip",
     "start": "node --import ./.output/server/instrument.server.mjs .output/server/index.mjs"
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.49.0",
-    "@convex-dev/react-query": "0.1.0",
+    "@clerk/tanstack-react-start": "^0.28.1",
     "@sentry/tanstackstart-react": "^10.22.0",
     "@tailwindcss/vite": "^4.0.6",
     "@tanstack/react-devtools": "^0.7.0",
@@ -27,6 +28,7 @@
     "@tanstack/router-plugin": "^1.132.0",
     "convex": "^1.27.3",
     "dotenv-cli": "^11.0.0",
+    "framer-motion": "^12.30.0",
     "lucide-react": "^0.561.0",
     "nitro": "npm:nitro-nightly@latest",
     "react": "^19.2.0",
@@ -37,18 +39,19 @@
   "devDependencies": {
     "@tanstack/devtools-vite": "^0.3.11",
     "@tanstack/eslint-config": "^0.3.0",
-    "@testing-library/dom": "^10.4.0",
-    "@testing-library/react": "^16.2.0",
     "@types/node": "^22.10.2",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.4",
     "babel-plugin-react-compiler": "^1.0.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
     "jsdom": "^27.0.0",
+    "knip": "^5.82.1",
     "prettier": "^3.5.3",
     "typescript": "^5.7.2",
     "vite": "^7.1.7",
-    "vitest": "^3.0.5",
-    "web-vitals": "^5.1.0"
+    "vitest": "^3.0.5"
   }
 }

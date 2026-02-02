@@ -1,4 +1,5 @@
 import { ClerkProvider } from '@clerk/clerk-react'
+import { PropsWithChildren } from 'react'
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 if (!PUBLISHABLE_KEY) {
@@ -7,9 +8,7 @@ if (!PUBLISHABLE_KEY) {
 
 export default function AppClerkProvider({
   children,
-}: {
-  children: React.ReactNode
-}) {
+}: PropsWithChildren) {
   return (
     <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
       {children}
