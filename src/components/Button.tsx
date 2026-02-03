@@ -17,10 +17,10 @@ const sizes = {
   md: 'px-6 py-3 text-base',
 } as const;
 
-export type ButtonVariant = keyof typeof variants;
+type ButtonVariant = keyof typeof variants;
 export type ButtonSize = keyof typeof sizes;
 
-export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
   loading?: boolean;

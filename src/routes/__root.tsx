@@ -102,15 +102,26 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const mainRef = useRef<HTMLDivElement>(null);
 
-  // Apply saved theme (light/dark) on mount
+  // Apply theme on mount: use saved preference, else default to system (prefers-color-scheme)
   useEffect(() => {
-    const saved = localStorage.getItem(THEME_KEY);
-    const isDark = saved === 'dark';
-    document.documentElement.classList.toggle('dark', isDark);
-    document.documentElement.setAttribute(
-      'data-theme',
-      isDark ? 'dark' : 'light',
-    );
+    const applyTheme = () => {
+      const saved = localStorage.getItem(THEME_KEY);
+      const isDark =
+        saved === 'dark'
+          ? true
+          : saved === 'light'
+            ? false
+            : window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.classList.toggle('dark', isDark);
+      document.documentElement.setAttribute(
+        'data-theme',
+        isDark ? 'dark' : 'light',
+      );
+    };
+    applyTheme();
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    mq.addEventListener('change', applyTheme);
+    return () => mq.removeEventListener('change', applyTheme);
   }, []);
 
   // Inert main content when mobile menu is open so focus stays in header + menu

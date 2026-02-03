@@ -3,7 +3,7 @@
   "entry": ["src/start.ts", "eslint.config.js", "instrument.server.mjs"],
   "project": ["src/**/*.{ts,tsx}", "convex/**/*.ts"],
   "ignoreFiles": ["src/routeTree.gen.ts", "convex/_generated"],
-  "ignoreDependencies": ["@tanstack/router-plugin", "tailwindcss"],
+  "ignoreDependencies": ["@tanstack/router-plugin", "tailwindcss", "babel-plugin-react-compiler"],
   "ignoreBinaries": ["eslint"],
   "ignoreIssues": {
     "src/integrations/tanstack-query/root-provider.tsx": ["exports"]

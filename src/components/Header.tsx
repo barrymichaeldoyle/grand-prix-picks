@@ -32,8 +32,20 @@ export default function Header({
   const [dark, setDark] = useState(false)
 
   useEffect(() => {
-    const saved = localStorage.getItem(themeKey)
-    setDark(saved === 'dark')
+    const syncTheme = () => {
+      const saved = localStorage.getItem(themeKey)
+      const isDark =
+        saved === 'dark'
+          ? true
+          : saved === 'light'
+            ? false
+            : window.matchMedia('(prefers-color-scheme: dark)').matches
+      setDark(isDark)
+    }
+    syncTheme()
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    mq.addEventListener('change', syncTheme)
+    return () => mq.removeEventListener('change', syncTheme)
   }, [themeKey])
 
   const toggleTheme = useCallback(() => {
