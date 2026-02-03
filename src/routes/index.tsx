@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { ConvexHttpClient } from 'convex/browser'
+import { createFileRoute, Link } from '@tanstack/react-router';
+import { ConvexHttpClient } from 'convex/browser';
 import {
   ChevronRight,
   Clock,
@@ -9,19 +9,19 @@ import {
   Target,
   Trophy,
   Users,
-} from 'lucide-react'
+} from 'lucide-react';
 
-import { api } from '../../convex/_generated/api'
-import { primaryButtonStyles } from '../components/Button'
-import RaceCard from '../components/RaceCard'
+import { api } from '../../convex/_generated/api';
+import { primaryButtonStyles } from '../components/Button';
+import RaceCard from '../components/RaceCard';
 
-const convex = new ConvexHttpClient(import.meta.env.VITE_CONVEX_URL)
+const convex = new ConvexHttpClient(import.meta.env.VITE_CONVEX_URL);
 
 export const Route = createFileRoute('/')({
   component: HomePage,
   loader: async () => {
-    const nextRace = await convex.query(api.races.getNextRace)
-    return { nextRace }
+    const nextRace = await convex.query(api.races.getNextRace);
+    return { nextRace };
   },
   head: () => ({
     meta: [
@@ -33,10 +33,10 @@ export const Route = createFileRoute('/')({
       },
     ],
   }),
-})
+});
 
 function HomePage() {
-  const { nextRace } = Route.useLoaderData()
+  const { nextRace } = Route.useLoaderData();
 
   return (
     <div className="min-h-screen bg-page">
@@ -219,5 +219,5 @@ function HomePage() {
         </div>
       </section>
     </div>
-  )
+  );
 }

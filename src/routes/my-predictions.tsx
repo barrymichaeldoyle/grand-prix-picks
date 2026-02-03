@@ -38,7 +38,7 @@ const SESSION_LABELS_SHORT: Record<SessionType, string> = {
   race: 'R',
 };
 
-function getSessionsForWeekend(hasSprint: boolean): SessionType[] {
+function getSessionsForWeekend(hasSprint: boolean): Array<SessionType> {
   return hasSprint
     ? ['quali', 'sprint_quali', 'sprint', 'race']
     : ['quali', 'race'];

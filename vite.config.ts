@@ -6,8 +6,8 @@ import { devtools } from '@tanstack/devtools-vite';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import viteReact from '@vitejs/plugin-react';
 import { nitro } from 'nitro/vite';
-import viteTsConfigPaths from 'vite-tsconfig-paths';
 import { defineConfig } from 'vite';
+import viteTsConfigPaths from 'vite-tsconfig-paths';
 
 // Use Cloudflare Pages preset when CF_PAGES env var is set (during deployment)
 const nitroPreset = process.env.CF_PAGES ? 'cloudflare-pages' : 'node-server';

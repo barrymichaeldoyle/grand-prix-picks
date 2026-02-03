@@ -410,7 +410,7 @@ export const seedRaces = internalMutation({
     const now = Date.now();
     let created = 0;
     let updated = 0;
-    let skipped = 0;
+    const skipped = 0;
 
     for (const race of F1_RACES_2026) {
       const raceStartAt = new Date(race.raceDate).getTime();

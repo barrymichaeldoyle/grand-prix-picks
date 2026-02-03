@@ -1,18 +1,18 @@
-import { useQuery } from 'convex/react'
-import { AnimatePresence, motion } from 'framer-motion'
-import { ChevronDown } from 'lucide-react'
-import { useState } from 'react'
+import { useQuery } from 'convex/react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ChevronDown } from 'lucide-react';
+import { useState } from 'react';
 
-import { api } from '../../convex/_generated/api'
-import type { Doc, Id } from '../../convex/_generated/dataModel'
-import { Badge } from './Badge'
-import PredictionForm from './PredictionForm'
+import { api } from '../../convex/_generated/api';
+import type { Doc, Id } from '../../convex/_generated/dataModel';
+import { Badge } from './Badge';
+import PredictionForm from './PredictionForm';
 
-type Race = Doc<'races'>
-type SessionType = 'quali' | 'sprint_quali' | 'sprint' | 'race'
+type Race = Doc<'races'>;
+type SessionType = 'quali' | 'sprint_quali' | 'sprint' | 'race';
 
 interface WeekendPredictionsProps {
-  race: Race
+  race: Race;
 }
 
 const SESSION_LABELS: Record<SessionType, string> = {
@@ -20,20 +20,20 @@ const SESSION_LABELS: Record<SessionType, string> = {
   sprint_quali: 'Sprint Quali',
   sprint: 'Sprint',
   race: 'Race',
-}
+};
 
 const SESSION_LABELS_SHORT: Record<SessionType, string> = {
   quali: 'Q',
   sprint_quali: 'SQ',
   sprint: 'S',
   race: 'R',
-}
+};
 
-function getSessionsForRace(race: Race): SessionType[] {
+function getSessionsForRace(race: Race): Array<SessionType> {
   if (race.hasSprint) {
-    return ['quali', 'sprint_quali', 'sprint', 'race']
+    return ['quali', 'sprint_quali', 'sprint', 'race'];
   }
-  return ['quali', 'race']
+  return ['quali', 'race'];
 }
 
 function getSessionLockTime(
@@ -42,37 +42,37 @@ function getSessionLockTime(
 ): number | undefined {
   switch (session) {
     case 'quali':
-      return race.qualiLockAt
+      return race.qualiLockAt;
     case 'sprint_quali':
-      return race.sprintQualiLockAt
+      return race.sprintQualiLockAt;
     case 'sprint':
-      return race.sprintLockAt
+      return race.sprintLockAt;
     case 'race':
-      return race.predictionLockAt
+      return race.predictionLockAt;
   }
 }
 
 function isSessionLocked(race: Race, session: SessionType): boolean {
-  const lockTime = getSessionLockTime(race, session)
-  return lockTime !== undefined && Date.now() >= lockTime
+  const lockTime = getSessionLockTime(race, session);
+  return lockTime !== undefined && Date.now() >= lockTime;
 }
 
 function formatLockTime(timestamp: number | undefined): string {
-  if (!timestamp) return ''
+  if (!timestamp) return '';
   return new Date(timestamp).toLocaleString('en-US', {
     weekday: 'short',
     hour: 'numeric',
     minute: '2-digit',
-  })
+  });
 }
 
 interface SessionTabProps {
-  session: SessionType
-  race: Race
-  picks: Array<Id<'drivers'>> | null
-  isExpanded: boolean
-  onToggle: () => void
-  drivers: Array<Doc<'drivers'>> | undefined
+  session: SessionType;
+  race: Race;
+  picks: Array<Id<'drivers'>> | null;
+  isExpanded: boolean;
+  onToggle: () => void;
+  drivers: Array<Doc<'drivers'>> | undefined;
 }
 
 function SessionTab({
@@ -83,8 +83,8 @@ function SessionTab({
   onToggle,
   drivers,
 }: SessionTabProps) {
-  const locked = isSessionLocked(race, session)
-  const lockTime = getSessionLockTime(race, session)
+  const locked = isSessionLocked(race, session);
+  const lockTime = getSessionLockTime(race, session);
 
   return (
     <div className="overflow-hidden rounded-lg border border-border/60 bg-surface-muted/30">
@@ -107,7 +107,7 @@ function SessionTab({
           {picks && drivers && (
             <div className="mt-2 flex items-center gap-3 text-sm">
               {picks.map((driverId, i) => {
-                const driver = drivers.find((d) => d._id === driverId)
+                const driver = drivers.find((d) => d._id === driverId);
                 return (
                   <span key={driverId} className="flex items-center gap-1">
                     <span className="text-xs font-bold text-accent">
@@ -115,7 +115,7 @@ function SessionTab({
                     </span>
                     <span className="text-text-muted">{driver?.code}</span>
                   </span>
-                )
+                );
               })}
             </div>
           )}
@@ -159,24 +159,24 @@ function SessionTab({
         )}
       </AnimatePresence>
     </div>
-  )
+  );
 }
 
 export default function WeekendPredictions({ race }: WeekendPredictionsProps) {
   const weekendPredictions = useQuery(api.predictions.myWeekendPredictions, {
     raceId: race._id,
-  })
-  const drivers = useQuery(api.drivers.listDrivers)
+  });
+  const drivers = useQuery(api.drivers.listDrivers);
 
   const [expandedSession, setExpandedSession] = useState<SessionType | null>(
     null,
-  )
-  const [showSessionDetails, setShowSessionDetails] = useState(false)
+  );
+  const [showSessionDetails, setShowSessionDetails] = useState(false);
 
-  const sessions = getSessionsForRace(race)
+  const sessions = getSessionsForRace(race);
   const hasPredictions =
     weekendPredictions?.predictions &&
-    Object.values(weekendPredictions.predictions).some((p) => p !== null)
+    Object.values(weekendPredictions.predictions).some((p) => p !== null);
 
   // If user has no predictions yet, show the simple form
   // This will cascade to all sessions on submit
@@ -192,7 +192,7 @@ export default function WeekendPredictions({ race }: WeekendPredictionsProps) {
         </p>
         <PredictionForm raceId={race._id} />
       </div>
-    )
+    );
   }
 
   // User has predictions - show option to view/edit by session
@@ -228,7 +228,7 @@ export default function WeekendPredictions({ race }: WeekendPredictionsProps) {
                 className={`grid ${race.hasSprint ? 'grid-cols-4' : 'grid-cols-2'}`}
               >
                 {sessions.map((session) => {
-                  const locked = isSessionLocked(race, session)
+                  const locked = isSessionLocked(race, session);
                   return (
                     <div key={session} className="px-2 py-2.5 text-center">
                       <span className="hidden text-xs font-semibold text-text-muted sm:inline">
@@ -241,7 +241,7 @@ export default function WeekendPredictions({ race }: WeekendPredictionsProps) {
                         <span className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-warning" />
                       )}
                     </div>
-                  )
+                  );
                 })}
               </div>
             </div>
@@ -261,18 +261,18 @@ export default function WeekendPredictions({ race }: WeekendPredictionsProps) {
                   className={`grid ${race.hasSprint ? 'grid-cols-4' : 'grid-cols-2'}`}
                 >
                   {sessions.map((session) => {
-                    const picks = weekendPredictions.predictions[session]
-                    const driverId = picks?.[position]
+                    const picks = weekendPredictions.predictions[session];
+                    const driverId = picks?.[position];
                     const driver = driverId
                       ? drivers?.find((d) => d._id === driverId)
-                      : null
+                      : null;
                     return (
                       <div key={session} className="px-2 py-2.5 text-center">
                         <span className="text-sm font-medium text-text">
                           {driver?.code ?? '—'}
                         </span>
                       </div>
-                    )
+                    );
                   })}
                 </div>
               </div>
@@ -308,5 +308,5 @@ export default function WeekendPredictions({ race }: WeekendPredictionsProps) {
         )}
       </AnimatePresence>
     </div>
-  )
+  );
 }

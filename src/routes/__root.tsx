@@ -6,8 +6,10 @@ import {
   createRootRouteWithContext,
 } from '@tanstack/react-router';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
-import { PropsWithChildren, useEffect, useRef, useState } from 'react';
+import type { PropsWithChildren } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
+import ErrorBoundary from '../components/ErrorBoundary';
 import Footer from '../components/Footer';
 import Header, { MEDIA_MATCH_BREAKPOINT } from '../components/Header';
 import ScrollToTop from '../components/ScrollToTop';
@@ -174,7 +176,9 @@ function RootDocument({ children }: PropsWithChildren) {
               >
                 <ScrollToTop scrollContainerRef={mainRef} />
                 <div className="flex min-h-full flex-col">
-                  <main className="min-h-0 flex-1">{children}</main>
+                  <main className="min-h-0 flex-1">
+                    <ErrorBoundary>{children}</ErrorBoundary>
+                  </main>
                   <Footer />
                 </div>
                 <TanStackDevtools

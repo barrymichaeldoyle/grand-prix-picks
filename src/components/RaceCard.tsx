@@ -1,12 +1,12 @@
-import { Link } from '@tanstack/react-router'
-import { ArrowRight, Calendar, Clock } from 'lucide-react'
+import { Link } from '@tanstack/react-router';
+import { ArrowRight, Calendar, Clock } from 'lucide-react';
 
-import type { Doc } from '../../convex/_generated/dataModel'
-import { Badge, StatusBadge } from './Badge'
+import type { Doc } from '../../convex/_generated/dataModel';
+import { Badge, StatusBadge } from './Badge';
 
-export { StatusBadge } from './Badge'
+export { StatusBadge } from './Badge';
 
-type Race = Doc<'races'>
+type Race = Doc<'races'>;
 
 /** Map race slug prefix to ISO 3166-1 alpha-2 country code for flag images (flagcdn.com). */
 const SLUG_TO_COUNTRY: Record<string, string> = {
@@ -40,27 +40,27 @@ const SLUG_TO_COUNTRY: Record<string, string> = {
   portugal: 'pt',
   'las-vegas': 'us',
   azerbaijan: 'az',
-}
+};
 
 export function getCountryCodeForRace(race: { slug: string }): string | null {
-  const key = race.slug.replace(/-\d{4}$/, '').toLowerCase()
-  return SLUG_TO_COUNTRY[key] ?? null
+  const key = race.slug.replace(/-\d{4}$/, '').toLowerCase();
+  return SLUG_TO_COUNTRY[key] ?? null;
 }
 
-const FLAG_CDN = 'https://flagcdn.com'
+const FLAG_CDN = 'https://flagcdn.com';
 
-const FLAG_WIDTH = 40
-const FLAG_HEIGHT = 30
+const FLAG_WIDTH = 40;
+const FLAG_HEIGHT = 30;
 
 export function RaceFlag({
   countryCode,
   size = 'md',
 }: {
-  countryCode: string
-  size?: 'md' | 'lg'
+  countryCode: string;
+  size?: 'md' | 'lg';
 }) {
-  const w = size === 'lg' ? 56 : FLAG_WIDTH
-  const h = size === 'lg' ? 42 : FLAG_HEIGHT
+  const w = size === 'lg' ? 56 : FLAG_WIDTH;
+  const h = size === 'lg' ? 42 : FLAG_HEIGHT;
   return (
     <span
       className="inline-block shrink-0 overflow-hidden rounded shadow-sm ring-1 ring-black/5"
@@ -76,14 +76,14 @@ export function RaceFlag({
         loading="lazy"
       />
     </span>
-  )
+  );
 }
 
 interface RaceCardProps {
-  race: Race
-  isNext?: boolean
+  race: Race;
+  isNext?: boolean;
   /** When predictions open (previous race start). Shown for "not yet open" races. */
-  predictionOpenAt?: number | null
+  predictionOpenAt?: number | null;
 }
 
 function formatDate(timestamp: number): string {
@@ -91,14 +91,14 @@ function formatDate(timestamp: number): string {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
-  })
+  });
 }
 
 function formatTime(timestamp: number): string {
   return new Date(timestamp).toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
-  })
+  });
 }
 
 function formatDateLong(timestamp: number): string {
@@ -107,23 +107,23 @@ function formatDateLong(timestamp: number): string {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
-  })
+  });
 }
 
 function getTimeUntil(timestamp: number): string {
-  const now = Date.now()
-  const diff = timestamp - now
+  const now = Date.now();
+  const diff = timestamp - now;
 
-  if (diff <= 0) return 'Started'
+  if (diff <= 0) return 'Started';
 
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
 
   if (days > 0) {
-    return `${days}d ${hours}h`
+    return `${days}d ${hours}h`;
   }
-  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-  return `${hours}h ${minutes}m`
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  return `${hours}h ${minutes}m`;
 }
 
 export default function RaceCard({
@@ -132,10 +132,10 @@ export default function RaceCard({
   predictionOpenAt,
 }: RaceCardProps) {
   // Only the next upcoming race is open for predictions
-  const isPredictable = race.status === 'upcoming' && isNext
-  const isNotYetOpen = race.status === 'upcoming' && !isNext
+  const isPredictable = race.status === 'upcoming' && isNext;
+  const isNotYetOpen = race.status === 'upcoming' && !isNext;
 
-  const countryCode = getCountryCodeForRace(race)
+  const countryCode = getCountryCodeForRace(race);
 
   return (
     <Link
@@ -164,7 +164,7 @@ export default function RaceCard({
             <StatusBadge status={race.status} isNext={isNext} />
           </div>
 
-          <h3 className="mb-2 text-lg line-clamp-2  font-semibold text-text sm:mb-3 sm:text-xl">
+          <h3 className="mb-2 line-clamp-2 text-lg font-semibold text-text sm:mb-3 sm:text-xl">
             {race.name}
           </h3>
 
@@ -204,5 +204,5 @@ export default function RaceCard({
         />
       </div>
     </Link>
-  )
+  );
 }

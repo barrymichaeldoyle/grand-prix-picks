@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { Badge, type BadgeVariant } from './Badge';
+
+import type { BadgeVariant } from './Badge';
+import { Badge } from './Badge';
 
 const meta: Meta<typeof Badge> = {
   title: 'Design System/Badges',
@@ -23,7 +25,7 @@ const meta: Meta<typeof Badge> = {
         'not_yet_open',
         'locked',
         'finished',
-      ] satisfies BadgeVariant[],
+      ] satisfies Array<BadgeVariant>,
     },
   },
 };

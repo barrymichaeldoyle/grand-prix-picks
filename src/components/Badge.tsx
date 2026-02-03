@@ -1,5 +1,5 @@
-import { Clock, Lock, Trophy } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { Clock, Lock, Trophy } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 export type BadgeVariant =
   | 'next'
@@ -8,7 +8,7 @@ export type BadgeVariant =
   | 'not_yet_open'
   | 'locked'
   | 'submitted'
-  | 'finished'
+  | 'finished';
 
 const variantStyles: Record<BadgeVariant, string> = {
   next: 'bg-accent-muted text-accent border border-accent/30',
@@ -19,7 +19,7 @@ const variantStyles: Record<BadgeVariant, string> = {
   locked: 'bg-warning-muted text-warning border border-warning/30',
   submitted: 'bg-success-muted text-success border border-success/30',
   finished: 'bg-surface-muted text-text-muted border-border border',
-}
+};
 
 const statusIcons: Record<
   'upcoming' | 'not_yet_open' | 'locked' | 'submitted' | 'finished',
@@ -30,7 +30,7 @@ const statusIcons: Record<
   locked: <Lock size={14} />,
   submitted: null,
   finished: <Trophy size={14} />,
-}
+};
 
 const statusLabels: Record<
   'upcoming' | 'not_yet_open' | 'locked' | 'submitted' | 'finished',
@@ -41,14 +41,14 @@ const statusLabels: Record<
   locked: 'Predictions locked',
   submitted: 'Submitted',
   finished: 'Finished',
-}
+};
 
 export interface BadgeProps {
-  variant: BadgeVariant
+  variant: BadgeVariant;
   /** Optional icon (used for status variants when not provided). Ignored for next/sprint. */
-  icon?: ReactNode
+  icon?: ReactNode;
   /** Label text. For status variants, defaults to the variant label when not provided. */
-  children?: ReactNode
+  children?: ReactNode;
 }
 
 export function Badge({ variant, icon, children }: BadgeProps) {
@@ -57,13 +57,13 @@ export function Badge({ variant, icon, children }: BadgeProps) {
     variant === 'not_yet_open' ||
     variant === 'locked' ||
     variant === 'submitted' ||
-    variant === 'finished'
+    variant === 'finished';
 
-  const defaultIcon = isStatusVariant ? statusIcons[variant] : null
-  const defaultLabel = isStatusVariant ? statusLabels[variant] : null
+  const defaultIcon = isStatusVariant ? statusIcons[variant] : null;
+  const defaultLabel = isStatusVariant ? statusLabels[variant] : null;
 
-  const showIcon = isStatusVariant && (icon !== undefined ? icon : defaultIcon)
-  const label = children ?? defaultLabel
+  const showIcon = isStatusVariant && (icon !== undefined ? icon : defaultIcon);
+  const label = children ?? defaultLabel;
 
   return (
     <span
@@ -72,21 +72,21 @@ export function Badge({ variant, icon, children }: BadgeProps) {
       {showIcon}
       {label}
     </span>
-  )
+  );
 }
 
-export type RaceStatus = 'upcoming' | 'locked' | 'finished'
+export type RaceStatus = 'upcoming' | 'locked' | 'finished';
 
 export interface StatusBadgeProps {
   /** Race status from Convex: "upcoming" | "locked" | "finished". */
-  status: string
+  status: string;
   /** When true and status is upcoming, shows "Open for predictions". When false and status is upcoming, shows "Not yet open". */
-  isNext?: boolean
+  isNext?: boolean;
 }
 
 export function StatusBadge({ status, isNext }: StatusBadgeProps) {
   const effectiveStatus: BadgeVariant =
-    status === 'upcoming' && !isNext ? 'not_yet_open' : (status as RaceStatus)
+    status === 'upcoming' && !isNext ? 'not_yet_open' : (status as RaceStatus);
 
-  return <Badge variant={effectiveStatus} />
+  return <Badge variant={effectiveStatus} />;
 }

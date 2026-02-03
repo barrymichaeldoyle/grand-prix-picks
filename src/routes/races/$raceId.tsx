@@ -5,8 +5,9 @@ import { ArrowLeft, Calendar, Clock, Lock, LogIn, Trophy } from 'lucide-react';
 
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
-import Button from '../../components/Button';
 import { Badge } from '../../components/Badge';
+import Button from '../../components/Button';
+import ErrorBoundary from '../../components/ErrorBoundary';
 import {
   getCountryCodeForRace,
   RaceFlag,
@@ -180,7 +181,9 @@ function RaceDetailPage() {
                   </h2>
 
                   {isSignedIn ? (
-                    <WeekendPredictions race={race} />
+                    <ErrorBoundary>
+                      <WeekendPredictions race={race} />
+                    </ErrorBoundary>
                   ) : (
                     <div className="rounded-lg border-2 border-dashed border-border bg-surface py-8 text-center">
                       <LogIn className="mx-auto mb-4 h-12 w-12 text-text-muted" />
@@ -238,7 +241,9 @@ function RaceDetailPage() {
                       Race Results
                     </h2>
                   </div>
-                  <RaceResults raceId={race._id} />
+                  <ErrorBoundary>
+                    <RaceResults raceId={race._id} />
+                  </ErrorBoundary>
                 </>
               )}
             </div>

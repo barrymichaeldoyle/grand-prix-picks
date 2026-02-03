@@ -1,4 +1,4 @@
-import { SignInButton, SignedOut } from '@clerk/clerk-react';
+import { SignedOut, SignInButton } from '@clerk/clerk-react';
 import { Link } from '@tanstack/react-router';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Flag, Menu, Moon, Sun, X } from 'lucide-react';

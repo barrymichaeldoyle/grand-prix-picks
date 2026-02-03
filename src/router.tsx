@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/tanstackstart-react';
 import { createRouter } from '@tanstack/react-router';
 import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query';
 
+import ErrorFallback from './components/ErrorFallback';
 import * as TanstackQuery from './integrations/tanstack-query/root-provider';
 // Import the generated route tree
 import { routeTree } from './routeTree.gen';
@@ -15,8 +16,8 @@ export const getRouter = () => {
     context: {
       ...rqContext,
     },
-
     defaultPreload: 'intent',
+    defaultErrorComponent: ({ error }) => <ErrorFallback error={error} />,
   });
 
   setupRouterSsrQueryIntegration({

@@ -238,7 +238,7 @@ export const submitPrediction = mutation({
     assertFiveUnique(args.picks.map((id) => id));
 
     // Determine which sessions to update
-    const sessionsToUpdate: SessionType[] = args.sessionType
+    const sessionsToUpdate: Array<SessionType> = args.sessionType
       ? [args.sessionType]
       : race.hasSprint
         ? ['quali', 'sprint_quali', 'sprint', 'race']
@@ -252,7 +252,7 @@ export const submitPrediction = mutation({
       race: race.predictionLockAt,
     };
 
-    const results: Id<'predictions'>[] = [];
+    const results: Array<Id<'predictions'>> = [];
 
     for (const sessionType of sessionsToUpdate) {
       const lockTime = lockTimes[sessionType];
