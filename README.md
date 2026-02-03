@@ -61,6 +61,39 @@ To avoid 500 errors (`HTTPError`) from Clerk’s middleware on Cloudflare Pages:
 - Set the `VITE_CONVEX_URL` and `CONVEX_DEPLOYMENT` environment variables in your `.env.local`. (Or run `npx convex init` to set them automatically.)
 - Run `npx convex dev` to start the Convex server.
 
+### Convex “Server Error” when called by client (e.g. on Cloudflare)
+
+If you see `[CONVEX Q(...)] Server Error - Called by client`, Convex is failing to verify the Clerk JWT.
+
+**Where to set what**
+
+- **Cloudflare** (Pages → Settings → Environment variables): `CLERK_JWT_KEY`, `CLERK_SECRET_KEY`, `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_CONVEX_URL`. These are for the app and Worker.
+- **Convex** (Dashboard → your deployment → Settings → Environment Variables): `CLERK_JWT_ISSUER_DOMAIN` only. Convex runs on Convex’s servers, so this must be set in the Convex dashboard for the **same** deployment whose URL is in `VITE_CONVEX_URL`.
+
+**Checklist**
+
+1. **Convex Dashboard** → open the deployment that matches `VITE_CONVEX_URL` (e.g. `https://something.convex.cloud`) → **Settings** → **Environment Variables**. Confirm `CLERK_JWT_ISSUER_DOMAIN` is set there (not only in Cloudflare).
+2. **Exact value**: In **Clerk Dashboard** → **JWT Templates** → “Convex” template, copy the **Issuer** URL. It must match exactly (e.g. `https://xxx.clerk.accounts.dev` for dev, or your production Clerk issuer). No trailing slash. If your app uses production Clerk, the issuer must be the production one.
+3. **Convex Logs**: In Convex Dashboard → **Logs**, find the failed request (e.g. by Request ID). The log message usually says why JWT verification failed (e.g. issuer mismatch, invalid token).
+4. After changing Convex env vars, wait a moment or trigger a redeploy so Convex picks them up; then reload the app.
+
+## Setting up Sentry
+
+[Sentry](https://sentry.io) is used for error monitoring and performance so you can see what’s failing in production. **Sentry is disabled outside production** (client uses `import.meta.env.PROD`, server uses `NODE_ENV === 'production'`; source map upload only runs for production builds).
+
+1. **Create a project** at [sentry.io](https://sentry.io) (JavaScript / TanStack Start or React).
+2. **Copy your DSN** from the project’s **Settings → Client Keys (DSN)** and set it in `.env.local`:
+   - `VITE_SENTRY_DSN=https://…@….ingest.sentry.io/…`
+3. **Optional but recommended** – for readable stack traces in Sentry, set:
+   - `VITE_SENTRY_ORG` – your Sentry org slug
+   - `VITE_SENTRY_PROJECT` – your Sentry project slug
+   - `SENTRY_AUTH_TOKEN` – from [Sentry → Auth Tokens](https://sentry.io/settings/account/api/auth-tokens/) (e.g. “Project: Read & Write”, “Release: Admin”).
+     Then run builds with env loaded (e.g. `dotenv -e .env.local -- pnpm build:cf`) so the Sentry Vite plugin can upload source maps. Without these, errors will still be reported but stack traces may be minified.
+
+Errors are reported from both the **client** (browser) and the **server** (via `instrument.server.mjs`). The client only initializes Sentry when `VITE_SENTRY_DSN` is set; the server logs a warning and skips Sentry if the DSN is missing.
+
+For **Cloudflare Pages**, add `VITE_SENTRY_DSN` (and optionally `VITE_SENTRY_ORG`, `VITE_SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN` for source map uploads) to the project’s environment variables so production builds report to Sentry.
+
 ## Routing
 
 This project uses [TanStack Router](https://tanstack.com/router). The initial setup is a file based router. Which means that the routes are managed as files in `src/routes`.

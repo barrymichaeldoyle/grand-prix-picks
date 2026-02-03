@@ -49,6 +49,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.50.0",
+    "@sentry/vite-plugin": "^4.9.0",
     "@storybook/addon-vitest": "9.1.13",
     "@storybook/react": "^10.2.0",
     "@storybook/react-vite": "^10.2.0",
