@@ -6,10 +6,10 @@ const base =
 
 const variants = {
   primary:
-    'bg-accent hover:bg-accent-hover text-white disabled:bg-surface-muted disabled:text-text-muted disabled:cursor-not-allowed',
+    'bg-button-accent hover:bg-button-accent-hover text-white disabled:bg-surface-muted disabled:text-text-muted disabled:cursor-not-allowed',
   saved:
     'bg-success-muted text-success border border-success/30 cursor-default',
-  loading: 'bg-accent text-white opacity-90 cursor-wait',
+  loading: 'bg-button-accent text-white opacity-90 cursor-wait',
 } as const;
 
 const sizes = {
@@ -82,7 +82,9 @@ export default Button;
 
 /** Class names for styling a link as a primary button (e.g. Link from react-router). */
 export function primaryButtonStyles(size: ButtonSize = 'md'): string {
-  return [base, sizes[size], 'bg-accent hover:bg-accent-hover text-white'].join(
-    ' ',
-  );
+  return [
+    base,
+    sizes[size],
+    'bg-button-accent hover:bg-button-accent-hover text-white',
+  ].join(' ');
 }

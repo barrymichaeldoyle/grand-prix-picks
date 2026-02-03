@@ -1,6 +1,13 @@
 import { defineSchema, defineTable } from 'convex/server';
 import { v } from 'convex/values';
 
+const sessionType = v.union(
+  v.literal('quali'),
+  v.literal('sprint_quali'),
+  v.literal('sprint'),
+  v.literal('race'),
+);
+
 export default defineSchema({
   users: defineTable({
     clerkUserId: v.string(),
@@ -27,8 +34,22 @@ export default defineSchema({
     round: v.number(), // 1..N
     name: v.string(), // "Bahrain Grand Prix"
     slug: v.string(), // "bahrain-2026"
+
+    // Qualifying session (all races have this)
+    qualiStartAt: v.optional(v.number()), // ms epoch
+    qualiLockAt: v.optional(v.number()), // ms epoch
+
+    // Sprint weekend sessions (optional - only ~6 races per season)
+    hasSprint: v.optional(v.boolean()),
+    sprintQualiStartAt: v.optional(v.number()),
+    sprintQualiLockAt: v.optional(v.number()),
+    sprintStartAt: v.optional(v.number()),
+    sprintLockAt: v.optional(v.number()),
+
+    // Main race session
     raceStartAt: v.number(), // ms epoch
-    predictionLockAt: v.number(), // ms epoch
+    predictionLockAt: v.number(), // ms epoch (locks race predictions)
+
     status: v.string(), // "upcoming" | "locked" | "finished"
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -38,27 +59,37 @@ export default defineSchema({
     .index('by_predictionLockAt', ['predictionLockAt'])
     .index('by_raceStartAt', ['raceStartAt']),
 
+  // Top 5 predictions (quali, sprint, race)
   predictions: defineTable({
     userId: v.id('users'),
     raceId: v.id('races'),
+    sessionType: v.optional(sessionType), // undefined = "race" for backwards compat
     picks: v.array(v.id('drivers')), // length 5
     submittedAt: v.number(),
     updatedAt: v.number(),
   })
-    .index('by_user_race', ['userId', 'raceId'])
+    .index('by_user_race', ['userId', 'raceId']) // legacy
+    .index('by_user_race_session', ['userId', 'raceId', 'sessionType'])
     .index('by_race', ['raceId'])
+    .index('by_race_session', ['raceId', 'sessionType'])
     .index('by_user', ['userId']),
 
+  // Classification results per session
   results: defineTable({
     raceId: v.id('races'),
+    sessionType: v.optional(sessionType), // undefined = "race" for backwards compat
     classification: v.array(v.id('drivers')), // ordered, ideally full 20
     publishedAt: v.number(),
     updatedAt: v.number(),
-  }).index('by_race', ['raceId']),
+  })
+    .index('by_race', ['raceId']) // legacy
+    .index('by_race_session', ['raceId', 'sessionType']),
 
+  // Top 5 scores per session
   scores: defineTable({
     userId: v.id('users'),
     raceId: v.id('races'),
+    sessionType: v.optional(sessionType), // undefined = "race" for backwards compat
     points: v.number(),
     breakdown: v.optional(
       v.array(
@@ -73,7 +104,70 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   })
-    .index('by_user_race', ['userId', 'raceId'])
+    .index('by_user_race', ['userId', 'raceId']) // legacy
+    .index('by_user_race_session', ['userId', 'raceId', 'sessionType'])
     .index('by_race', ['raceId'])
-    .index('by_user', ['userId']),
+    .index('by_race_session', ['raceId', 'sessionType'])
+    .index('by_user', ['userId'])
+    .index('by_user_session', ['userId', 'sessionType']),
+
+  // ============ HEAD TO HEAD ============
+
+  // Teammate pairings per season
+  h2hMatchups: defineTable({
+    season: v.number(),
+    team: v.string(), // "McLaren", "Ferrari", etc.
+    driver1Id: v.id('drivers'),
+    driver2Id: v.id('drivers'),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_season', ['season'])
+    .index('by_season_team', ['season', 'team']),
+
+  // H2H predictions
+  h2hPredictions: defineTable({
+    userId: v.id('users'),
+    raceId: v.id('races'),
+    sessionType: sessionType, // "quali" or "race" (no sprint for H2H to keep it simple)
+    matchupId: v.id('h2hMatchups'),
+    predictedWinnerId: v.id('drivers'), // must be driver1 or driver2 from matchup
+    submittedAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_user_race_session', ['userId', 'raceId', 'sessionType'])
+    .index('by_user_race_session_matchup', [
+      'userId',
+      'raceId',
+      'sessionType',
+      'matchupId',
+    ])
+    .index('by_race_session', ['raceId', 'sessionType']),
+
+  // H2H results per session
+  h2hResults: defineTable({
+    raceId: v.id('races'),
+    sessionType: sessionType,
+    matchupId: v.id('h2hMatchups'),
+    winnerId: v.id('drivers'), // whoever finished ahead in classification
+    publishedAt: v.number(),
+  })
+    .index('by_race_session', ['raceId', 'sessionType'])
+    .index('by_race_session_matchup', ['raceId', 'sessionType', 'matchupId']),
+
+  // H2H scores
+  h2hScores: defineTable({
+    userId: v.id('users'),
+    raceId: v.id('races'),
+    sessionType: sessionType,
+    points: v.number(), // 1 point per correct pick, or could weight differently
+    correctPicks: v.number(), // count of correct H2H predictions
+    totalPicks: v.number(), // count of total H2H predictions made
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_user_race_session', ['userId', 'raceId', 'sessionType'])
+    .index('by_race_session', ['raceId', 'sessionType'])
+    .index('by_user', ['userId'])
+    .index('by_user_session', ['userId', 'sessionType']),
 });

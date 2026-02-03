@@ -39,7 +39,7 @@ const SLUG_TO_COUNTRY: Record<string, string> = {
   azerbaijan: 'az',
 };
 
-function getCountryCodeForRace(race: Race): string | null {
+export function getCountryCodeForRace(race: { slug: string }): string | null {
   const key = race.slug.replace(/-\d{4}$/, '').toLowerCase();
   return SLUG_TO_COUNTRY[key] ?? null;
 }
@@ -49,18 +49,26 @@ const FLAG_CDN = 'https://flagcdn.com';
 const FLAG_WIDTH = 40;
 const FLAG_HEIGHT = 30;
 
-function RaceFlag({ countryCode }: { countryCode: string }) {
+export function RaceFlag({
+  countryCode,
+  size = 'md',
+}: {
+  countryCode: string;
+  size?: 'md' | 'lg';
+}) {
+  const w = size === 'lg' ? 56 : FLAG_WIDTH;
+  const h = size === 'lg' ? 42 : FLAG_HEIGHT;
   return (
     <span
       className="inline-block shrink-0 overflow-hidden rounded shadow-sm ring-1 ring-black/5"
-      style={{ width: FLAG_WIDTH, height: FLAG_HEIGHT }}
+      style={{ width: w, height: h }}
     >
       <img
         src={`${FLAG_CDN}/w80/${countryCode}.png`}
         srcSet={`${FLAG_CDN}/w160/${countryCode}.png 2x`}
         alt=""
-        width={FLAG_WIDTH}
-        height={FLAG_HEIGHT}
+        width={w}
+        height={h}
         className="h-full w-full object-cover"
         loading="lazy"
       />
@@ -199,6 +207,11 @@ export default function RaceCard({
             {isNext && (
               <span className="px-2 py-0.5 text-xs font-semibold bg-accent-muted text-accent rounded shrink-0">
                 NEXT UP
+              </span>
+            )}
+            {race.hasSprint && (
+              <span className="px-2 py-0.5 text-xs font-semibold bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 rounded shrink-0">
+                SPRINT
               </span>
             )}
             <StatusBadge status={race.status} isNext={isNext} />

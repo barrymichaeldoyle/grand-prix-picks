@@ -2,21 +2,18 @@ import { SignInButton, useAuth } from '@clerk/clerk-react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { ConvexHttpClient } from 'convex/browser';
 import { useQuery } from 'convex/react';
-import {
-  ArrowLeft,
-  Calendar,
-  Clock,
-  Flag,
-  Lock,
-  LogIn,
-  Trophy,
-} from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Lock, LogIn, Trophy } from 'lucide-react';
 
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
 import Button from '../../components/Button';
 import InlineLoader from '../../components/InlineLoader';
 import PredictionForm from '../../components/PredictionForm';
+import {
+  getCountryCodeForRace,
+  RaceFlag,
+  StatusBadge,
+} from '../../components/RaceCard';
 import RaceResults from '../../components/RaceResults';
 
 const convex = new ConvexHttpClient(import.meta.env.VITE_CONVEX_URL);
@@ -51,14 +48,20 @@ export const Route = createFileRoute('/races/$raceId')({
 
 function formatDate(timestamp: number): string {
   return new Date(timestamp).toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
+    weekday: 'short',
+    month: 'short',
     day: 'numeric',
-    year: 'numeric',
   });
 }
 
 function formatTime(timestamp: number): string {
+  return new Date(timestamp).toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+function formatTimeWithTz(timestamp: number): string {
   return new Date(timestamp).toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
@@ -122,48 +125,62 @@ function RaceDetailPage() {
           border: 'border-border',
           background: 'bg-surface',
         };
+  const countryCode = getCountryCodeForRace(race);
 
   return (
     <div className="min-h-screen bg-page">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <Link
           to="/races"
-          className="inline-flex items-center gap-2 text-text-muted hover:text-text transition-colors mb-8"
+          className="inline-flex items-center gap-2 text-text-muted hover:text-text transition-colors mb-6"
         >
           <ArrowLeft size={20} />
           Back to races
         </Link>
 
-        <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-sm">
-          <div className="flex flex-col gap-4 p-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm font-semibold uppercase tracking-wide text-text-muted">
-              <Flag className="h-4 w-4 text-accent" />
-              Grand Prix
-            </div>
-            <div>
-              <span className="text-sm font-medium text-text-muted">
-                Round {race.round} · Season {race.season}
-              </span>
-              <h1 className="text-3xl font-bold text-text mt-2">{race.name}</h1>
-            </div>
-          </div>
-
-          <div className="px-6 pb-6">
-            <div className="flex flex-wrap gap-6 text-text-muted">
-              <div className="flex items-center gap-2">
-                <Calendar size={18} className="text-text-muted" />
-                <span>{formatDate(race.raceStartAt)}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock size={18} className="text-text-muted" />
-                <span>{formatTime(race.raceStartAt)}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Lock size={18} className="text-text-muted" />
-                <span>
-                  Predictions lock {formatTime(race.predictionLockAt)}
+        <div
+          className={`rounded-xl overflow-hidden shadow-sm border ${
+            isNextRace
+              ? 'border-accent/50 bg-surface'
+              : 'border-border bg-surface'
+          }`}
+        >
+          <div className="p-4 sm:p-5">
+            {/* Same top row as RaceCard: flag, round, badges */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-2">
+              {countryCode && (
+                <span className="inline-flex shrink-0 items-center">
+                  <RaceFlag countryCode={countryCode} size="lg" />
                 </span>
-              </div>
+              )}
+              <span className="text-sm font-medium text-text-muted shrink-0">
+                Round {race.round}
+              </span>
+              {isNextRace && (
+                <span className="px-2 py-0.5 text-xs font-semibold bg-accent-muted text-accent rounded shrink-0">
+                  NEXT UP
+                </span>
+              )}
+              <StatusBadge status={race.status} isNext={isNextRace} />
+            </div>
+
+            <h1 className="text-lg sm:text-xl font-semibold text-text mb-2 sm:mb-3">
+              {race.name}
+            </h1>
+
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-text-muted">
+              <span className="inline-flex items-center gap-1.5">
+                <Calendar size={16} className="shrink-0 text-text-muted" />
+                {formatDate(race.raceStartAt)}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Clock size={16} className="shrink-0 text-text-muted" />
+                {formatTime(race.raceStartAt)}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Lock size={16} className="shrink-0 text-text-muted" />
+                Predictions lock {formatTimeWithTz(race.predictionLockAt)}
+              </span>
             </div>
           </div>
 

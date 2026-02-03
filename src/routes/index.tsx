@@ -1,6 +1,15 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { ConvexHttpClient } from 'convex/browser';
-import { ChevronRight, Flag, Trophy, Users } from 'lucide-react';
+import {
+  ChevronRight,
+  Clock,
+  Flag,
+  HelpCircle,
+  Lock,
+  Target,
+  Trophy,
+  Users,
+} from 'lucide-react';
 
 import { api } from '../../convex/_generated/api';
 import { primaryButtonStyles } from '../components/Button';
@@ -110,6 +119,95 @@ function HomePage() {
             <p className="text-text-muted text-sm">
               Compete against other fans throughout the season to see who knows
               F1 best.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-12 px-6 max-w-4xl mx-auto">
+        <div className="flex items-center justify-center gap-2 mb-8">
+          <HelpCircle className="w-6 h-6 text-accent" />
+          <h2 className="text-2xl font-bold text-text text-center">
+            Frequently Asked Questions
+          </h2>
+        </div>
+
+        <div className="space-y-4">
+          <div className="bg-surface border border-border rounded-xl p-6">
+            <h3 className="flex items-center gap-3 text-lg font-semibold text-text mb-3">
+              <Target className="w-5 h-5 text-accent shrink-0" />
+              How does scoring work?
+            </h3>
+            <div className="pl-8">
+              <p className="text-text-muted mb-3">
+                Points are awarded based on how close your predictions are to
+                the actual race results:
+              </p>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-center gap-2">
+                  <span className="w-16 font-bold text-accent">5 points</span>
+                  <span className="text-text-muted">Exact position match</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-16 font-bold text-accent">3 points</span>
+                  <span className="text-text-muted">Off by one position</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-16 font-bold text-accent">1 point</span>
+                  <span className="text-text-muted">
+                    Driver finishes in top 5, but off by 2+ positions
+                  </span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-16 font-bold text-text-muted">
+                    0 points
+                  </span>
+                  <span className="text-text-muted">
+                    Driver finishes outside the top 5
+                  </span>
+                </li>
+              </ul>
+              <p className="text-text-muted mt-3 text-sm">
+                Maximum possible score per race: 25 points (all 5 predictions
+                exactly correct).
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-surface border border-border rounded-xl p-6">
+            <h3 className="flex items-center gap-3 text-lg font-semibold text-text mb-3">
+              <Lock className="w-5 h-5 text-accent shrink-0" />
+              When do predictions lock?
+            </h3>
+            <p className="text-text-muted pl-8">
+              Predictions lock 1 hour before the race starts. Once locked, you
+              cannot change your picks. Make sure to submit your predictions
+              before the deadline!
+            </p>
+          </div>
+
+          <div className="bg-surface border border-border rounded-xl p-6">
+            <h3 className="flex items-center gap-3 text-lg font-semibold text-text mb-3">
+              <Clock className="w-5 h-5 text-accent shrink-0" />
+              When can I make predictions?
+            </h3>
+            <p className="text-text-muted pl-8">
+              You can only predict for the next upcoming race. Predictions for
+              future races open once the current race begins. This keeps things
+              fair and prevents early predictions based on outdated information.
+            </p>
+          </div>
+
+          <div className="bg-surface border border-border rounded-xl p-6">
+            <h3 className="flex items-center gap-3 text-lg font-semibold text-text mb-3">
+              <Trophy className="w-5 h-5 text-accent shrink-0" />
+              How is the leaderboard calculated?
+            </h3>
+            <p className="text-text-muted pl-8">
+              Your total season score is the sum of all your race scores. The
+              leaderboard ranks players by total points. Compete throughout the
+              entire 2026 season to claim the top spot!
             </p>
           </div>
         </div>
