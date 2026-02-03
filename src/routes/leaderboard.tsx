@@ -31,7 +31,7 @@ function LeaderboardPage() {
   const { leaderboard } = Route.useLoaderData();
 
   return (
-    <div className="min-h-screen bg-page">
+    <div className="bg-page">
       <div className="mx-auto max-w-4xl px-4 py-8">
         <div className="mb-8">
           <h1 className="mb-2 text-3xl font-bold text-text">Leaderboard</h1>

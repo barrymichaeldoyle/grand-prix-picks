@@ -57,7 +57,7 @@ function MyPredictionsPage() {
 
   if (!isSignedIn) {
     return (
-      <div className="min-h-full bg-page">
+      <div className="bg-page">
         <div className="mx-auto max-w-4xl px-4 py-8">
           <div className="rounded-xl border border-border bg-surface p-8 text-center">
             <LogIn className="mx-auto mb-4 h-16 w-16 text-text-muted" />
@@ -84,7 +84,7 @@ function MyPredictionsPage() {
   const scoredWeekends = weekends.filter((w) => w.hasScores).length;
 
   return (
-    <div className="min-h-full bg-page">
+    <div className="bg-page">
       <div className="mx-auto max-w-4xl px-4 py-8">
         <div className="mb-8">
           <h1 className="mb-2 text-3xl font-bold text-text">My Predictions</h1>

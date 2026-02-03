@@ -173,8 +173,10 @@ function RootDocument({ children }: PropsWithChildren) {
                 className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto"
               >
                 <ScrollToTop scrollContainerRef={mainRef} />
-                {children}
-                <Footer />
+                <div className="flex min-h-full flex-col">
+                  <main className="min-h-0 flex-1">{children}</main>
+                  <Footer />
+                </div>
                 <TanStackDevtools
                   config={{
                     position: 'bottom-right',
