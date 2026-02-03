@@ -8,6 +8,9 @@ import { fileURLToPath, URL } from 'url'
 import tailwindcss from '@tailwindcss/vite'
 import { nitro } from 'nitro/vite'
 
+// Use Cloudflare Pages preset when CF_PAGES env var is set (during deployment)
+const nitroPreset = process.env.CF_PAGES ? 'cloudflare-pages' : 'node-server'
+
 const config = defineConfig({
   resolve: {
     alias: {
@@ -16,7 +19,9 @@ const config = defineConfig({
   },
   plugins: [
     devtools(),
-    nitro(),
+    nitro({
+      preset: nitroPreset,
+    }),
     // this is the plugin that enables path aliases
     viteTsConfigPaths({
       projects: ['./tsconfig.json'],
