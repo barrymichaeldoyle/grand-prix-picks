@@ -31,7 +31,7 @@ export default function PredictionForm({ raceId, existingPicks }: PredictionForm
   if (drivers === undefined) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 text-cyan-400 animate-spin" />
+        <Loader2 className="w-6 h-6 text-accent animate-spin" />
       </div>
     );
   }
@@ -99,7 +99,7 @@ export default function PredictionForm({ raceId, existingPicks }: PredictionForm
     <div className="space-y-6">
       {/* Your Picks */}
       <div>
-        <h3 className="text-lg font-semibold text-white mb-3">Your Picks</h3>
+        <h3 className="text-lg font-semibold text-text mb-3">Your Picks</h3>
         <div className="space-y-2">
           {/* Picked drivers - these animate when reordering */}
           <AnimatePresence mode="popLayout">
@@ -111,42 +111,42 @@ export default function PredictionForm({ raceId, existingPicks }: PredictionForm
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
                 transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                className="flex items-center gap-3 p-3 rounded-lg border bg-slate-700/50 border-slate-600"
+                className="flex items-center gap-3 p-3 rounded-lg border bg-surface-muted border-border"
               >
                 <motion.span
                   layout="position"
-                  className="w-8 h-8 flex items-center justify-center rounded-full bg-cyan-500/20 text-cyan-400 font-bold text-sm"
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-accent-muted text-accent font-bold text-sm"
                 >
                   P{index + 1}
                 </motion.span>
 
                 <div className="flex-1">
-                  <span className="text-white font-medium">{driver.displayName}</span>
-                  <span className="ml-2 text-slate-500 text-sm">{driver.code}</span>
+                  <span className="text-text font-medium">{driver.displayName}</span>
+                  <span className="ml-2 text-text-muted text-sm">{driver.code}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => moveUp(index)}
                     disabled={index === 0}
-                    className="p-1.5 rounded hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    className="p-1.5 rounded hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     aria-label="Move up"
                   >
-                    <ChevronUp size={18} className="text-slate-400" />
+                    <ChevronUp size={18} className="text-text-muted" />
                   </button>
                   <button
                     onClick={() => moveDown(index)}
                     disabled={index >= picks.length - 1}
-                    className="p-1.5 rounded hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    className="p-1.5 rounded hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     aria-label="Move down"
                   >
-                    <ChevronDown size={18} className="text-slate-400" />
+                    <ChevronDown size={18} className="text-text-muted" />
                   </button>
                   <button
                     onClick={() => removeDriver(driver._id)}
-                    className="p-1.5 rounded hover:bg-red-500/20 transition-colors ml-1"
+                    className="p-1.5 rounded hover:bg-error-muted transition-colors ml-1"
                     aria-label="Remove"
                   >
-                    <X size={18} className="text-red-400" />
+                    <X size={18} className="text-error" />
                   </button>
                 </div>
               </motion.div>
@@ -157,12 +157,12 @@ export default function PredictionForm({ raceId, existingPicks }: PredictionForm
           {Array.from({ length: emptySlots }).map((_, i) => (
             <div
               key={`empty-${i}`}
-              className="flex items-center gap-3 p-3 rounded-lg border bg-slate-800/30 border-slate-700 border-dashed"
+              className="flex items-center gap-3 p-3 rounded-lg border bg-surface border-border border-dashed"
             >
-              <span className="w-8 h-8 flex items-center justify-center rounded-full bg-cyan-500/20 text-cyan-400 font-bold text-sm">
+              <span className="w-8 h-8 flex items-center justify-center rounded-full bg-accent-muted text-accent font-bold text-sm">
                 P{pickedDrivers.length + i + 1}
               </span>
-              <span className="flex-1 text-slate-500 text-sm">
+              <span className="flex-1 text-text-muted text-sm">
                 Select a driver below
               </span>
             </div>
@@ -175,7 +175,7 @@ export default function PredictionForm({ raceId, existingPicks }: PredictionForm
         <button
           onClick={handleSubmit}
           disabled={picks.length !== 5 || isSubmitting || (submitStatus === 'success' && !hasChanges)}
-          className="flex items-center gap-2 px-6 py-3 bg-cyan-500 hover:bg-cyan-600 disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
+          className="flex items-center gap-2 px-6 py-3 bg-accent hover:bg-accent-hover disabled:bg-surface-muted disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
         >
           {isSubmitting ? (
             <>
@@ -195,26 +195,26 @@ export default function PredictionForm({ raceId, existingPicks }: PredictionForm
         </button>
 
         {picks.length < 5 && (
-          <span className="text-slate-400 text-sm">
+          <span className="text-text-muted text-sm">
             Select {5 - picks.length} more driver{5 - picks.length !== 1 ? 's' : ''}
           </span>
         )}
 
         {submitStatus === 'success' && hasChanges && (
-          <span className="text-amber-400 text-sm">Unsaved changes</span>
+          <span className="text-warning text-sm">Unsaved changes</span>
         )}
 
         {submitStatus === 'error' && (
-          <span className="text-red-400 text-sm">{errorMessage}</span>
+          <span className="text-error text-sm">{errorMessage}</span>
         )}
       </div>
 
       {/* Available Drivers */}
       <div>
-        <h3 className="text-lg font-semibold text-white mb-3">
+        <h3 className="text-lg font-semibold text-text mb-3">
           Select Drivers
           {picks.length >= 5 && (
-            <span className="ml-2 text-sm font-normal text-slate-400">
+            <span className="ml-2 text-sm font-normal text-text-muted">
               (remove a pick to change)
             </span>
           )}
@@ -231,12 +231,12 @@ export default function PredictionForm({ raceId, existingPicks }: PredictionForm
                 transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                 onClick={() => addDriver(driver._id)}
                 disabled={picks.length >= 5}
-                className="flex flex-col items-center gap-1 p-3 rounded-lg border border-slate-700 bg-slate-800/50 hover:border-cyan-500/50 hover:bg-slate-700/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="flex flex-col items-center gap-1 p-3 rounded-lg border border-border bg-surface hover:border-accent/50 hover:bg-surface-hover disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 whileHover={{ scale: picks.length >= 5 ? 1 : 1.05 }}
                 whileTap={{ scale: picks.length >= 5 ? 1 : 0.95 }}
               >
-                <span className="text-lg font-bold text-cyan-400">{driver.code}</span>
-                <span className="text-xs text-slate-400 text-center leading-tight">
+                <span className="text-lg font-bold text-accent">{driver.code}</span>
+                <span className="text-xs text-text-muted text-center leading-tight">
                   {driver.familyName || driver.displayName.split(' ').pop()}
                 </span>
               </motion.button>

@@ -1,15 +1,106 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+
+/* ==========================================================================
+   Design tokens: semantic colors for light/dark mode.
+   Toggle by adding/removing .dark on <html> (or use prefers-color-scheme).
+   ========================================================================== */
+
+:root {
+  --page: #f8fafc;
+  --surface: #ffffff;
+  --surface-hover: #f1f5f9;
+  --surface-muted: #f1f5f9;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --accent: #0d9488;
+  --accent-hover: #0f766e;
+  --accent-muted: #ccfbf1;
+  --success: #059669;
+  --success-muted: #d1fae5;
+  --warning: #d97706;
+  --warning-muted: #fef3c7;
+  --error: #dc2626;
+  --error-muted: #fee2e2;
+  --overlay: rgba(15, 23, 42, 0.5);
+}
+
+.dark,
+[data-theme='dark'] {
+  --page: #0f172a;
+  --surface: #1e293b;
+  --surface-hover: #334155;
+  --surface-muted: #334155;
+  --text: #f8fafc;
+  --text-muted: #94a3b8;
+  --border: #334155;
+  --border-strong: #475569;
+  --accent: #2dd4bf;
+  --accent-hover: #5eead4;
+  --accent-muted: #134e4a;
+  --success: #34d399;
+  --success-muted: #064e3b;
+  --warning: #fbbf24;
+  --warning-muted: #78350f;
+  --error: #f87171;
+  --error-muted: #7f1d1d;
+  --overlay: rgba(0, 0, 0, 0.5);
+}
+
+/* Expose tokens to Tailwind so we get bg-page, text-muted, etc. */
+@theme inline {
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-muted: var(--surface-muted);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-muted: var(--accent-muted);
+  --color-success: var(--success);
+  --color-success-muted: var(--success-muted);
+  --color-warning: var(--warning);
+  --color-warning-muted: var(--warning-muted);
+  --color-error: var(--error);
+  --color-error-muted: var(--error-muted);
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+html {
+  background-color: var(--page);
+  overscroll-behavior: none;
+}
 
 body {
-  @apply m-0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+  margin: 0;
+  background-color: var(--page);
+  color: var(--text);
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    Consolas,
     monospace;
 }

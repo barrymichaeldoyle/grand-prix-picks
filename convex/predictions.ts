@@ -95,6 +95,17 @@ export const submitPrediction = mutation({
       throw new Error('Predictions are locked for this race');
     }
 
+    // Only allow predictions for the next upcoming race
+    const allRaces = await ctx.db.query('races').collect();
+    const upcomingRaces = allRaces
+      .filter((r) => r.raceStartAt > now)
+      .sort((a, b) => a.raceStartAt - b.raceStartAt);
+    const nextRace = upcomingRaces[0];
+
+    if (!nextRace || nextRace._id !== args.raceId) {
+      throw new Error('Predictions are only open for the next upcoming race');
+    }
+
     assertFiveUnique(args.picks.map((id) => id));
 
     const existing = await ctx.db

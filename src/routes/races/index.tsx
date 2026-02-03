@@ -2,7 +2,8 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import RaceCard from '../../components/RaceCard';
-import { Loader2, Calendar } from 'lucide-react';
+import PageLoader from '../../components/PageLoader';
+import { Calendar } from 'lucide-react';
 
 export const Route = createFileRoute('/races/')({
   component: RacesPage,
@@ -13,34 +14,39 @@ function RacesPage() {
   const nextRace = useQuery(api.races.getNextRace);
 
   if (races === undefined) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   const upcomingRaces = races.filter((r) => r.status === 'upcoming');
   const lockedRaces = races.filter((r) => r.status === 'locked');
   const finishedRaces = races.filter((r) => r.status === 'finished');
 
+  // When predictions open for a race = previous race's start (same season, round - 1)
+  const getPredictionOpenAt = (race: (typeof races)[0]) => {
+    if (race.round <= 1) return null;
+    const prev = races.find(
+      (r) => r.season === race.season && r.round === race.round - 1,
+    );
+    return prev?.raceStartAt ?? null;
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-page">
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">2026 Season</h1>
-          <p className="text-slate-400">
+          <h1 className="text-3xl font-bold text-text mb-2">2026 Season</h1>
+          <p className="text-text-muted">
             Predict the top 5 finishers for each Grand Prix
           </p>
         </div>
 
         {races.length === 0 ? (
           <div className="text-center py-16">
-            <Calendar className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-white mb-2">
+            <Calendar className="w-16 h-16 text-text-muted mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-text mb-2">
               No races scheduled yet
             </h2>
-            <p className="text-slate-400">
+            <p className="text-text-muted">
               Check back soon for the 2026 race calendar
             </p>
           </div>
@@ -48,8 +54,8 @@ function RacesPage() {
           <div className="space-y-8">
             {upcomingRaces.length > 0 && (
               <section>
-                <h2 className="text-lg font-semibold text-slate-300 mb-4 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-emerald-400 rounded-full"></span>
+                <h2 className="text-lg font-semibold text-text-muted mb-4 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-success rounded-full"></span>
                   Upcoming Races
                 </h2>
                 <div className="space-y-3">
@@ -58,6 +64,7 @@ function RacesPage() {
                       key={race._id}
                       race={race}
                       isNext={nextRace?._id === race._id}
+                      predictionOpenAt={getPredictionOpenAt(race)}
                     />
                   ))}
                 </div>
@@ -66,8 +73,8 @@ function RacesPage() {
 
             {lockedRaces.length > 0 && (
               <section>
-                <h2 className="text-lg font-semibold text-slate-300 mb-4 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-amber-400 rounded-full"></span>
+                <h2 className="text-lg font-semibold text-text-muted mb-4 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-warning rounded-full"></span>
                   In Progress
                 </h2>
                 <div className="space-y-3">
@@ -80,8 +87,8 @@ function RacesPage() {
 
             {finishedRaces.length > 0 && (
               <section>
-                <h2 className="text-lg font-semibold text-slate-300 mb-4 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-slate-400 rounded-full"></span>
+                <h2 className="text-lg font-semibold text-text-muted mb-4 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-text-muted rounded-full"></span>
                   Completed
                 </h2>
                 <div className="space-y-3">

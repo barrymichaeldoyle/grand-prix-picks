@@ -3,9 +3,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "dotenv -e .env.local -- sh -c \"NODE_OPTIONS='--import ./instrument.server.mjs' vite dev --port 3000\"",
+    "dev": "concurrently -n v,c \"pnpm run dev:vite\" \"pnpm run dev:convex\"",
+    "dev:vite": "dotenv -e .env.local -- sh -c \"NODE_OPTIONS='--import ./instrument.server.mjs' vite dev --port 3000\"",
+    "dev:convex": "convex dev",
     "build": "vite build && cp instrument.server.mjs .output/server",
     "preview": "vite preview",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
     "test": "vitest run",
     "lint": "eslint",
     "format": "prettier",
@@ -37,6 +41,10 @@
     "vite-tsconfig-paths": "^6.0.2"
   },
   "devDependencies": {
+    "@storybook/react": "^10.2.0",
+    "@storybook/react-vite": "^10.2.0",
+    "storybook": "^10.2.0",
+    "concurrently": "^9.1.2",
     "@tanstack/devtools-vite": "^0.3.11",
     "@tanstack/eslint-config": "^0.3.0",
     "@types/node": "^22.10.2",

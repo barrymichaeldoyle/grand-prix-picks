@@ -35,6 +35,27 @@ export const getRace = query({
   },
 });
 
+/**
+ * When predictions open for this race (previous race's start time).
+ * Null for round 1 (no previous race).
+ */
+export const getPredictionOpenAt = query({
+  args: { raceId: v.id('races') },
+  handler: async (ctx, args) => {
+    const race = await ctx.db.get(args.raceId);
+    if (!race || race.round <= 1) return null;
+
+    const previousRace = await ctx.db
+      .query('races')
+      .withIndex('by_season_round', (q) =>
+        q.eq('season', race.season).eq('round', race.round - 1),
+      )
+      .unique();
+
+    return previousRace?.raceStartAt ?? null;
+  },
+});
+
 export const adminUpsertRace = mutation({
   args: {
     raceId: v.optional(v.id('races')),
