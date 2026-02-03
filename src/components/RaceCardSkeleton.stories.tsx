@@ -56,12 +56,12 @@ export const AsNext: Story = {
 export const CompareWithRaceCard: Story = {
   render: () => (
     <StorybookRouter>
-      <div className="flex flex-col gap-10 p-4 max-w-2xl">
+      <div className="flex max-w-2xl flex-col gap-10 p-4">
         <div className="flex flex-col gap-3">
           <p className="text-sm font-semibold text-text-muted">
             Skeleton (isNext) vs RaceCard (isNext)
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="flex flex-col gap-1">
               <span className="text-xs text-text-muted">Skeleton</span>
               <RaceCardSkeleton isNext />
@@ -80,7 +80,7 @@ export const CompareWithRaceCard: Story = {
           <p className="text-sm font-semibold text-text-muted">
             Skeleton (!isNext) vs RaceCard (!isNext)
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="flex flex-col gap-1">
               <span className="text-xs text-text-muted">Skeleton</span>
               <RaceCardSkeleton />

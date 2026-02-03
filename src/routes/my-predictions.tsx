@@ -1,11 +1,12 @@
 import { SignInButton, useAuth } from '@clerk/clerk-react';
-import { createFileRoute,Link } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import { CheckCircle, Clock, History, LogIn, Trophy } from 'lucide-react';
 
 import { api } from '../../convex/_generated/api';
 import Button, { primaryButtonStyles } from '../components/Button';
 import PageLoader from '../components/PageLoader';
+import { getCountryCodeForRace, RaceFlag } from '../components/RaceCard';
 
 export const Route = createFileRoute('/my-predictions')({
   component: MyPredictionsPage,
@@ -21,9 +22,31 @@ export const Route = createFileRoute('/my-predictions')({
   }),
 });
 
+type SessionType = 'quali' | 'sprint_quali' | 'sprint' | 'race';
+
+const SESSION_LABELS: Record<SessionType, string> = {
+  quali: 'Qualifying',
+  sprint_quali: 'Sprint Quali',
+  sprint: 'Sprint',
+  race: 'Race',
+};
+
+const SESSION_LABELS_SHORT: Record<SessionType, string> = {
+  quali: 'Q',
+  sprint_quali: 'SQ',
+  sprint: 'S',
+  race: 'R',
+};
+
+function getSessionsForWeekend(hasSprint: boolean): SessionType[] {
+  return hasSprint
+    ? ['quali', 'sprint_quali', 'sprint', 'race']
+    : ['quali', 'race'];
+}
+
 function MyPredictionsPage() {
   const { isSignedIn, isLoaded } = useAuth();
-  const predictions = useQuery(
+  const weekends = useQuery(
     api.predictions.myPredictionHistory,
     isSignedIn ? {} : 'skip',
   );
@@ -34,14 +57,14 @@ function MyPredictionsPage() {
 
   if (!isSignedIn) {
     return (
-      <div className="min-h-screen bg-page">
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <div className="bg-surface border border-border rounded-xl p-8 text-center">
-            <LogIn className="w-16 h-16 text-text-muted mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-text mb-2">
+      <div className="min-h-full bg-page">
+        <div className="mx-auto max-w-4xl px-4 py-8">
+          <div className="rounded-xl border border-border bg-surface p-8 text-center">
+            <LogIn className="mx-auto mb-4 h-16 w-16 text-text-muted" />
+            <h1 className="mb-2 text-2xl font-bold text-text">
               Sign In Required
             </h1>
-            <p className="text-text-muted mb-4">
+            <p className="mb-4 text-text-muted">
               Sign in to view your prediction history.
             </p>
             <SignInButton mode="modal">
@@ -53,46 +76,46 @@ function MyPredictionsPage() {
     );
   }
 
-  if (predictions === undefined) {
+  if (weekends === undefined) {
     return <PageLoader />;
   }
 
-  const totalPoints = predictions.reduce((sum, p) => sum + (p.points ?? 0), 0);
-  const completedRaces = predictions.filter((p) => p.points !== null).length;
+  const totalPoints = weekends.reduce((sum, w) => sum + w.totalPoints, 0);
+  const scoredWeekends = weekends.filter((w) => w.hasScores).length;
 
   return (
-    <div className="min-h-screen bg-page">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="min-h-full bg-page">
+      <div className="mx-auto max-w-4xl px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-text mb-2">My Predictions</h1>
+          <h1 className="mb-2 text-3xl font-bold text-text">My Predictions</h1>
           <p className="text-text-muted">Your prediction history and scores</p>
         </div>
 
         {/* Stats summary */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="bg-surface border border-border rounded-xl p-4 text-center">
+        <div className="mb-8 grid grid-cols-3 gap-4">
+          <div className="rounded-xl border border-border bg-surface p-4 text-center">
             <div className="text-3xl font-bold text-accent">{totalPoints}</div>
             <div className="text-sm text-text-muted">Total Points</div>
           </div>
-          <div className="bg-surface border border-border rounded-xl p-4 text-center">
+          <div className="rounded-xl border border-border bg-surface p-4 text-center">
             <div className="text-3xl font-bold text-text">
-              {predictions.length}
+              {weekends.length}
             </div>
-            <div className="text-sm text-text-muted">Predictions Made</div>
+            <div className="text-sm text-text-muted">Weekends</div>
           </div>
-          <div className="bg-surface border border-border rounded-xl p-4 text-center">
-            <div className="text-3xl font-bold text-text">{completedRaces}</div>
-            <div className="text-sm text-text-muted">Races Scored</div>
+          <div className="rounded-xl border border-border bg-surface p-4 text-center">
+            <div className="text-3xl font-bold text-text">{scoredWeekends}</div>
+            <div className="text-sm text-text-muted">Scored</div>
           </div>
         </div>
 
-        {predictions.length === 0 ? (
-          <div className="bg-surface border border-border rounded-xl p-8 text-center">
-            <History className="w-16 h-16 text-text-muted mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-text mb-2">
+        {weekends.length === 0 ? (
+          <div className="rounded-xl border border-border bg-surface p-8 text-center">
+            <History className="mx-auto mb-4 h-16 w-16 text-text-muted" />
+            <h2 className="mb-2 text-xl font-semibold text-text">
               No predictions yet
             </h2>
-            <p className="text-text-muted mb-4">
+            <p className="mb-4 text-text-muted">
               Make your first prediction to start tracking your scores.
             </p>
             <Link to="/races" className={primaryButtonStyles('sm')}>
@@ -101,65 +124,150 @@ function MyPredictionsPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {predictions.map((prediction) => (
-              <Link
-                key={prediction._id}
-                to="/races/$raceId"
-                params={{ raceId: prediction.raceId }}
-                className="block bg-surface border border-border rounded-xl p-4 hover:bg-surface-muted transition-colors"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm text-text-muted">
-                        Round {prediction.raceRound}
-                      </span>
-                      {prediction.raceStatus === 'finished' ? (
-                        <CheckCircle className="w-4 h-4 text-success" />
-                      ) : prediction.raceStatus === 'locked' ? (
-                        <Clock className="w-4 h-4 text-warning" />
-                      ) : null}
-                    </div>
-                    <h3 className="text-lg font-semibold text-text mb-2">
-                      {prediction.raceName}
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {prediction.picks.map((pick, index) => (
-                        <span
-                          key={pick.driverId}
-                          className="inline-flex items-center gap-1 px-2 py-1 bg-surface-muted rounded text-sm"
-                        >
-                          <span className="text-text-muted">P{index + 1}</span>
-                          <span className="text-accent font-medium">
-                            {pick.code}
+            {weekends.map((weekend) => {
+              const sessions = getSessionsForWeekend(weekend.hasSprint);
+              const countryCode = getCountryCodeForRace({
+                slug:
+                  weekend.raceName
+                    .toLowerCase()
+                    .replace(/ grand prix$/i, '')
+                    .replace(/ /g, '-') + '-2026',
+              });
+
+              return (
+                <Link
+                  key={weekend.raceId}
+                  to="/races/$raceId"
+                  params={{ raceId: weekend.raceId }}
+                  className="block overflow-hidden rounded-xl border border-border bg-surface transition-colors hover:border-border-strong"
+                >
+                  {/* Header */}
+                  <div className="flex items-center justify-between gap-4 p-4">
+                    <div className="flex min-w-0 items-center gap-3">
+                      {countryCode && <RaceFlag countryCode={countryCode} />}
+                      <div className="min-w-0">
+                        <div className="mb-0.5 flex items-center gap-2">
+                          <span className="text-sm text-text-muted">
+                            Round {weekend.raceRound}
                           </span>
+                          {weekend.raceStatus === 'finished' ? (
+                            <CheckCircle className="h-4 w-4 text-success" />
+                          ) : weekend.raceStatus === 'locked' ? (
+                            <Clock className="h-4 w-4 text-warning" />
+                          ) : null}
+                          {weekend.hasSprint && (
+                            <span className="rounded bg-purple-100 px-1.5 py-0.5 text-xs font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                              SPRINT
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="truncate text-lg font-semibold text-text">
+                          {weekend.raceName}
+                        </h3>
+                      </div>
+                    </div>
+
+                    <div className="shrink-0 text-right">
+                      {weekend.hasScores ? (
+                        <div className="flex items-center gap-2">
+                          <Trophy className="h-5 w-5 text-accent" />
+                          <span className="text-2xl font-bold text-accent">
+                            {weekend.totalPoints}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-text-muted">
+                          {weekend.raceStatus === 'upcoming'
+                            ? 'Awaiting race'
+                            : 'Awaiting results'}
                         </span>
-                      ))}
+                      )}
                     </div>
                   </div>
 
-                  <div className="text-right">
-                    {prediction.points !== null ? (
-                      <div className="flex items-center gap-2">
-                        <Trophy className="w-5 h-5 text-accent" />
-                        <span className="text-2xl font-bold text-accent">
-                          {prediction.points}
-                        </span>
+                  {/* Predictions table */}
+                  <div className="border-t border-border/60 bg-surface-muted/30">
+                    {/* Table header */}
+                    <div className="grid grid-cols-[auto_1fr] border-b border-border/50">
+                      <div className="w-12 sm:w-16" />
+                      <div
+                        className={`grid ${weekend.hasSprint ? 'grid-cols-4' : 'grid-cols-2'}`}
+                      >
+                        {sessions.map((session) => (
+                          <div key={session} className="px-2 py-2 text-center">
+                            <span className="hidden text-xs font-semibold text-text-muted sm:inline">
+                              {SESSION_LABELS[session]}
+                            </span>
+                            <span className="text-xs font-semibold text-text-muted sm:hidden">
+                              {SESSION_LABELS_SHORT[session]}
+                            </span>
+                          </div>
+                        ))}
                       </div>
-                    ) : (
-                      <span className="text-sm text-text-muted">
-                        {prediction.raceStatus === 'upcoming'
-                          ? 'Awaiting race'
-                          : 'Awaiting results'}
-                      </span>
-                    )}
-                    <div className="text-xs text-text-muted mt-1">
-                      {new Date(prediction.submittedAt).toLocaleDateString()}
                     </div>
+
+                    {/* Table rows - P1 through P5 */}
+                    {[0, 1, 2, 3, 4].map((position) => (
+                      <div
+                        key={position}
+                        className={`grid grid-cols-[auto_1fr] ${position < 4 ? 'border-b border-border/30' : ''}`}
+                      >
+                        <div className="flex w-12 items-center justify-center py-2 sm:w-16">
+                          <span className="text-sm font-bold text-accent">
+                            P{position + 1}
+                          </span>
+                        </div>
+                        <div
+                          className={`grid ${weekend.hasSprint ? 'grid-cols-4' : 'grid-cols-2'}`}
+                        >
+                          {sessions.map((session) => {
+                            const sessionData = weekend.sessions[session];
+                            const pick = sessionData?.picks[position];
+                            return (
+                              <div
+                                key={session}
+                                className="px-2 py-2 text-center"
+                              >
+                                <span className="text-sm font-medium text-text">
+                                  {pick?.code ?? '—'}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Points row */}
+                    {weekend.hasScores && (
+                      <div className="grid grid-cols-[auto_1fr] border-t border-border/50">
+                        <div className="flex w-12 items-center justify-center py-2 sm:w-16">
+                          <Trophy className="h-4 w-4 text-accent" />
+                        </div>
+                        <div
+                          className={`grid ${weekend.hasSprint ? 'grid-cols-4' : 'grid-cols-2'}`}
+                        >
+                          {sessions.map((session) => {
+                            const sessionData = weekend.sessions[session];
+                            const points = sessionData?.points;
+                            return (
+                              <div
+                                key={session}
+                                className="px-2 py-2 text-center"
+                              >
+                                <span className="text-sm font-bold text-accent">
+                                  {points ?? '—'}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>

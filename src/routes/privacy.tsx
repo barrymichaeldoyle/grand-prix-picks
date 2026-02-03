@@ -1,4 +1,4 @@
-import { createFileRoute,Link } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/privacy')({
   component: PrivacyPage,
@@ -17,15 +17,15 @@ export const Route = createFileRoute('/privacy')({
 function PrivacyPage() {
   return (
     <div className="min-h-screen bg-page">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="mx-auto max-w-4xl px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-text mb-2">Privacy Policy</h1>
-          <p className="text-text-muted text-sm">Last updated: February 2026</p>
+          <h1 className="mb-2 text-3xl font-bold text-text">Privacy Policy</h1>
+          <p className="text-sm text-text-muted">Last updated: February 2026</p>
         </div>
 
         <div className="prose prose-invert max-w-none space-y-6 text-text-muted">
           <section>
-            <h2 className="text-xl font-semibold text-text mb-2">
+            <h2 className="mb-2 text-xl font-semibold text-text">
               1. Introduction
             </h2>
             <p>
@@ -37,7 +37,7 @@ function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-text mb-2">
+            <h2 className="mb-2 text-xl font-semibold text-text">
               2. Information We Collect
             </h2>
             <p>
@@ -50,7 +50,7 @@ function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-text mb-2">
+            <h2 className="mb-2 text-xl font-semibold text-text">
               3. How We Use Your Information
             </h2>
             <p>
@@ -65,7 +65,7 @@ function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-text mb-2">
+            <h2 className="mb-2 text-xl font-semibold text-text">
               4. Data Storage and Security
             </h2>
             <p>
@@ -77,7 +77,7 @@ function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-text mb-2">
+            <h2 className="mb-2 text-xl font-semibold text-text">
               5. Your Rights and Choices
             </h2>
             <p>
@@ -89,7 +89,7 @@ function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-text mb-2">
+            <h2 className="mb-2 text-xl font-semibold text-text">
               6. Changes to This Policy
             </h2>
             <p>
@@ -101,7 +101,7 @@ function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-text mb-2">7. Contact</h2>
+            <h2 className="mb-2 text-xl font-semibold text-text">7. Contact</h2>
             <p>
               For privacy-related questions or requests, you can reach the
               operator of this app via the contact details provided on the main

@@ -21,15 +21,14 @@ function AdminNewRacePage() {
     slug: '',
     raceDate: '',
     raceTime: '14:00',
-    lockHoursBefore: 1,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   if (isAdmin === undefined) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
       </div>
     );
   }
@@ -37,10 +36,10 @@ function AdminNewRacePage() {
   if (!isAdmin) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <div className="bg-slate-800/50 border border-red-500/30 rounded-xl p-8 text-center">
-            <Shield className="w-16 h-16 text-red-400 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-white mb-2">
+        <div className="mx-auto max-w-4xl px-4 py-8">
+          <div className="rounded-xl border border-red-500/30 bg-slate-800/50 p-8 text-center">
+            <Shield className="mx-auto mb-4 h-16 w-16 text-red-400" />
+            <h1 className="mb-2 text-2xl font-bold text-white">
               Access Denied
             </h1>
             <p className="text-slate-400">Admin privileges required.</p>
@@ -83,8 +82,7 @@ function AdminNewRacePage() {
         `${formData.raceDate}T${formData.raceTime}:00`,
       );
       const raceStartAt = raceDateTime.getTime();
-      const predictionLockAt =
-        raceStartAt - formData.lockHoursBefore * 60 * 60 * 1000;
+      const predictionLockAt = raceStartAt;
 
       await upsertRace({
         season: formData.season,
@@ -106,21 +104,21 @@ function AdminNewRacePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="mx-auto max-w-2xl px-4 py-8">
         <Link
           to="/admin"
-          className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8"
+          className="mb-8 inline-flex items-center gap-2 text-slate-400 transition-colors hover:text-white"
         >
           <ArrowLeft size={20} />
           Back to Admin
         </Link>
 
-        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-          <h1 className="text-2xl font-bold text-white mb-6">Add New Race</h1>
+        <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-6">
+          <h1 className="mb-6 text-2xl font-bold text-white">Add New Race</h1>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="mb-2 block text-sm font-medium text-slate-300">
                 Race Name *
               </label>
               <input
@@ -128,13 +126,13 @@ function AdminNewRacePage() {
                 value={formData.name}
                 onChange={(e) => handleNameChange(e.target.value)}
                 placeholder="e.g. Monaco Grand Prix"
-                className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500"
+                className="w-full rounded-lg border border-slate-600 bg-slate-700 px-4 py-2 text-white placeholder-slate-400 focus:border-cyan-500 focus:outline-none"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="mb-2 block text-sm font-medium text-slate-300">
                   Round
                 </label>
                 <input
@@ -148,12 +146,12 @@ function AdminNewRacePage() {
                   }
                   min={1}
                   max={30}
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full rounded-lg border border-slate-600 bg-slate-700 px-4 py-2 text-white focus:border-cyan-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="mb-2 block text-sm font-medium text-slate-300">
                   Season
                 </label>
                 <input
@@ -165,13 +163,13 @@ function AdminNewRacePage() {
                       season: parseInt(e.target.value) || 2026,
                     })
                   }
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full rounded-lg border border-slate-600 bg-slate-700 px-4 py-2 text-white focus:border-cyan-500 focus:outline-none"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="mb-2 block text-sm font-medium text-slate-300">
                 URL Slug
               </label>
               <input
@@ -180,13 +178,13 @@ function AdminNewRacePage() {
                 onChange={(e) =>
                   setFormData({ ...formData, slug: e.target.value })
                 }
-                className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-cyan-500"
+                className="w-full rounded-lg border border-slate-600 bg-slate-700 px-4 py-2 text-white focus:border-cyan-500 focus:outline-none"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="mb-2 block text-sm font-medium text-slate-300">
                   Race Date *
                 </label>
                 <input
@@ -195,12 +193,12 @@ function AdminNewRacePage() {
                   onChange={(e) =>
                     setFormData({ ...formData, raceDate: e.target.value })
                   }
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full rounded-lg border border-slate-600 bg-slate-700 px-4 py-2 text-white focus:border-cyan-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="mb-2 block text-sm font-medium text-slate-300">
                   Race Time (local)
                 </label>
                 <input
@@ -209,32 +207,13 @@ function AdminNewRacePage() {
                   onChange={(e) =>
                     setFormData({ ...formData, raceTime: e.target.value })
                   }
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full rounded-lg border border-slate-600 bg-slate-700 px-4 py-2 text-white focus:border-cyan-500 focus:outline-none"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Lock predictions (hours before race)
-              </label>
-              <input
-                type="number"
-                value={formData.lockHoursBefore}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    lockHoursBefore: parseInt(e.target.value) || 1,
-                  })
-                }
-                min={0}
-                max={48}
-                className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-cyan-500"
-              />
-            </div>
-
             {error && (
-              <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 text-sm">
+              <div className="rounded-lg border border-red-500/30 bg-red-500/20 p-3 text-sm text-red-400">
                 {error}
               </div>
             )}
@@ -242,7 +221,7 @@ function AdminNewRacePage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-cyan-500 hover:bg-cyan-600 disabled:bg-slate-600 text-white font-semibold rounded-lg transition-colors"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-500 px-6 py-3 font-semibold text-white transition-colors hover:bg-cyan-600 disabled:bg-slate-600"
             >
               {isSubmitting ? (
                 <>

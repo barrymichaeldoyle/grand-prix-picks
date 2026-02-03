@@ -13,7 +13,7 @@ const variants = {
 } as const;
 
 const sizes = {
-  sm: 'px-6 py-2 text-base',
+  sm: 'px-6 text-base py-2',
   md: 'px-6 py-3 text-base',
 } as const;
 
@@ -65,7 +65,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {loading ? (
           <>
-            <Loader2 size={20} className="animate-spin shrink-0" />
+            <Loader2 size={20} className="shrink-0 animate-spin" />
             {children}
           </>
         ) : (

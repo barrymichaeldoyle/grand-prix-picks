@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from 'convex/react';
-import { AnimatePresence, motion,Reorder } from 'framer-motion';
+import { AnimatePresence, motion, Reorder } from 'framer-motion';
 import { Check, ChevronDown, ChevronUp, GripVertical, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -9,15 +9,19 @@ import Button from './Button';
 import InlineLoader from './InlineLoader';
 
 type Driver = Doc<'drivers'>;
+type SessionType = 'quali' | 'sprint_quali' | 'sprint' | 'race';
 
 interface PredictionFormProps {
   raceId: Id<'races'>;
   existingPicks?: Array<Id<'drivers'>>;
+  /** If provided, only update this specific session. Otherwise cascade to all. */
+  sessionType?: SessionType;
 }
 
 export default function PredictionForm({
   raceId,
   existingPicks,
+  sessionType,
 }: PredictionFormProps) {
   const drivers = useQuery(api.drivers.listDrivers);
   const submitPrediction = useMutation(api.predictions.submitPrediction);
@@ -93,7 +97,7 @@ export default function PredictionForm({
     setErrorMessage('');
 
     try {
-      await submitPrediction({ raceId, picks });
+      await submitPrediction({ raceId, picks, sessionType });
       setSubmitStatus('success');
     } catch (error) {
       setSubmitStatus('error');
@@ -119,21 +123,21 @@ export default function PredictionForm({
         {/* Your Picks - tier list: static positions + draggable cards */}
         <div
           data-testid="your-picks"
-          className="lg:min-w-0 lg:flex-1 lg:min-w-[400px]"
+          className="lg:min-w-0 lg:min-w-[400px] lg:flex-1"
         >
-          <h3 className="text-lg font-semibold text-text mb-2 sm:mb-3">
+          <h3 className="mb-2 text-lg font-semibold text-text sm:mb-3">
             Your Picks
           </h3>
           <div
-            className="flex gap-0 rounded-xl border border-border overflow-hidden bg-surface"
+            className="flex gap-0 overflow-hidden rounded-xl border border-border bg-surface"
             data-testid="picks-list"
           >
             {/* Static position labels + vertical divider */}
-            <div className="flex flex-col shrink-0 border-r border-border bg-surface-muted/50">
+            <div className="flex shrink-0 flex-col border-r border-border bg-surface-muted/50">
               {[1, 2, 3, 4, 5].map((n) => (
                 <div
                   key={n}
-                  className="h-11 sm:h-[56px] flex items-center justify-center w-9 sm:w-11 border-b border-border text-accent font-bold text-sm shrink-0"
+                  className="flex h-11 w-9 shrink-0 items-center justify-center border-b border-border text-sm font-bold text-accent sm:h-[56px] sm:w-11"
                   aria-hidden
                 >
                   {n}
@@ -147,7 +151,7 @@ export default function PredictionForm({
               axis="y"
               values={picks}
               onReorder={handleReorder}
-              className="flex flex-col flex-1 min-w-0"
+              className="flex min-w-0 flex-1 flex-col"
             >
               <AnimatePresence mode="popLayout">
                 {picks.map((driverId, index) => {
@@ -159,7 +163,7 @@ export default function PredictionForm({
                       value={driverId}
                       as="div"
                       data-testid={`picked-driver-${index + 1}`}
-                      className="relative flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 border-b border-border bg-surface-muted cursor-grab active:cursor-grabbing touch-none h-11 sm:h-[56px] shrink-0"
+                      className="relative flex h-11 shrink-0 cursor-grab touch-none items-center gap-1.5 border-b border-border bg-surface-muted px-2 py-1.5 active:cursor-grabbing sm:h-[56px] sm:gap-2 sm:px-3 sm:py-2"
                       transition={{
                         type: 'spring',
                         stiffness: 150,
@@ -173,15 +177,15 @@ export default function PredictionForm({
                       <span className="shrink-0 text-text-muted" aria-hidden>
                         <GripVertical size={16} />
                       </span>
-                      <div className="flex-1 min-w-0">
-                        <span className="text-text font-medium truncate block">
+                      <div className="min-w-0 flex-1">
+                        <span className="block truncate font-medium text-text">
                           {driver.displayName}
                         </span>
-                        <span className="text-text-muted text-sm">
+                        <span className="text-sm text-text-muted">
                           {driver.code}
                         </span>
                       </div>
-                      <div className="flex items-center gap-0.5 shrink-0">
+                      <div className="flex shrink-0 items-center gap-0.5">
                         <button
                           type="button"
                           onClick={(e) => {
@@ -189,7 +193,7 @@ export default function PredictionForm({
                             moveUp(index);
                           }}
                           disabled={index === 0}
-                          className="p-1 sm:p-1.5 rounded hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          className="rounded p-1 transition-colors hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-30 sm:p-1.5"
                           aria-label="Move up"
                         >
                           <ChevronUp size={16} className="text-text-muted" />
@@ -201,7 +205,7 @@ export default function PredictionForm({
                             moveDown(index);
                           }}
                           disabled={index >= picks.length - 1}
-                          className="p-1 sm:p-1.5 rounded hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          className="rounded p-1 transition-colors hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-30 sm:p-1.5"
                           aria-label="Move down"
                         >
                           <ChevronDown size={16} className="text-text-muted" />
@@ -212,7 +216,7 @@ export default function PredictionForm({
                             e.stopPropagation();
                             removeDriver(driver._id);
                           }}
-                          className="p-1 sm:p-1.5 rounded hover:bg-error-muted transition-colors"
+                          className="rounded p-1 transition-colors hover:bg-error-muted sm:p-1.5"
                           aria-label="Remove"
                           data-testid={`remove-pick-${index + 1}`}
                         >
@@ -228,9 +232,9 @@ export default function PredictionForm({
               {Array.from({ length: emptySlots }).map((_, i) => (
                 <div
                   key={`empty-${i}`}
-                  className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 h-11 sm:h-[56px] border-b border-border bg-surface border-dashed border-t-0 border-x-0 shrink-0"
+                  className="flex h-11 shrink-0 items-center gap-2 border-x-0 border-t-0 border-b border-dashed border-border bg-surface px-2 py-1.5 sm:h-[56px] sm:gap-3 sm:px-3 sm:py-2"
                 >
-                  <span className="flex-1 text-text-muted text-sm">
+                  <span className="flex-1 text-sm text-text-muted">
                     Select a driver
                   </span>
                 </div>
@@ -239,7 +243,7 @@ export default function PredictionForm({
           </div>
 
           {/* Submit row - directly under Your Picks */}
-          <div className="mt-3 sm:mt-4 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-3 sm:mt-4 sm:gap-4">
             <Button
               variant="primary"
               size="md"
@@ -274,7 +278,7 @@ export default function PredictionForm({
 
             {picks.length < 5 && (
               <span
-                className="text-text-muted text-sm"
+                className="text-sm text-text-muted"
                 data-testid="picks-remaining"
               >
                 Select {5 - picks.length} more driver
@@ -284,7 +288,7 @@ export default function PredictionForm({
 
             {submitStatus === 'success' && hasChanges && (
               <span
-                className="text-warning text-sm"
+                className="text-sm text-warning"
                 data-testid="unsaved-changes"
               >
                 Unsaved changes
@@ -292,7 +296,7 @@ export default function PredictionForm({
             )}
 
             {submitStatus === 'error' && (
-              <span className="text-error text-sm" data-testid="submit-error">
+              <span className="text-sm text-error" data-testid="submit-error">
                 {errorMessage}
               </span>
             )}
@@ -301,7 +305,7 @@ export default function PredictionForm({
 
         {/* Available Drivers - selection pool (right column on desktop) */}
         <div className="lg:min-w-0 lg:flex-[2]">
-          <h3 className="text-lg font-semibold text-text mb-2 sm:mb-3">
+          <h3 className="mb-2 text-lg font-semibold text-text sm:mb-3">
             Select Drivers
             {picks.length >= 5 && (
               <span className="ml-2 text-sm font-normal text-text-muted">
@@ -311,7 +315,7 @@ export default function PredictionForm({
           </h3>
           <motion.div
             layout
-            className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-4 gap-1.5 sm:gap-2"
+            className="grid grid-cols-3 gap-1.5 sm:grid-cols-4 sm:gap-2 md:grid-cols-5 lg:grid-cols-4"
             data-testid="driver-selection"
           >
             <AnimatePresence mode="popLayout">
@@ -329,14 +333,14 @@ export default function PredictionForm({
                   }}
                   onClick={() => addDriver(driver._id)}
                   disabled={picks.length >= 5}
-                  className="flex flex-col items-center gap-0.5 sm:gap-1 p-2 sm:p-3 rounded-lg border border-border bg-surface hover:border-accent/50 hover:bg-surface-hover disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="flex flex-col items-center gap-0.5 rounded-lg border border-border bg-surface p-2 transition-colors hover:border-accent/50 hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-40 sm:gap-1 sm:p-3"
                   whileHover={{ scale: picks.length >= 5 ? 1 : 1.05 }}
                   whileTap={{ scale: picks.length >= 5 ? 1 : 0.95 }}
                 >
                   <span className="text-lg font-bold text-accent">
                     {driver.code}
                   </span>
-                  <span className="text-xs text-text-muted text-center leading-tight">
+                  <span className="text-center text-xs leading-tight text-text-muted">
                     {driver.familyName || driver.displayName.split(' ').pop()}
                   </span>
                 </motion.button>

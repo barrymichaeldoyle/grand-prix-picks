@@ -25,7 +25,7 @@ export default function HeaderUser() {
         <SignInButton mode="modal">
           <button
             type="button"
-            className={`${buttonClasses} disabled:opacity-50 disabled:cursor-not-allowed`}
+            className={`${buttonClasses} disabled:cursor-not-allowed disabled:opacity-50`}
           >
             Sign in
           </button>

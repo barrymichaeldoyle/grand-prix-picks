@@ -34,7 +34,11 @@ const preview: Preview = {
         <div
           className={themeClass}
           data-theme={theme}
-          style={{ minHeight: '100vh', padding: '1rem', backgroundColor: 'var(--page)' }}
+          style={{
+            minHeight: '100vh',
+            padding: '1rem',
+            backgroundColor: 'var(--page)',
+          }}
         >
           <Story />
         </div>

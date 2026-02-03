@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
-import { ConvexHttpClient } from 'convex/browser';
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { ConvexHttpClient } from 'convex/browser'
 import {
   ChevronRight,
   Clock,
@@ -9,19 +9,19 @@ import {
   Target,
   Trophy,
   Users,
-} from 'lucide-react';
+} from 'lucide-react'
 
-import { api } from '../../convex/_generated/api';
-import { primaryButtonStyles } from '../components/Button';
-import RaceCard from '../components/RaceCard';
+import { api } from '../../convex/_generated/api'
+import { primaryButtonStyles } from '../components/Button'
+import RaceCard from '../components/RaceCard'
 
-const convex = new ConvexHttpClient(import.meta.env.VITE_CONVEX_URL);
+const convex = new ConvexHttpClient(import.meta.env.VITE_CONVEX_URL)
 
 export const Route = createFileRoute('/')({
   component: HomePage,
   loader: async () => {
-    const nextRace = await convex.query(api.races.getNextRace);
-    return { nextRace };
+    const nextRace = await convex.query(api.races.getNextRace)
+    return { nextRace }
   },
   head: () => ({
     meta: [
@@ -33,23 +33,23 @@ export const Route = createFileRoute('/')({
       },
     ],
   }),
-});
+})
 
 function HomePage() {
-  const { nextRace } = Route.useLoaderData();
+  const { nextRace } = Route.useLoaderData()
 
   return (
     <div className="min-h-screen bg-page">
       {/* Hero Section */}
-      <section className="relative py-16 px-6 text-center overflow-hidden">
-        <div className="relative max-w-3xl mx-auto">
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <Flag className="w-12 h-12 text-accent" />
-            <h1 className="text-4xl md:text-5xl font-black text-text tracking-tight">
+      <section className="relative overflow-hidden px-6 py-16 text-center">
+        <div className="relative mx-auto max-w-3xl">
+          <div className="mb-6 flex items-center justify-center gap-3">
+            <Flag className="h-12 w-12 text-accent" />
+            <h1 className="text-4xl font-black tracking-tight text-text md:text-5xl">
               Grand Prix Picks
             </h1>
           </div>
-          <p className="text-xl text-text-muted mb-8">
+          <p className="mb-8 text-xl text-text-muted">
             Predict the top 5 finishers for each Formula 1 race and compete with
             friends throughout the 2026 season.
           </p>
@@ -64,59 +64,59 @@ function HomePage() {
       </section>
 
       {/* Next Race Section */}
-      <section className="px-6 pb-12 max-w-4xl mx-auto">
-        <h2 className="text-lg font-semibold text-text-muted mb-4">
+      <section className="mx-auto max-w-4xl px-6 pb-12">
+        <h2 className="mb-4 text-lg font-semibold text-text-muted">
           Next Race
         </h2>
         {nextRace ? (
           <RaceCard race={nextRace} isNext />
         ) : (
-          <div className="bg-surface border border-border rounded-xl p-6 text-center">
+          <div className="rounded-xl border border-border bg-surface p-6 text-center">
             <p className="text-text-muted">No upcoming races scheduled</p>
           </div>
         )}
       </section>
 
       {/* How It Works */}
-      <section className="py-12 px-6 max-w-5xl mx-auto">
-        <h2 className="text-2xl font-bold text-text text-center mb-8">
+      <section className="mx-auto max-w-5xl px-6 py-12">
+        <h2 className="mb-8 text-center text-2xl font-bold text-text">
           How It Works
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-surface border border-border rounded-xl p-6 text-center">
-            <div className="w-12 h-12 bg-accent-muted rounded-full flex items-center justify-center mx-auto mb-4">
-              <Flag className="w-6 h-6 text-accent" />
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div className="rounded-xl border border-border bg-surface p-6 text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-accent-muted">
+              <Flag className="h-6 w-6 text-accent" />
             </div>
-            <h3 className="text-lg font-semibold text-text mb-2">
+            <h3 className="mb-2 text-lg font-semibold text-text">
               Pick Your Top 5
             </h3>
-            <p className="text-text-muted text-sm">
+            <p className="text-sm text-text-muted">
               Before each race, select the 5 drivers you think will finish in
               the top positions.
             </p>
           </div>
 
-          <div className="bg-surface border border-border rounded-xl p-6 text-center">
-            <div className="w-12 h-12 bg-accent-muted rounded-full flex items-center justify-center mx-auto mb-4">
-              <Trophy className="w-6 h-6 text-accent" />
+          <div className="rounded-xl border border-border bg-surface p-6 text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-accent-muted">
+              <Trophy className="h-6 w-6 text-accent" />
             </div>
-            <h3 className="text-lg font-semibold text-text mb-2">
+            <h3 className="mb-2 text-lg font-semibold text-text">
               Earn Points
             </h3>
-            <p className="text-text-muted text-sm">
+            <p className="text-sm text-text-muted">
               Score points based on how accurate your predictions are. Exact
               position matches earn the most.
             </p>
           </div>
 
-          <div className="bg-surface border border-border rounded-xl p-6 text-center">
-            <div className="w-12 h-12 bg-accent-muted rounded-full flex items-center justify-center mx-auto mb-4">
-              <Users className="w-6 h-6 text-accent" />
+          <div className="rounded-xl border border-border bg-surface p-6 text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-accent-muted">
+              <Users className="h-6 w-6 text-accent" />
             </div>
-            <h3 className="text-lg font-semibold text-text mb-2">
+            <h3 className="mb-2 text-lg font-semibold text-text">
               Climb the Leaderboard
             </h3>
-            <p className="text-text-muted text-sm">
+            <p className="text-sm text-text-muted">
               Compete against other fans throughout the season to see who knows
               F1 best.
             </p>
@@ -125,24 +125,26 @@ function HomePage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-12 px-6 max-w-4xl mx-auto">
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <HelpCircle className="w-6 h-6 text-accent" />
-          <h2 className="text-2xl font-bold text-text text-center">
+      <section className="mx-auto max-w-4xl px-6 py-12">
+        <div className="mb-8 flex items-center justify-center gap-2">
+          <HelpCircle className="h-6 w-6 text-accent" />
+          <h2 className="text-center text-2xl font-bold text-text">
             Frequently Asked Questions
           </h2>
         </div>
 
         <div className="space-y-4">
-          <div className="bg-surface border border-border rounded-xl p-6">
-            <h3 className="flex items-center gap-3 text-lg font-semibold text-text mb-3">
-              <Target className="w-5 h-5 text-accent shrink-0" />
+          <div className="rounded-xl border border-border bg-surface p-6">
+            <h3 className="mb-3 flex items-center gap-3 text-lg font-semibold text-text">
+              <Target className="h-5 w-5 shrink-0 text-accent" />
               How does scoring work?
             </h3>
             <div className="pl-8">
-              <p className="text-text-muted mb-3">
-                Points are awarded based on how close your predictions are to
-                the actual race results:
+              <p className="mb-3 text-text-muted">
+                The same points system applies to qualifying, sprint qualifying
+                (on sprint weekends), the sprint, and the race. You pick the top
+                5 for each session; points are awarded by how close your picks
+                are to the actual result:
               </p>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-center gap-2">
@@ -156,7 +158,7 @@ function HomePage() {
                 <li className="flex items-center gap-2">
                   <span className="w-16 font-bold text-accent">1 point</span>
                   <span className="text-text-muted">
-                    Driver finishes in top 5, but off by 2+ positions
+                    Driver in top 5, but off by 2+ positions
                   </span>
                 </li>
                 <li className="flex items-center gap-2">
@@ -168,50 +170,54 @@ function HomePage() {
                   </span>
                 </li>
               </ul>
-              <p className="text-text-muted mt-3 text-sm">
-                Maximum possible score per race: 25 points (all 5 predictions
-                exactly correct).
+              <p className="mt-3 text-sm text-text-muted">
+                Each session scores up to 25 points (all 5 correct). Your
+                weekend total is the sum of quali, sprint (if applicable), and
+                race scores—so sprint weekends can earn you more points.
               </p>
             </div>
           </div>
 
-          <div className="bg-surface border border-border rounded-xl p-6">
-            <h3 className="flex items-center gap-3 text-lg font-semibold text-text mb-3">
-              <Lock className="w-5 h-5 text-accent shrink-0" />
+          <div className="rounded-xl border border-border bg-surface p-6">
+            <h3 className="mb-3 flex items-center gap-3 text-lg font-semibold text-text">
+              <Lock className="h-5 w-5 shrink-0 text-accent" />
               When do predictions lock?
             </h3>
-            <p className="text-text-muted pl-8">
-              Predictions lock 1 hour before the race starts. Once locked, you
-              cannot change your picks. Make sure to submit your predictions
-              before the deadline!
+            <p className="pl-8 text-text-muted">
+              Each session locks at its scheduled start time: qualifying, sprint
+              qualifying (on sprint weekends), the sprint, and the race each
+              have their own deadline. Once a session is locked, you can't
+              change those picks—submit before each deadline!
             </p>
           </div>
 
-          <div className="bg-surface border border-border rounded-xl p-6">
-            <h3 className="flex items-center gap-3 text-lg font-semibold text-text mb-3">
-              <Clock className="w-5 h-5 text-accent shrink-0" />
+          <div className="rounded-xl border border-border bg-surface p-6">
+            <h3 className="mb-3 flex items-center gap-3 text-lg font-semibold text-text">
+              <Clock className="h-5 w-5 shrink-0 text-accent" />
               When can I make predictions?
             </h3>
-            <p className="text-text-muted pl-8">
-              You can only predict for the next upcoming race. Predictions for
-              future races open once the current race begins. This keeps things
-              fair and prevents early predictions based on outdated information.
+            <p className="pl-8 text-text-muted">
+              You predict for the current weekend only. For each session (quali,
+              sprint quali, sprint, race), you can submit or edit picks until
+              that session's scheduled start time. Future weekends open once the
+              current one is done, keeping things fair.
             </p>
           </div>
 
-          <div className="bg-surface border border-border rounded-xl p-6">
-            <h3 className="flex items-center gap-3 text-lg font-semibold text-text mb-3">
-              <Trophy className="w-5 h-5 text-accent shrink-0" />
+          <div className="rounded-xl border border-border bg-surface p-6">
+            <h3 className="mb-3 flex items-center gap-3 text-lg font-semibold text-text">
+              <Trophy className="h-5 w-5 shrink-0 text-accent" />
               How is the leaderboard calculated?
             </h3>
-            <p className="text-text-muted pl-8">
-              Your total season score is the sum of all your race scores. The
-              leaderboard ranks players by total points. Compete throughout the
-              entire 2026 season to claim the top spot!
+            <p className="pl-8 text-text-muted">
+              Your total season score is the sum of all your session scores:
+              qualifying, sprint (when applicable), and the race for every
+              weekend. The leaderboard ranks players by that total. Compete
+              throughout the 2026 season to claim the top spot!
             </p>
           </div>
         </div>
       </section>
     </div>
-  );
+  )
 }

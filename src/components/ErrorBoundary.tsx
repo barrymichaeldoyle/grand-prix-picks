@@ -23,7 +23,7 @@ export default class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         this.props.fallback ?? (
-          <div className="bg-surface border border-border rounded-xl p-6 text-center">
+          <div className="rounded-xl border border-border bg-surface p-6 text-center">
             <p className="text-text-muted">Something went wrong</p>
           </div>
         )

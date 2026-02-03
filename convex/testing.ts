@@ -55,7 +55,7 @@ export const createTestRace = internalMutation({
   handler: async (ctx, args) => {
     const now = Date.now();
     const raceStartAt = now + args.startsInMs;
-    const predictionLockAt = raceStartAt - 60 * 60 * 1000;
+    const predictionLockAt = raceStartAt;
 
     // Check if race already exists
     const existing = await ctx.db
@@ -260,14 +260,14 @@ export const seedTestScenario = internalMutation({
     };
 
     if (args.scenario === 'upcoming_race') {
-      // Race in 7 days, predictions open
+      // Race in 7 days, predictions open (lock at race start)
       const raceId = await ctx.db.insert('races', {
         season: 2026,
         round: 99,
         name: 'Test Grand Prix',
         slug: 'test-gp-2026',
         raceStartAt: now + 7 * DAY,
-        predictionLockAt: now + 7 * DAY - HOUR,
+        predictionLockAt: now + 7 * DAY,
         status: 'upcoming',
         createdAt: now,
         updatedAt: now,
@@ -276,14 +276,14 @@ export const seedTestScenario = internalMutation({
     }
 
     if (args.scenario === 'locked_race') {
-      // Race in 30 minutes, predictions locked
+      // Race "started" 30 mins ago (lock = race start, so predictions locked)
       const raceId = await ctx.db.insert('races', {
         season: 2026,
         round: 98,
         name: 'Locked Test GP',
         slug: 'locked-test-gp-2026',
-        raceStartAt: now + 30 * 60 * 1000,
-        predictionLockAt: now - 30 * 60 * 1000, // Locked 30 mins ago
+        raceStartAt: now - 30 * 60 * 1000,
+        predictionLockAt: now - 30 * 60 * 1000,
         status: 'locked',
         createdAt: now,
         updatedAt: now,
@@ -302,14 +302,14 @@ export const seedTestScenario = internalMutation({
     }
 
     if (args.scenario === 'finished_race') {
-      // Race finished yesterday
+      // Race finished yesterday (lock at race start)
       const raceId = await ctx.db.insert('races', {
         season: 2026,
         round: 97,
         name: 'Finished Test GP',
         slug: 'finished-test-gp-2026',
         raceStartAt: now - DAY,
-        predictionLockAt: now - DAY - HOUR,
+        predictionLockAt: now - DAY,
         status: 'finished',
         createdAt: now,
         updatedAt: now,
@@ -350,14 +350,14 @@ export const seedTestScenario = internalMutation({
       const races: Array<{ id: Id<'races'>; slug: string; status: string }> =
         [];
 
-      // Past finished race
+      // Past finished race (lock at race start)
       const finishedRaceId = await ctx.db.insert('races', {
         season: 2026,
         round: 1,
         name: 'Season Opener GP',
         slug: 'season-opener-2026',
         raceStartAt: now - 14 * DAY,
-        predictionLockAt: now - 14 * DAY - HOUR,
+        predictionLockAt: now - 14 * DAY,
         status: 'finished',
         createdAt: now,
         updatedAt: now,
@@ -384,14 +384,14 @@ export const seedTestScenario = internalMutation({
         updatedAt: now - 13 * DAY,
       });
 
-      // Current upcoming race
+      // Current upcoming race (lock at race start)
       const upcomingRaceId = await ctx.db.insert('races', {
         season: 2026,
         round: 2,
         name: 'Current GP',
         slug: 'current-gp-2026',
         raceStartAt: now + 3 * DAY,
-        predictionLockAt: now + 3 * DAY - HOUR,
+        predictionLockAt: now + 3 * DAY,
         status: 'upcoming',
         createdAt: now,
         updatedAt: now,
@@ -402,14 +402,14 @@ export const seedTestScenario = internalMutation({
         status: 'upcoming',
       });
 
-      // Future race
+      // Future race (lock at race start)
       const futureRaceId = await ctx.db.insert('races', {
         season: 2026,
         round: 3,
         name: 'Future GP',
         slug: 'future-gp-2026',
         raceStartAt: now + 17 * DAY,
-        predictionLockAt: now + 17 * DAY - HOUR,
+        predictionLockAt: now + 17 * DAY,
         status: 'upcoming',
         createdAt: now,
         updatedAt: now,

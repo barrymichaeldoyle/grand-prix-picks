@@ -1,4 +1,4 @@
-import { createFileRoute,Link } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/terms')({
   component: TermsPage,
@@ -17,17 +17,17 @@ export const Route = createFileRoute('/terms')({
 function TermsPage() {
   return (
     <div className="min-h-screen bg-page">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="mx-auto max-w-4xl px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-text mb-2">
+          <h1 className="mb-2 text-3xl font-bold text-text">
             Terms of Service
           </h1>
-          <p className="text-text-muted text-sm">Last updated: February 2026</p>
+          <p className="text-sm text-text-muted">Last updated: February 2026</p>
         </div>
 
         <div className="prose prose-invert max-w-none space-y-6 text-text-muted">
           <section>
-            <h2 className="text-xl font-semibold text-text mb-2">
+            <h2 className="mb-2 text-xl font-semibold text-text">
               1. Acceptance of Terms
             </h2>
             <p>
@@ -38,7 +38,7 @@ function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-text mb-2">
+            <h2 className="mb-2 text-xl font-semibold text-text">
               2. Description of Service
             </h2>
             <p>
@@ -51,7 +51,7 @@ function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-text mb-2">
+            <h2 className="mb-2 text-xl font-semibold text-text">
               3. Eligibility and Account
             </h2>
             <p>
@@ -64,7 +64,7 @@ function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-text mb-2">
+            <h2 className="mb-2 text-xl font-semibold text-text">
               4. Acceptable Use
             </h2>
             <p>
@@ -77,7 +77,7 @@ function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-text mb-2">
+            <h2 className="mb-2 text-xl font-semibold text-text">
               5. Predictions and Scoring
             </h2>
             <p>
@@ -89,7 +89,7 @@ function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-text mb-2">
+            <h2 className="mb-2 text-xl font-semibold text-text">
               6. Disclaimer
             </h2>
             <p>
@@ -102,7 +102,7 @@ function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-text mb-2">
+            <h2 className="mb-2 text-xl font-semibold text-text">
               7. Changes to Terms or Service
             </h2>
             <p>
@@ -114,7 +114,7 @@ function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-text mb-2">8. Contact</h2>
+            <h2 className="mb-2 text-xl font-semibold text-text">8. Contact</h2>
             <p>
               For questions about these terms, please use the contact details
               provided on the main site (e.g. the footer or about page).

@@ -46,7 +46,7 @@ function RacesPage() {
 
   return (
     <div className="min-h-screen bg-page">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="mx-auto max-w-7xl px-4 py-8">
         <header className="mb-8 flex flex-col gap-1 md:flex-row md:items-baseline md:gap-3">
           <h1 className="text-3xl font-bold text-text">2026 Season</h1>
           <p className="text-text-muted md:text-base">
@@ -55,9 +55,9 @@ function RacesPage() {
         </header>
 
         {races.length === 0 ? (
-          <div className="text-center py-16">
-            <Calendar className="w-16 h-16 text-text-muted mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-text mb-2">
+          <div className="py-16 text-center">
+            <Calendar className="mx-auto mb-4 h-16 w-16 text-text-muted" />
+            <h2 className="mb-2 text-xl font-semibold text-text">
               No races scheduled yet
             </h2>
             <p className="text-text-muted">
@@ -68,11 +68,11 @@ function RacesPage() {
           <div className="space-y-8">
             {upcomingRaces.length > 0 && (
               <section>
-                <h2 className="text-lg font-semibold text-text-muted mb-4 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-success rounded-full"></span>
+                <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-text-muted">
+                  <span className="h-2 w-2 rounded-full bg-success"></span>
                   Upcoming Races
                 </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {upcomingRaces.map((race) => (
                     <RaceCard
                       key={race._id}
@@ -87,11 +87,11 @@ function RacesPage() {
 
             {lockedRaces.length > 0 && (
               <section>
-                <h2 className="text-lg font-semibold text-text-muted mb-4 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-warning rounded-full"></span>
+                <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-text-muted">
+                  <span className="h-2 w-2 rounded-full bg-warning"></span>
                   In Progress
                 </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {lockedRaces.map((race) => (
                     <RaceCard key={race._id} race={race} />
                   ))}
@@ -101,11 +101,11 @@ function RacesPage() {
 
             {finishedRaces.length > 0 && (
               <section>
-                <h2 className="text-lg font-semibold text-text-muted mb-4 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-text-muted rounded-full"></span>
+                <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-text-muted">
+                  <span className="h-2 w-2 rounded-full bg-text-muted"></span>
                   Completed
                 </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {finishedRaces.map((race) => (
                     <RaceCard key={race._id} race={race} />
                   ))}

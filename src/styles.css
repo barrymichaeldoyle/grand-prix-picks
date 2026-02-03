@@ -80,12 +80,16 @@
    ========================================================================== */
 
 html {
+  min-height: 100%;
   background-color: var(--page);
   overscroll-behavior: none;
 }
 
 body {
+  min-height: 100%;
   margin: 0;
+  /* Scroll lives in the main content area so the scrollbar sits below the sticky header */
+  overflow: hidden;
   background-color: var(--page);
   color: var(--text);
   font-family:
@@ -103,4 +107,32 @@ body {
 
 code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* Nav link active state: thick accent border (wins over merged Tailwind classes) */
+.nav-link-active {
+  border-color: var(--accent) !important;
+}
+
+/* Sprint badge: force colors so they win in both themes (Tailwind order can override otherwise) */
+.sprint-badge {
+  background-color: rgba(
+    126,
+    34,
+    206,
+    0.18
+  ) !important; /* purple-200, light mode */
+  border-color: #c4b5fd !important; /* purple-300 */
+  color: #5b21b6 !important; /* purple-800, light mode */
+}
+.dark .sprint-badge,
+[data-theme='dark'] .sprint-badge {
+  background-color: rgba(
+    126,
+    34,
+    206,
+    0.3
+  ) !important; /* purple-700, lighter and less opaque */
+  border-color: rgba(167, 139, 250, 0.45) !important; /* purple-300 */
+  color: #c4b5fd !important; /* purple-200, dark mode */
 }

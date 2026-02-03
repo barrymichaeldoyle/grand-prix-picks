@@ -416,10 +416,9 @@ export const seedRaces = internalMutation({
       const raceStartAt = new Date(race.raceDate).getTime();
       const qualiStartAt = new Date(race.qualiDate).getTime();
 
-      // Lock times: 1 hour before each session
-      const HOUR = 60 * 60 * 1000;
-      const predictionLockAt = raceStartAt - HOUR;
-      const qualiLockAt = qualiStartAt - HOUR;
+      // Lock times: at each session's scheduled start time
+      const predictionLockAt = raceStartAt;
+      const qualiLockAt = qualiStartAt;
 
       // Sprint times (if applicable)
       const sprintQualiStartAt = race.sprintQualiDate
@@ -428,10 +427,8 @@ export const seedRaces = internalMutation({
       const sprintStartAt = race.sprintDate
         ? new Date(race.sprintDate).getTime()
         : undefined;
-      const sprintQualiLockAt = sprintQualiStartAt
-        ? sprintQualiStartAt - HOUR
-        : undefined;
-      const sprintLockAt = sprintStartAt ? sprintStartAt - HOUR : undefined;
+      const sprintQualiLockAt = sprintQualiStartAt;
+      const sprintLockAt = sprintStartAt;
 
       // Check if race already exists by slug
       const existing = await ctx.db

@@ -4,6 +4,15 @@ import type { Id } from './_generated/dataModel';
 import { mutation, query } from './_generated/server';
 import { getOrCreateViewer, getViewer, requireViewer } from './lib/auth';
 
+const sessionTypeValidator = v.union(
+  v.literal('quali'),
+  v.literal('sprint_quali'),
+  v.literal('sprint'),
+  v.literal('race'),
+);
+
+type SessionType = 'quali' | 'sprint_quali' | 'sprint' | 'race';
+
 export const myPredictionHistory = query({
   args: {},
   handler: async (ctx) => {
@@ -15,45 +24,91 @@ export const myPredictionHistory = query({
       .withIndex('by_user', (q) => q.eq('userId', viewer._id))
       .collect();
 
-    // Enrich with race info and scores
-    const enriched = await Promise.all(
-      predictions.map(async (pred) => {
-        const race = await ctx.db.get(pred.raceId);
-        const score = await ctx.db
+    // Get all drivers for lookups
+    const allDrivers = await ctx.db.query('drivers').collect();
+    const driverMap = new Map(allDrivers.map((d) => [d._id, d]));
+
+    // Group predictions by raceId
+    const byRace = new Map<Id<'races'>, Array<(typeof predictions)[0]>>();
+    for (const pred of predictions) {
+      const existing = byRace.get(pred.raceId) ?? [];
+      existing.push(pred);
+      byRace.set(pred.raceId, existing);
+    }
+
+    // Build weekend summaries
+    const weekends = await Promise.all(
+      Array.from(byRace.entries()).map(async ([raceId, preds]) => {
+        const race = await ctx.db.get(raceId);
+        if (!race) return null;
+
+        // Get all scores for this race weekend
+        const scores = await ctx.db
           .query('scores')
           .withIndex('by_user_race', (q) =>
-            q.eq('userId', viewer._id).eq('raceId', pred.raceId),
+            q.eq('userId', viewer._id).eq('raceId', raceId),
           )
-          .unique();
+          .collect();
 
-        // Get driver names for picks
-        const pickDetails = await Promise.all(
-          pred.picks.map(async (driverId: Id<'drivers'>) => {
-            const driver = await ctx.db.get(driverId);
-            return {
+        // Build session predictions map
+        const sessions: Record<
+          SessionType,
+          {
+            picks: Array<{ driverId: Id<'drivers'>; code: string }>;
+            points: number | null;
+            submittedAt: number;
+          } | null
+        > = {
+          quali: null,
+          sprint_quali: null,
+          sprint: null,
+          race: null,
+        };
+
+        for (const pred of preds) {
+          const sessionType = (pred.sessionType as SessionType) ?? 'race';
+          const score = scores.find(
+            (s) => (s.sessionType ?? 'race') === sessionType,
+          );
+
+          sessions[sessionType] = {
+            picks: pred.picks.map((driverId) => ({
               driverId,
-              code: driver?.code ?? '???',
-              displayName: driver?.displayName ?? 'Unknown',
-            };
-          }),
+              code: driverMap.get(driverId)?.code ?? '???',
+            })),
+            points: score?.points ?? null,
+            submittedAt: pred.submittedAt,
+          };
+        }
+
+        // Calculate total points for weekend
+        const totalPoints = Object.values(sessions).reduce(
+          (sum, s) => sum + (s?.points ?? 0),
+          0,
         );
 
+        // Get latest submission time
+        const latestSubmission = Math.max(...preds.map((p) => p.submittedAt));
+
         return {
-          _id: pred._id,
-          raceId: pred.raceId,
-          raceName: race?.name ?? 'Unknown Race',
-          raceRound: race?.round ?? 0,
-          raceStatus: race?.status ?? 'unknown',
-          raceDate: race?.raceStartAt ?? 0,
-          picks: pickDetails,
-          points: score?.points ?? null,
-          submittedAt: pred.submittedAt,
+          raceId,
+          raceName: race.name,
+          raceRound: race.round,
+          raceStatus: race.status,
+          raceDate: race.raceStartAt,
+          hasSprint: race.hasSprint ?? false,
+          sessions,
+          totalPoints,
+          hasScores: scores.length > 0,
+          submittedAt: latestSubmission,
         };
       }),
     );
 
-    // Sort by race date descending
-    return enriched.sort((a, b) => b.raceDate - a.raceDate);
+    // Filter nulls and sort by race date descending
+    return weekends
+      .filter((w): w is NonNullable<typeof w> => w !== null)
+      .sort((a, b) => b.raceDate - a.raceDate);
   },
 });
 
@@ -64,26 +119,102 @@ function assertFiveUnique(ids: Array<string>) {
 }
 
 export const myPredictionForRace = query({
-  args: { raceId: v.id('races') },
+  args: {
+    raceId: v.id('races'),
+    sessionType: v.optional(sessionTypeValidator),
+  },
   handler: async (ctx, args) => {
     // Don't throw if user doesn't exist yet - they may be newly signed in
     // and won't have a Convex user record until their first mutation
     const viewer = await getViewer(ctx);
     if (!viewer) return null;
 
+    // If sessionType specified, use the new index
+    if (args.sessionType) {
+      return await ctx.db
+        .query('predictions')
+        .withIndex('by_user_race_session', (q) =>
+          q
+            .eq('userId', viewer._id)
+            .eq('raceId', args.raceId)
+            .eq('sessionType', args.sessionType),
+        )
+        .unique();
+    }
+
+    // Legacy: return race prediction (sessionType undefined or 'race')
+    // First try with sessionType 'race', then fall back to undefined (legacy)
+    const racePrediction = await ctx.db
+      .query('predictions')
+      .withIndex('by_user_race_session', (q) =>
+        q
+          .eq('userId', viewer._id)
+          .eq('raceId', args.raceId)
+          .eq('sessionType', 'race'),
+      )
+      .unique();
+
+    if (racePrediction) return racePrediction;
+
+    // Fall back to legacy prediction without sessionType
     return await ctx.db
       .query('predictions')
       .withIndex('by_user_race', (q) =>
         q.eq('userId', viewer._id).eq('raceId', args.raceId),
       )
-      .unique();
+      .first();
   },
 });
 
+/** Get all predictions for a weekend (all session types) */
+export const myWeekendPredictions = query({
+  args: { raceId: v.id('races') },
+  handler: async (ctx, args) => {
+    const viewer = await getViewer(ctx);
+    if (!viewer) return null;
+
+    const race = await ctx.db.get(args.raceId);
+    if (!race) return null;
+
+    // Get all predictions for this race weekend
+    const allPredictions = await ctx.db
+      .query('predictions')
+      .withIndex('by_user_race', (q) =>
+        q.eq('userId', viewer._id).eq('raceId', args.raceId),
+      )
+      .collect();
+
+    // Group by session type
+    const bySession: Record<SessionType, Array<Id<'drivers'>> | null> = {
+      quali: null,
+      sprint_quali: null,
+      sprint: null,
+      race: null,
+    };
+
+    for (const pred of allPredictions) {
+      const sessionType = (pred.sessionType as SessionType) ?? 'race';
+      bySession[sessionType] = pred.picks;
+    }
+
+    return {
+      hasSprint: race.hasSprint ?? false,
+      predictions: bySession,
+    };
+  },
+});
+
+/**
+ * Submit prediction for a specific session, or cascade to all sessions.
+ *
+ * - If sessionType is provided: only update that specific session
+ * - If sessionType is omitted: cascade to all applicable sessions (quali, sprint*, race)
+ */
 export const submitPrediction = mutation({
   args: {
     raceId: v.id('races'),
     picks: v.array(v.id('drivers')),
+    sessionType: v.optional(sessionTypeValidator),
   },
   handler: async (ctx, args) => {
     const viewer = requireViewer(await getOrCreateViewer(ctx));
@@ -92,9 +223,6 @@ export const submitPrediction = mutation({
     if (!race) throw new Error('Race not found');
 
     const now = Date.now();
-    if (now >= race.predictionLockAt) {
-      throw new Error('Predictions are locked for this race');
-    }
 
     // Only allow predictions for the next upcoming race
     const allRaces = await ctx.db.query('races').collect();
@@ -109,27 +237,70 @@ export const submitPrediction = mutation({
 
     assertFiveUnique(args.picks.map((id) => id));
 
-    const existing = await ctx.db
-      .query('predictions')
-      .withIndex('by_user_race', (q) =>
-        q.eq('userId', viewer._id).eq('raceId', args.raceId),
-      )
-      .unique();
+    // Determine which sessions to update
+    const sessionsToUpdate: SessionType[] = args.sessionType
+      ? [args.sessionType]
+      : race.hasSprint
+        ? ['quali', 'sprint_quali', 'sprint', 'race']
+        : ['quali', 'race'];
 
-    if (existing) {
-      await ctx.db.patch(existing._id, {
-        picks: args.picks,
-        updatedAt: now,
-      });
-      return existing._id;
+    // Check lock times for each session
+    const lockTimes: Record<SessionType, number | undefined> = {
+      quali: race.qualiLockAt,
+      sprint_quali: race.sprintQualiLockAt,
+      sprint: race.sprintLockAt,
+      race: race.predictionLockAt,
+    };
+
+    const results: Id<'predictions'>[] = [];
+
+    for (const sessionType of sessionsToUpdate) {
+      const lockTime = lockTimes[sessionType];
+
+      // Skip if session is locked (but don't fail - other sessions may still be open)
+      if (lockTime && now >= lockTime) {
+        if (args.sessionType) {
+          // If user specifically requested this session, throw error
+          throw new Error(`Predictions are locked for ${sessionType}`);
+        }
+        // Otherwise skip silently (cascade mode)
+        continue;
+      }
+
+      // Find existing prediction for this session
+      const existing = await ctx.db
+        .query('predictions')
+        .withIndex('by_user_race_session', (q) =>
+          q
+            .eq('userId', viewer._id)
+            .eq('raceId', args.raceId)
+            .eq('sessionType', sessionType),
+        )
+        .unique();
+
+      if (existing) {
+        await ctx.db.patch(existing._id, {
+          picks: args.picks,
+          updatedAt: now,
+        });
+        results.push(existing._id);
+      } else {
+        const id = await ctx.db.insert('predictions', {
+          userId: viewer._id,
+          raceId: args.raceId,
+          sessionType,
+          picks: args.picks,
+          submittedAt: now,
+          updatedAt: now,
+        });
+        results.push(id);
+      }
     }
 
-    return await ctx.db.insert('predictions', {
-      userId: viewer._id,
-      raceId: args.raceId,
-      picks: args.picks,
-      submittedAt: now,
-      updatedAt: now,
-    });
+    if (results.length === 0) {
+      throw new Error('All sessions are locked for this race');
+    }
+
+    return results[0]; // Return first created/updated prediction ID
   },
 });

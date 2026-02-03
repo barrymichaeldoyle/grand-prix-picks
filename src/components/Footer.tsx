@@ -28,59 +28,69 @@ function LinkedInIcon({ className }: { className?: string }) {
 
 export default function Footer() {
   return (
-    <footer className="border-t border-border bg-surface mt-auto">
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-sm text-text-muted">
-          <p className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-1">
-              <span>Made by</span>
-              <a
-                href="https://barrymichaeldoyle.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-accent hover:underline"
-              >
-                Barry Michael Doyle
-              </a>
-            </div>
-            <span>·</span>
+    <footer className="mt-auto border-t border-border bg-surface">
+      <div className="mx-auto max-w-4xl px-4 py-6">
+        <div className="flex flex-col gap-4 text-sm text-text-muted sm:flex-row sm:items-center sm:gap-10">
+          {/* Author + social: one row, wraps as a unit */}
+          <div className="flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1">
+            <span>Made by</span>
+            <a
+              href="https://barrymichaeldoyle.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-accent transition-colors hover:text-accent-hover"
+            >
+              Barry Michael Doyle
+            </a>
+            <span
+              aria-hidden
+              className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-border"
+            />
             <a
               href="https://x.com/barrymdoyle"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-text-muted hover:text-accent transition-colors"
+              className="text-accent transition-colors hover:text-accent-hover"
               aria-label="X (Twitter)"
             >
-              <XIcon className="w-4 h-4" />
+              <XIcon className="h-4 w-4" />
             </a>
             <a
               href="https://www.linkedin.com/in/barry-michael-doyle-11369683/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-text-muted hover:text-accent transition-colors"
+              className="text-accent transition-colors hover:text-accent-hover"
               aria-label="LinkedIn"
             >
-              <LinkedInIcon className="w-4 h-4" />
+              <LinkedInIcon className="h-4 w-4" />
             </a>
-          </p>
-          <p className="text-xs flex flex-wrap items-center gap-x-2 gap-y-1">
-            This is a fan-made project. Not affiliated with Formula 1, FIA, or
-            any related entities.
-            <span className="text-border">·</span>
-            <Link
-              to="/privacy"
-              className="text-text-muted hover:text-accent transition-colors"
-            >
-              Privacy
-            </Link>
-            <span className="text-border">·</span>
-            <Link
-              to="/terms"
-              className="text-text-muted hover:text-accent transition-colors"
-            >
-              Terms
-            </Link>
-          </p>
+          </div>
+
+          {/* Disclaimer + legal links: grouped next to author block */}
+          <div className="flex min-w-0 flex-col gap-2">
+            <p className="max-w-sm text-xs text-text-muted">
+              This is a fan-made project. Not affiliated with Formula 1, FIA, or
+              any related entities.
+            </p>
+            <div className="flex items-center gap-x-2 text-xs">
+              <Link
+                to="/privacy"
+                className="font-semibold text-accent transition-colors hover:text-accent-hover"
+              >
+                Privacy
+              </Link>
+              <span
+                aria-hidden
+                className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-border"
+              />
+              <Link
+                to="/terms"
+                className="font-semibold text-accent transition-colors hover:text-accent-hover"
+              >
+                Terms
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </footer>

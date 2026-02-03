@@ -19,7 +19,7 @@ export default function RaceResults({ raceId }: RaceResultsProps) {
 
   if (!result) {
     return (
-      <div className="text-center py-8 border-2 border-dashed border-border rounded-lg">
+      <div className="rounded-lg border-2 border-dashed border-border py-8 text-center">
         <p className="text-text-muted">Results not yet published</p>
       </div>
     );
@@ -31,28 +31,28 @@ export default function RaceResults({ raceId }: RaceResultsProps) {
     <div className="space-y-6">
       {/* Official Results */}
       <div>
-        <h3 className="text-lg font-semibold text-text mb-3">
+        <h3 className="mb-3 text-lg font-semibold text-text">
           Official Results
         </h3>
         <div className="grid grid-cols-5 gap-2">
           {top5.map((entry) => (
             <div
               key={entry.driverId}
-              className={`p-3 rounded-lg border text-center ${
+              className={`rounded-lg border p-3 text-center ${
                 entry.position === 1
-                  ? 'bg-warning-muted border-warning/30'
+                  ? 'border-warning/30 bg-warning-muted'
                   : entry.position === 2
-                    ? 'bg-surface-muted border-border'
+                    ? 'border-border bg-surface-muted'
                     : entry.position === 3
-                      ? 'bg-warning-muted/70 border-warning/20'
-                      : 'bg-surface border-border'
+                      ? 'border-warning/20 bg-warning-muted/70'
+                      : 'border-border bg-surface'
               }`}
             >
-              <div className="text-sm text-text-muted mb-1">
+              <div className="mb-1 text-sm text-text-muted">
                 P{entry.position}
               </div>
               <div className="text-lg font-bold text-accent">{entry.code}</div>
-              <div className="text-xs text-text-muted truncate">
+              <div className="truncate text-xs text-text-muted">
                 {entry.displayName.split(' ').pop()}
               </div>
             </div>
@@ -63,10 +63,10 @@ export default function RaceResults({ raceId }: RaceResultsProps) {
       {/* My Score */}
       {myScore && (
         <div>
-          <div className="flex items-center justify-between mb-3">
+          <div className="mb-3 flex items-center justify-between">
             <h3 className="text-lg font-semibold text-text">Your Score</h3>
             <div className="flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-accent" />
+              <Trophy className="h-5 w-5 text-accent" />
               <span className="text-2xl font-bold text-accent">
                 {myScore.points} pts
               </span>
@@ -74,7 +74,7 @@ export default function RaceResults({ raceId }: RaceResultsProps) {
           </div>
 
           {myScore.enrichedBreakdown && (
-            <div className="bg-surface border border-border rounded-lg overflow-hidden">
+            <div className="overflow-hidden rounded-lg border border-border bg-surface">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border text-sm">
@@ -104,10 +104,10 @@ export default function RaceResults({ raceId }: RaceResultsProps) {
                         className="border-b border-border last:border-0"
                       >
                         <td className="px-4 py-3">
-                          <span className="text-text font-medium">
+                          <span className="font-medium text-text">
                             {item.displayName}
                           </span>
-                          <span className="ml-2 text-text-muted text-sm">
+                          <span className="ml-2 text-sm text-text-muted">
                             {item.code}
                           </span>
                         </td>
@@ -121,7 +121,7 @@ export default function RaceResults({ raceId }: RaceResultsProps) {
                             <span
                               className={
                                 diff === 0
-                                  ? 'text-success font-medium'
+                                  ? 'font-medium text-success'
                                   : diff === 1
                                     ? 'text-warning'
                                     : 'text-text-muted'
@@ -136,13 +136,13 @@ export default function RaceResults({ raceId }: RaceResultsProps) {
                         <td className="px-4 py-3 text-right">
                           <div className="flex items-center justify-end gap-2">
                             {item.points === 5 ? (
-                              <Check className="w-4 h-4 text-success" />
+                              <Check className="h-4 w-4 text-success" />
                             ) : item.points === 3 ? (
-                              <Minus className="w-4 h-4 text-warning" />
+                              <Minus className="h-4 w-4 text-warning" />
                             ) : item.points === 1 ? (
-                              <Minus className="w-4 h-4 text-text-muted" />
+                              <Minus className="h-4 w-4 text-text-muted" />
                             ) : (
-                              <X className="w-4 h-4 text-error" />
+                              <X className="h-4 w-4 text-error" />
                             )}
                             <span
                               className={`font-bold ${
@@ -168,16 +168,16 @@ export default function RaceResults({ raceId }: RaceResultsProps) {
           )}
 
           <div className="mt-3 text-sm text-text-muted">
-            <span className="inline-flex items-center gap-1 mr-4">
-              <span className="w-2 h-2 rounded-full bg-success"></span>
+            <span className="mr-4 inline-flex items-center gap-1">
+              <span className="h-2 w-2 rounded-full bg-success"></span>
               Exact match: 5 pts
             </span>
-            <span className="inline-flex items-center gap-1 mr-4">
-              <span className="w-2 h-2 rounded-full bg-warning"></span>
+            <span className="mr-4 inline-flex items-center gap-1">
+              <span className="h-2 w-2 rounded-full bg-warning"></span>
               Off by 1: 3 pts
             </span>
             <span className="inline-flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-text-muted"></span>
+              <span className="h-2 w-2 rounded-full bg-text-muted"></span>
               In top 5: 1 pt
             </span>
           </div>
@@ -185,7 +185,7 @@ export default function RaceResults({ raceId }: RaceResultsProps) {
       )}
 
       {!myScore && (
-        <div className="bg-surface-muted border border-border rounded-lg p-4 text-center">
+        <div className="rounded-lg border border-border bg-surface-muted p-4 text-center">
           <p className="text-text-muted">
             You didn't submit a prediction for this race
           </p>

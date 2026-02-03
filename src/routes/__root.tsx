@@ -138,15 +138,19 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body>
         <ClerkProvider>
           <ConvexProvider>
-            <div className="min-h-screen flex flex-col">
+            <div className="flex h-[100dvh] h-screen flex-col overflow-hidden">
               <Header
                 mobileMenuOpen={mobileMenuOpen}
                 onMobileMenuOpenChange={setMobileMenuOpen}
                 themeKey={THEME_KEY}
               />
-              <div ref={mainRef} className="flex-1">
-                <ScrollToTop />
+              <div
+                ref={mainRef}
+                className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto"
+              >
+                <ScrollToTop scrollContainerRef={mainRef} />
                 {children}
+                <Footer />
                 <TanStackDevtools
                   config={{
                     position: 'bottom-right',
@@ -160,7 +164,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                   ]}
                 />
               </div>
-              <Footer />
             </div>
           </ConvexProvider>
         </ClerkProvider>

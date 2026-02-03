@@ -1,4 +1,4 @@
-import "../_browser-chunks/chunk-A242L54C.js";
+import '../_browser-chunks/chunk-A242L54C.js';
 
 // src/manager/manager-stores.ts
 import {
@@ -9,8 +9,8 @@ import {
   experimental_getTestProviderStore,
   experimental_useTestProviderStore,
   internal_checklistStore,
-  internal_universalChecklistStore
-} from "storybook/manager-api";
+  internal_universalChecklistStore,
+} from 'storybook/manager-api';
 export {
   experimental_getStatusStore,
   experimental_getTestProviderStore,
@@ -19,5 +19,5 @@ export {
   internal_checklistStore,
   internal_fullStatusStore,
   internal_fullTestProviderStore,
-  internal_universalChecklistStore
+  internal_universalChecklistStore,
 };

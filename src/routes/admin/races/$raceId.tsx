@@ -1,4 +1,4 @@
-import { createFileRoute,Link } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { useMutation, useQuery } from 'convex/react';
 import { ArrowLeft, Check, Loader2, Save, Shield, Trophy } from 'lucide-react';
 import { useState } from 'react';
@@ -35,8 +35,8 @@ function AdminRaceDetailPage() {
 
   if (isAdmin === undefined || race === undefined || drivers === undefined) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
       </div>
     );
   }
@@ -44,10 +44,10 @@ function AdminRaceDetailPage() {
   if (!isAdmin) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <div className="bg-slate-800/50 border border-red-500/30 rounded-xl p-8 text-center">
-            <Shield className="w-16 h-16 text-red-400 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-white mb-2">
+        <div className="mx-auto max-w-4xl px-4 py-8">
+          <div className="rounded-xl border border-red-500/30 bg-slate-800/50 p-8 text-center">
+            <Shield className="mx-auto mb-4 h-16 w-16 text-red-400" />
+            <h1 className="mb-2 text-2xl font-bold text-white">
               Access Denied
             </h1>
             <p className="text-slate-400">Admin privileges required.</p>
@@ -60,7 +60,7 @@ function AdminRaceDetailPage() {
   if (!race) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-        <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="mx-auto max-w-4xl px-4 py-8">
           <p className="text-white">Race not found</p>
         </div>
       </div>
@@ -116,27 +116,27 @@ function AdminRaceDetailPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="mx-auto max-w-4xl px-4 py-8">
         <Link
           to="/admin"
-          className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8"
+          className="mb-8 inline-flex items-center gap-2 text-slate-400 transition-colors hover:text-white"
         >
           <ArrowLeft size={20} />
           Back to Admin
         </Link>
 
-        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 mb-6">
+        <div className="mb-6 rounded-xl border border-slate-700 bg-slate-800/50 p-6">
           <div className="flex items-center justify-between">
             <div>
               <span className="text-sm font-medium text-slate-500">
                 Round {race.round} - {race.season}
               </span>
-              <h1 className="text-2xl font-bold text-white mt-1">
+              <h1 className="mt-1 text-2xl font-bold text-white">
                 {race.name}
               </h1>
             </div>
             <span
-              className={`px-3 py-1 text-sm rounded-full ${
+              className={`rounded-full px-3 py-1 text-sm ${
                 race.status === 'upcoming'
                   ? 'bg-emerald-500/20 text-emerald-400'
                   : race.status === 'locked'
@@ -150,21 +150,21 @@ function AdminRaceDetailPage() {
         </div>
 
         {/* Publish Results Section */}
-        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Trophy className="w-5 h-5 text-yellow-400" />
+        <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-yellow-400" />
             <h2 className="text-xl font-semibold text-white">
               {existingResult ? 'Update Results' : 'Publish Results'}
             </h2>
           </div>
 
-          <p className="text-slate-400 mb-6">
+          <p className="mb-6 text-slate-400">
             Select the top 5 finishers in order (P1 to P5).
           </p>
 
           {/* Selected drivers (top 5) */}
           <div className="mb-6">
-            <h3 className="text-sm font-medium text-slate-400 mb-3">
+            <h3 className="mb-3 text-sm font-medium text-slate-400">
               Classification
             </h3>
             <div className="space-y-2">
@@ -173,22 +173,22 @@ function AdminRaceDetailPage() {
                 return (
                   <div
                     key={index}
-                    className={`flex items-center gap-3 p-3 rounded-lg border ${
+                    className={`flex items-center gap-3 rounded-lg border p-3 ${
                       driver
-                        ? 'bg-slate-700/50 border-slate-600'
-                        : 'bg-slate-800/30 border-slate-700 border-dashed'
+                        ? 'border-slate-600 bg-slate-700/50'
+                        : 'border-dashed border-slate-700 bg-slate-800/30'
                     }`}
                   >
-                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-yellow-500/20 text-yellow-400 font-bold text-sm">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-500/20 text-sm font-bold text-yellow-400">
                       P{index + 1}
                     </span>
                     {driver ? (
                       <>
                         <div className="flex-1">
-                          <span className="text-white font-medium">
+                          <span className="font-medium text-white">
                             {driver.displayName}
                           </span>
-                          <span className="ml-2 text-slate-500 text-sm">
+                          <span className="ml-2 text-sm text-slate-500">
                             {driver.code}
                           </span>
                         </div>
@@ -196,27 +196,27 @@ function AdminRaceDetailPage() {
                           <button
                             onClick={() => moveDriver(index, 'up')}
                             disabled={index === 0}
-                            className="p-1.5 rounded hover:bg-slate-600 disabled:opacity-30 transition-colors text-slate-400"
+                            className="rounded p-1.5 text-slate-400 transition-colors hover:bg-slate-600 disabled:opacity-30"
                           >
                             ↑
                           </button>
                           <button
                             onClick={() => moveDriver(index, 'down')}
                             disabled={index >= selectedDrivers.length - 1}
-                            className="p-1.5 rounded hover:bg-slate-600 disabled:opacity-30 transition-colors text-slate-400"
+                            className="rounded p-1.5 text-slate-400 transition-colors hover:bg-slate-600 disabled:opacity-30"
                           >
                             ↓
                           </button>
                           <button
                             onClick={() => toggleDriver(driver._id)}
-                            className="p-1.5 rounded hover:bg-red-500/20 transition-colors text-red-400 ml-2"
+                            className="ml-2 rounded p-1.5 text-red-400 transition-colors hover:bg-red-500/20"
                           >
                             ✕
                           </button>
                         </div>
                       </>
                     ) : (
-                      <span className="text-slate-500 text-sm">
+                      <span className="text-sm text-slate-500">
                         Select from below
                       </span>
                     )}
@@ -227,11 +227,11 @@ function AdminRaceDetailPage() {
           </div>
 
           {/* Publish button */}
-          <div className="flex items-center gap-4 mb-6">
+          <div className="mb-6 flex items-center gap-4">
             <button
               onClick={handlePublish}
               disabled={selectedDrivers.length !== 5 || isPublishing}
-              className="flex items-center gap-2 px-6 py-3 bg-yellow-500 hover:bg-yellow-600 disabled:bg-slate-600 disabled:cursor-not-allowed text-black font-semibold rounded-lg transition-colors"
+              className="flex items-center gap-2 rounded-lg bg-yellow-500 px-6 py-3 font-semibold text-black transition-colors hover:bg-yellow-600 disabled:cursor-not-allowed disabled:bg-slate-600"
             >
               {isPublishing ? (
                 <>
@@ -251,7 +251,7 @@ function AdminRaceDetailPage() {
               )}
             </button>
             {selectedDrivers.length < 5 && (
-              <span className="text-slate-400 text-sm">
+              <span className="text-sm text-slate-400">
                 Select {5 - selectedDrivers.length} more driver
                 {5 - selectedDrivers.length !== 1 ? 's' : ''}
               </span>
@@ -260,16 +260,16 @@ function AdminRaceDetailPage() {
 
           {/* Available drivers */}
           <div>
-            <h3 className="text-sm font-medium text-slate-400 mb-3">
+            <h3 className="mb-3 text-sm font-medium text-slate-400">
               Select Drivers
             </h3>
-            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
+            <div className="grid grid-cols-4 gap-2 sm:grid-cols-5 md:grid-cols-6">
               {availableDrivers.map((driver) => (
                 <button
                   key={driver._id}
                   onClick={() => toggleDriver(driver._id)}
                   disabled={selectedDrivers.length >= 5}
-                  className="flex flex-col items-center gap-1 p-2 rounded-lg border border-slate-700 bg-slate-800/50 hover:border-yellow-500/50 hover:bg-slate-700/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="flex flex-col items-center gap-1 rounded-lg border border-slate-700 bg-slate-800/50 p-2 transition-colors hover:border-yellow-500/50 hover:bg-slate-700/50 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <span className="text-sm font-bold text-cyan-400">
                     {driver.code}

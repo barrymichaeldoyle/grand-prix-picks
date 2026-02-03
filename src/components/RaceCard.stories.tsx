@@ -114,7 +114,7 @@ const ALL_STATES = [
 export const AllStates: Story = {
   render: () => (
     <StorybookRouter>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+      <div className="grid grid-cols-1 gap-6 p-4 md:grid-cols-2">
         {ALL_STATES.map(({ label, race, isNext, predictionOpenAt }) => (
           <div key={race._id} className="flex flex-col gap-2">
             <p className="text-sm font-medium text-text-muted">{label}</p>

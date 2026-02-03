@@ -21,15 +21,15 @@ export const Tokens: Story = {
   render: () => (
     <div className="space-y-6 text-text">
       <div>
-        <h1 className="text-2xl font-bold mb-2">Design Tokens</h1>
+        <h1 className="mb-2 text-2xl font-bold">Design Tokens</h1>
         <p className="text-text-muted">
           Use Tailwind utilities:{' '}
-          <code className="bg-surface-muted px-1 rounded">bg-page</code>,{' '}
-          <code className="bg-surface-muted px-1 rounded">bg-surface</code>,{' '}
-          <code className="bg-surface-muted px-1 rounded">text-text</code>,{' '}
-          <code className="bg-surface-muted px-1 rounded">text-text-muted</code>
-          , <code className="bg-surface-muted px-1 rounded">border-border</code>
-          , <code className="bg-surface-muted px-1 rounded">bg-accent</code>,
+          <code className="rounded bg-surface-muted px-1">bg-page</code>,{' '}
+          <code className="rounded bg-surface-muted px-1">bg-surface</code>,{' '}
+          <code className="rounded bg-surface-muted px-1">text-text</code>,{' '}
+          <code className="rounded bg-surface-muted px-1">text-text-muted</code>
+          , <code className="rounded bg-surface-muted px-1">border-border</code>
+          , <code className="rounded bg-surface-muted px-1">bg-accent</code>,
           etc.
         </p>
       </div>
@@ -55,10 +55,10 @@ export const Tokens: Story = {
       </div>
 
       <p className="text-sm text-text-muted">
-        Add <code className="bg-surface-muted px-1 rounded">.dark</code> to{' '}
-        <code className="bg-surface-muted px-1 rounded">&lt;html&gt;</code> or
+        Add <code className="rounded bg-surface-muted px-1">.dark</code> to{' '}
+        <code className="rounded bg-surface-muted px-1">&lt;html&gt;</code> or
         set{' '}
-        <code className="bg-surface-muted px-1 rounded">
+        <code className="rounded bg-surface-muted px-1">
           data-theme=&quot;dark&quot;
         </code>{' '}
         to switch to dark mode.
