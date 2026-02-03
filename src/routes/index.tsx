@@ -1,9 +1,10 @@
-import { createFileRoute,Link } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import { ChevronRight, Flag, Trophy, Users } from 'lucide-react';
 
 import { api } from '../../convex/_generated/api';
 import { primaryButtonStyles } from '../components/Button';
+import ErrorBoundary from '../components/ErrorBoundary';
 import RaceCard from '../components/RaceCard';
 import RaceCardSkeleton from '../components/RaceCardSkeleton';
 
@@ -21,9 +22,25 @@ export const Route = createFileRoute('/')({
   }),
 });
 
-function HomePage() {
+function NextRaceSection() {
   const nextRace = useQuery(api.races.getNextRace);
 
+  if (nextRace === undefined) {
+    return <RaceCardSkeleton isNext />;
+  }
+
+  if (nextRace) {
+    return <RaceCard race={nextRace} isNext />;
+  }
+
+  return (
+    <div className="bg-surface border border-border rounded-xl p-6 text-center">
+      <p className="text-text-muted">No upcoming races scheduled</p>
+    </div>
+  );
+}
+
+function HomePage() {
   return (
     <div className="min-h-screen bg-page">
       {/* Hero Section */}
@@ -54,15 +71,15 @@ function HomePage() {
         <h2 className="text-lg font-semibold text-text-muted mb-4">
           Next Race
         </h2>
-        {nextRace === undefined ? (
-          <RaceCardSkeleton isNext />
-        ) : nextRace ? (
-          <RaceCard race={nextRace} isNext />
-        ) : (
-          <div className="bg-surface border border-border rounded-xl p-6 text-center">
-            <p className="text-text-muted">No upcoming races scheduled</p>
-          </div>
-        )}
+        <ErrorBoundary
+          fallback={
+            <div className="bg-surface border border-border rounded-xl p-6 text-center">
+              <p className="text-text-muted">Unable to load next race</p>
+            </div>
+          }
+        >
+          <NextRaceSection />
+        </ErrorBoundary>
       </section>
 
       {/* How It Works */}
