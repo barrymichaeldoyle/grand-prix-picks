@@ -1,12 +1,9 @@
 import { clerkMiddleware } from '@clerk/tanstack-react-start/server';
 import { createStart } from '@tanstack/react-start';
 
-// On Cloudflare Pages, clerkMiddleware() verifies sessions via an outbound HTTP
-// call to Clerk's API by default. If that fails (missing env, timeout, etc.),
-// it throws an unhandled HTTPError → 500. Passing jwtKey enables networkless
-// JWT verification so no request is made. Set CLERK_JWT_KEY in your
-// Cloudflare Pages env (Dashboard → project → Settings → Environment variables).
-// Get the value from Clerk Dashboard → API Keys → JWT public key (JWKS).
+// On Cloudflare Pages, process.env is only populated when compatibility_flags
+// in wrangler.toml include nodejs_compat_populate_process_env. jwtKey enables
+// networkless JWT verification so Clerk doesn't call its API (avoiding HTTPError).
 const clerkJwtKey =
   typeof process !== 'undefined' ? process.env.CLERK_JWT_KEY : undefined;
 

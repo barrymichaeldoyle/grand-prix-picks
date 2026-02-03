@@ -47,12 +47,14 @@ pnpm check
 
 To avoid 500 errors (`HTTPError`) from Clerk’s middleware on Cloudflare Pages:
 
-1. In the [Cloudflare Dashboard](https://dash.cloudflare.com) → your Pages project → **Settings** → **Environment variables**, add:
+1. **`wrangler.toml`** already includes `compatibility_flags = ["nodejs_compat", "nodejs_compat_populate_process_env"]`. That makes dashboard env vars available as `process.env` in the Worker so Clerk can read `CLERK_JWT_KEY` and `CLERK_SECRET_KEY`. Don't remove these flags.
+
+2. In the [Cloudflare Dashboard](https://dash.cloudflare.com) → your Pages project → **Settings** → **Environment variables**, add:
    - **CLERK_SECRET_KEY** (required for server-side auth)
    - **VITE_CLERK_PUBLISHABLE_KEY** (so the client can talk to Clerk; set for Production and/or Preview as needed)
    - **CLERK_JWT_KEY** (recommended) – enables networkless JWT verification so the edge worker doesn’t call Clerk’s API on every request. Get this from [Clerk Dashboard](https://dashboard.clerk.com) → **API Keys** → JWT public key (JWKS).
 
-2. If you don’t set `CLERK_JWT_KEY`, the worker will call Clerk’s API for each request. That can fail (e.g. timeout or missing/invalid `CLERK_SECRET_KEY`) and surface as an unhandled `HTTPError` and 500 response.
+3. If you don’t set `CLERK_JWT_KEY`, the worker will call Clerk's API for each request. That can fail (e.g. timeout or missing/invalid `CLERK_SECRET_KEY`) and surface as an unhandled `HTTPError` and 500 response. If Clerk middleware still throws for any reason, the app catches it and continues without auth for that request instead of returning 500.
 
 ## Setting up Convex
 

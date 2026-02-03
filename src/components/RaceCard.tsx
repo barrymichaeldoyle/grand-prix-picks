@@ -11,6 +11,7 @@ const SLUG_TO_COUNTRY: Record<string, string> = {
   japan: 'jp',
   bahrain: 'bh',
   'saudi-arabia': 'sa',
+  saudi: 'sa',
   miami: 'us',
   canada: 'ca',
   monaco: 'mc',

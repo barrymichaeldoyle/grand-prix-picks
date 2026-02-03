@@ -3,7 +3,7 @@ import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { Flag, Trophy, Users, ChevronRight } from 'lucide-react';
 import RaceCard from '../components/RaceCard';
-import InlineLoader from '../components/InlineLoader';
+import RaceCardSkeleton from '../components/RaceCardSkeleton';
 import { primaryButtonStyles } from '../components/Button';
 
 export const Route = createFileRoute('/')({
@@ -54,7 +54,7 @@ function HomePage() {
           Next Race
         </h2>
         {nextRace === undefined ? (
-          <InlineLoader />
+          <RaceCardSkeleton isNext />
         ) : nextRace ? (
           <RaceCard race={nextRace} isNext />
         ) : (
