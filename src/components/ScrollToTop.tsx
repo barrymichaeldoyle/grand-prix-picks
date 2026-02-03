@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
 import { useLocation } from '@tanstack/react-router';
+import { useEffect } from 'react';
 
 /**
  * Scrolls the window to the top when the route location changes.

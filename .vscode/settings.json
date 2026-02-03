@@ -5,6 +5,8 @@
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "always"
   },
+  "eslint.useFlatConfig": true,
+  "eslint.codeActionsOnSave.mode": "all",
   "files.watcherExclude": {
     "**/routeTree.gen.ts": true
   },
@@ -23,9 +25,12 @@
     "Bortoleto",
     "Bottas",
     "Colapinto",
+    "dhabi",
+    "flagcdn",
     "Gasly",
     "Hadjar",
     "Hülkenberg",
+    "imola",
     "Isack",
     "Kimi",
     "Lando",
@@ -42,6 +47,7 @@
     "tanstackstart",
     "Valtteri",
     "Verstappen",
-    "vinxi"
+    "vinxi",
+    "VITE"
   ]
 }

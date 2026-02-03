@@ -20,9 +20,13 @@ test.describe('Races List Page', () => {
     const hasUpcoming = await page.getByText('Upcoming Races').isVisible();
     const hasInProgress = await page.getByText('In Progress').isVisible();
     const hasCompleted = await page.getByText('Completed').isVisible();
-    const hasEmptyState = await page.getByText('No races scheduled yet').isVisible();
+    const hasEmptyState = await page
+      .getByText('No races scheduled yet')
+      .isVisible();
 
-    expect(hasUpcoming || hasInProgress || hasCompleted || hasEmptyState).toBeTruthy();
+    expect(
+      hasUpcoming || hasInProgress || hasCompleted || hasEmptyState,
+    ).toBeTruthy();
   });
 
   test('race cards are clickable', async ({ page }) => {
@@ -101,12 +105,16 @@ test.describe('Race Detail Page', () => {
       // - "Not Yet Open" (upcoming, not next race)
       // - "Predictions Locked" (locked)
       // - "Race Results" (finished)
-      const hasPredictionForm = await page.getByText('Make Your Prediction').isVisible();
+      const hasPredictionForm = await page
+        .getByText('Make Your Prediction')
+        .isVisible();
       const hasNotYetOpen = await page.getByText('Not Yet Open').isVisible();
       const hasLocked = await page.getByText('Predictions Locked').isVisible();
       const hasResults = await page.getByText('Race Results').isVisible();
 
-      expect(hasPredictionForm || hasNotYetOpen || hasLocked || hasResults).toBeTruthy();
+      expect(
+        hasPredictionForm || hasNotYetOpen || hasLocked || hasResults,
+      ).toBeTruthy();
     }
   });
 

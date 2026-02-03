@@ -1,8 +1,9 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import { useQuery, useMutation } from 'convex/react';
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
+import { useMutation, useQuery } from 'convex/react';
+import { ArrowLeft, Loader2, Save, Shield } from 'lucide-react';
 import { useState } from 'react';
+
 import { api } from '../../../../convex/_generated/api';
-import { Loader2, ArrowLeft, Shield, Save } from 'lucide-react';
 
 export const Route = createFileRoute('/admin/races/new')({
   component: AdminNewRacePage,
@@ -39,7 +40,9 @@ function AdminNewRacePage() {
         <div className="max-w-4xl mx-auto px-4 py-8">
           <div className="bg-slate-800/50 border border-red-500/30 rounded-xl p-8 text-center">
             <Shield className="w-16 h-16 text-red-400 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-white mb-2">Access Denied</h1>
+            <h1 className="text-2xl font-bold text-white mb-2">
+              Access Denied
+            </h1>
             <p className="text-slate-400">Admin privileges required.</p>
           </div>
         </div>
@@ -48,10 +51,12 @@ function AdminNewRacePage() {
   }
 
   const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '') + `-${formData.season}`;
+    return (
+      name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '') + `-${formData.season}`
+    );
   };
 
   const handleNameChange = (name: string) => {
@@ -74,9 +79,12 @@ function AdminNewRacePage() {
     setIsSubmitting(true);
 
     try {
-      const raceDateTime = new Date(`${formData.raceDate}T${formData.raceTime}:00`);
+      const raceDateTime = new Date(
+        `${formData.raceDate}T${formData.raceTime}:00`,
+      );
       const raceStartAt = raceDateTime.getTime();
-      const predictionLockAt = raceStartAt - formData.lockHoursBefore * 60 * 60 * 1000;
+      const predictionLockAt =
+        raceStartAt - formData.lockHoursBefore * 60 * 60 * 1000;
 
       await upsertRace({
         season: formData.season,
@@ -132,7 +140,12 @@ function AdminNewRacePage() {
                 <input
                   type="number"
                   value={formData.round}
-                  onChange={(e) => setFormData({ ...formData, round: parseInt(e.target.value) || 1 })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      round: parseInt(e.target.value) || 1,
+                    })
+                  }
                   min={1}
                   max={30}
                   className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-cyan-500"
@@ -146,7 +159,12 @@ function AdminNewRacePage() {
                 <input
                   type="number"
                   value={formData.season}
-                  onChange={(e) => setFormData({ ...formData, season: parseInt(e.target.value) || 2026 })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      season: parseInt(e.target.value) || 2026,
+                    })
+                  }
                   className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-cyan-500"
                 />
               </div>
@@ -159,7 +177,9 @@ function AdminNewRacePage() {
               <input
                 type="text"
                 value={formData.slug}
-                onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, slug: e.target.value })
+                }
                 className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-cyan-500"
               />
             </div>
@@ -172,7 +192,9 @@ function AdminNewRacePage() {
                 <input
                   type="date"
                   value={formData.raceDate}
-                  onChange={(e) => setFormData({ ...formData, raceDate: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, raceDate: e.target.value })
+                  }
                   className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-cyan-500"
                 />
               </div>
@@ -184,7 +206,9 @@ function AdminNewRacePage() {
                 <input
                   type="time"
                   value={formData.raceTime}
-                  onChange={(e) => setFormData({ ...formData, raceTime: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, raceTime: e.target.value })
+                  }
                   className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-cyan-500"
                 />
               </div>
@@ -197,7 +221,12 @@ function AdminNewRacePage() {
               <input
                 type="number"
                 value={formData.lockHoursBefore}
-                onChange={(e) => setFormData({ ...formData, lockHoursBefore: parseInt(e.target.value) || 1 })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    lockHoursBefore: parseInt(e.target.value) || 1,
+                  })
+                }
                 min={0}
                 max={48}
                 className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-cyan-500"

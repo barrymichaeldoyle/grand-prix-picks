@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { ArrowRight, Calendar, Clock, Lock, Trophy } from 'lucide-react';
+
 import type { Doc } from '../../convex/_generated/dataModel';
 
 type Race = Doc<'races'>;

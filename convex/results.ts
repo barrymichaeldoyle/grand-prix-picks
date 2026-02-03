@@ -1,15 +1,16 @@
+import { v } from 'convex/values';
+
 import type { Doc, Id } from './_generated/dataModel';
 import { mutation, query } from './_generated/server';
-import { v } from 'convex/values';
 import {
   getOrCreateViewer,
   getViewer,
   requireAdmin,
   requireViewer,
 } from './lib/auth';
+import { scoreTopFive } from './lib/scoring';
 
 type ScoreBreakdownItem = NonNullable<Doc<'scores'>['breakdown']>[number];
-import { scoreTopFive } from './lib/scoring';
 
 export const getMyScoreForRace = query({
   args: { raceId: v.id('races') },

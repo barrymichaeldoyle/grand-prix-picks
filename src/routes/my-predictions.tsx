@@ -1,10 +1,11 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { SignInButton, useAuth } from '@clerk/clerk-react';
+import { createFileRoute,Link } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
-import { useAuth, SignInButton } from '@clerk/clerk-react';
+import { CheckCircle, Clock, History, LogIn, Trophy } from 'lucide-react';
+
 import { api } from '../../convex/_generated/api';
-import { History, LogIn, Trophy, Clock, CheckCircle } from 'lucide-react';
-import PageLoader from '../components/PageLoader';
 import Button, { primaryButtonStyles } from '../components/Button';
+import PageLoader from '../components/PageLoader';
 
 export const Route = createFileRoute('/my-predictions')({
   component: MyPredictionsPage,

@@ -13,9 +13,7 @@ test.describe('Home Page', () => {
     ).toBeVisible();
 
     // Check tagline
-    await expect(
-      page.getByText(/Predict the top 5 finishers/i),
-    ).toBeVisible();
+    await expect(page.getByText(/Predict the top 5 finishers/i)).toBeVisible();
   });
 
   test('shows "View Races" call to action', async ({ page }) => {
@@ -36,8 +34,13 @@ test.describe('Home Page', () => {
     await expect(page.getByText('Next Race')).toBeVisible();
 
     // Should show either a race card or "No upcoming races" message
-    const hasRaceCard = await page.getByText(/Grand Prix/i).first().isVisible();
-    const hasNoRaces = await page.getByText('No upcoming races scheduled').isVisible();
+    const hasRaceCard = await page
+      .getByText(/Grand Prix/i)
+      .first()
+      .isVisible();
+    const hasNoRaces = await page
+      .getByText('No upcoming races scheduled')
+      .isVisible();
 
     expect(hasRaceCard || hasNoRaces).toBeTruthy();
   });
@@ -77,7 +80,9 @@ test.describe('Home Page', () => {
     await page.goto('/');
 
     // Header should have the app name/logo link
-    const homeLink = page.getByRole('link', { name: /Grand Prix Picks/i }).first();
+    const homeLink = page
+      .getByRole('link', { name: /Grand Prix Picks/i })
+      .first();
     await expect(homeLink).toBeVisible();
   });
 
@@ -85,7 +90,9 @@ test.describe('Home Page', () => {
     await page.goto('/');
 
     // Find theme toggle button
-    const themeToggle = page.getByRole('button', { name: /switch to (dark|light) mode/i });
+    const themeToggle = page.getByRole('button', {
+      name: /switch to (dark|light) mode/i,
+    });
     await expect(themeToggle).toBeVisible();
 
     // Click to toggle
@@ -93,11 +100,15 @@ test.describe('Home Page', () => {
 
     // Verify the html element has the theme class changed
     const htmlElement = page.locator('html');
-    const hasDarkClass = await htmlElement.evaluate((el) => el.classList.contains('dark'));
+    const hasDarkClass = await htmlElement.evaluate((el) =>
+      el.classList.contains('dark'),
+    );
 
     // Toggle back
     await themeToggle.click();
-    const stillHasDarkClass = await htmlElement.evaluate((el) => el.classList.contains('dark'));
+    const stillHasDarkClass = await htmlElement.evaluate((el) =>
+      el.classList.contains('dark'),
+    );
 
     // Theme should have toggled
     expect(hasDarkClass !== stillHasDarkClass).toBeTruthy();

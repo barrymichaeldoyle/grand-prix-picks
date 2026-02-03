@@ -1,6 +1,7 @@
+import { v } from 'convex/values';
+
 import type { Id } from './_generated/dataModel';
 import { mutation, query } from './_generated/server';
-import { v } from 'convex/values';
 import { getOrCreateViewer, getViewer, requireViewer } from './lib/auth';
 
 export const myPredictionHistory = query({
@@ -56,7 +57,7 @@ export const myPredictionHistory = query({
   },
 });
 
-function assertFiveUnique(ids: string[]) {
+function assertFiveUnique(ids: Array<string>) {
   if (ids.length !== 5) throw new Error('Pick exactly 5 drivers');
   const set = new Set(ids);
   if (set.size !== 5) throw new Error('Picks must be unique (no duplicates)');

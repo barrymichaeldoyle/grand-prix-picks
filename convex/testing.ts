@@ -1,6 +1,7 @@
+import { v } from 'convex/values';
+
 import type { Id } from './_generated/dataModel';
 import { internalMutation } from './_generated/server';
-import { v } from 'convex/values';
 
 /**
  * Test helper mutations for Playwright e2e tests.
@@ -154,7 +155,13 @@ export const cleanupTestData = internalMutation({
   },
   handler: async (ctx, args) => {
     const keepDrivers = args.keepDrivers ?? true;
-    const tables = ['scores', 'predictions', 'results', 'races', 'users'] as const;
+    const tables = [
+      'scores',
+      'predictions',
+      'results',
+      'races',
+      'users',
+    ] as const;
 
     const counts: Record<string, number> = {};
 
@@ -242,7 +249,7 @@ export const seedTestScenario = internalMutation({
       scenario: TestScenario;
       userId: Id<'users'>;
       adminId: Id<'users'>;
-      driverIds: Id<'drivers'>[];
+      driverIds: Array<Id<'drivers'>>;
       raceId?: Id<'races'>;
       races?: Array<{ id: Id<'races'>; slug: string; status: string }>;
     } = {
@@ -340,7 +347,8 @@ export const seedTestScenario = internalMutation({
     }
 
     if (args.scenario === 'full_season') {
-      const races: Array<{ id: Id<'races'>; slug: string; status: string }> = [];
+      const races: Array<{ id: Id<'races'>; slug: string; status: string }> =
+        [];
 
       // Past finished race
       const finishedRaceId = await ctx.db.insert('races', {

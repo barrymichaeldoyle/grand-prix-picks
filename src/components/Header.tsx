@@ -1,10 +1,11 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Flag, Menu, X, Sun, Moon } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Flag, Menu, Moon, Sun, X } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
 import ClerkHeader from '../integrations/clerk/header-user.tsx';
 
-const navLinks: { to: string; label: string; exact?: boolean }[] = [
+const navLinks: Array<{ to: string; label: string; exact?: boolean }> = [
   { to: '/', label: 'Home', exact: true },
   { to: '/races', label: 'Races' },
   { to: '/leaderboard', label: 'Leaderboard' },
@@ -27,12 +28,17 @@ export default function Header({
   const menuRef = useRef<HTMLElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const [dark, setDark] = useState(
-    () => typeof localStorage !== 'undefined' && localStorage.getItem(themeKey) === 'dark',
+    () =>
+      typeof localStorage !== 'undefined' &&
+      localStorage.getItem(themeKey) === 'dark',
   );
 
   const toggleTheme = useCallback(() => {
     const next = document.documentElement.classList.toggle('dark');
-    document.documentElement.setAttribute('data-theme', next ? 'dark' : 'light');
+    document.documentElement.setAttribute(
+      'data-theme',
+      next ? 'dark' : 'light',
+    );
     localStorage.setItem(themeKey, next ? 'dark' : 'light');
     setDark(next);
   }, [themeKey]);

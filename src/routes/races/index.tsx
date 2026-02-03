@@ -1,9 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
-import { api } from '../../../convex/_generated/api';
-import RaceCard from '../../components/RaceCard';
-import PageLoader from '../../components/PageLoader';
 import { Calendar } from 'lucide-react';
+
+import { api } from '../../../convex/_generated/api';
+import PageLoader from '../../components/PageLoader';
+import RaceCard from '../../components/RaceCard';
 
 export const Route = createFileRoute('/races/')({
   component: RacesPage,

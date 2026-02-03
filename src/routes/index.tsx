@@ -1,10 +1,11 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute,Link } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
+import { ChevronRight, Flag, Trophy, Users } from 'lucide-react';
+
 import { api } from '../../convex/_generated/api';
-import { Flag, Trophy, Users, ChevronRight } from 'lucide-react';
+import { primaryButtonStyles } from '../components/Button';
 import RaceCard from '../components/RaceCard';
 import RaceCardSkeleton from '../components/RaceCardSkeleton';
-import { primaryButtonStyles } from '../components/Button';
 
 export const Route = createFileRoute('/')({
   component: HomePage,

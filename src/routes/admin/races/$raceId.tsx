@@ -1,9 +1,10 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
-import { useQuery, useMutation } from 'convex/react';
+import { createFileRoute,Link } from '@tanstack/react-router';
+import { useMutation, useQuery } from 'convex/react';
+import { ArrowLeft, Check, Loader2, Save, Shield, Trophy } from 'lucide-react';
 import { useState } from 'react';
+
 import { api } from '../../../../convex/_generated/api';
 import type { Id } from '../../../../convex/_generated/dataModel';
-import { Loader2, ArrowLeft, Shield, Save, Trophy, Check } from 'lucide-react';
 
 export const Route = createFileRoute('/admin/races/$raceId')({
   component: AdminRaceDetailPage,
@@ -15,11 +16,15 @@ function AdminRaceDetailPage() {
   const isAdmin = useQuery(api.users.amIAdmin);
   const race = useQuery(api.races.getRace, { raceId: typedRaceId });
   const drivers = useQuery(api.drivers.listDrivers);
-  const existingResult = useQuery(api.results.getResultForRace, { raceId: typedRaceId });
+  const existingResult = useQuery(api.results.getResultForRace, {
+    raceId: typedRaceId,
+  });
 
   const publishResults = useMutation(api.results.adminPublishResults);
 
-  const [selectedDrivers, setSelectedDrivers] = useState<Id<'drivers'>[]>([]);
+  const [selectedDrivers, setSelectedDrivers] = useState<Array<Id<'drivers'>>>(
+    [],
+  );
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishSuccess, setPublishSuccess] = useState(false);
 
@@ -42,7 +47,9 @@ function AdminRaceDetailPage() {
         <div className="max-w-4xl mx-auto px-4 py-8">
           <div className="bg-slate-800/50 border border-red-500/30 rounded-xl p-8 text-center">
             <Shield className="w-16 h-16 text-red-400 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-white mb-2">Access Denied</h1>
+            <h1 className="text-2xl font-bold text-white mb-2">
+              Access Denied
+            </h1>
             <p className="text-slate-400">Admin privileges required.</p>
           </div>
         </div>
@@ -74,7 +81,10 @@ function AdminRaceDetailPage() {
     if (newIndex < 0 || newIndex >= selectedDrivers.length) return;
 
     const newDrivers = [...selectedDrivers];
-    [newDrivers[index], newDrivers[newIndex]] = [newDrivers[newIndex], newDrivers[index]];
+    [newDrivers[index], newDrivers[newIndex]] = [
+      newDrivers[newIndex],
+      newDrivers[index],
+    ];
     setSelectedDrivers(newDrivers);
     setPublishSuccess(false);
   };
@@ -100,7 +110,9 @@ function AdminRaceDetailPage() {
     .map((id) => drivers.find((d) => d._id === id))
     .filter(Boolean);
 
-  const availableDrivers = drivers.filter((d) => !selectedDrivers.includes(d._id));
+  const availableDrivers = drivers.filter(
+    (d) => !selectedDrivers.includes(d._id),
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
@@ -119,7 +131,9 @@ function AdminRaceDetailPage() {
               <span className="text-sm font-medium text-slate-500">
                 Round {race.round} - {race.season}
               </span>
-              <h1 className="text-2xl font-bold text-white mt-1">{race.name}</h1>
+              <h1 className="text-2xl font-bold text-white mt-1">
+                {race.name}
+              </h1>
             </div>
             <span
               className={`px-3 py-1 text-sm rounded-full ${
@@ -150,7 +164,9 @@ function AdminRaceDetailPage() {
 
           {/* Selected drivers (top 5) */}
           <div className="mb-6">
-            <h3 className="text-sm font-medium text-slate-400 mb-3">Classification</h3>
+            <h3 className="text-sm font-medium text-slate-400 mb-3">
+              Classification
+            </h3>
             <div className="space-y-2">
               {[0, 1, 2, 3, 4].map((index) => {
                 const driver = selectedDriverData[index];
@@ -169,8 +185,12 @@ function AdminRaceDetailPage() {
                     {driver ? (
                       <>
                         <div className="flex-1">
-                          <span className="text-white font-medium">{driver.displayName}</span>
-                          <span className="ml-2 text-slate-500 text-sm">{driver.code}</span>
+                          <span className="text-white font-medium">
+                            {driver.displayName}
+                          </span>
+                          <span className="ml-2 text-slate-500 text-sm">
+                            {driver.code}
+                          </span>
                         </div>
                         <div className="flex items-center gap-1">
                           <button
@@ -196,7 +216,9 @@ function AdminRaceDetailPage() {
                         </div>
                       </>
                     ) : (
-                      <span className="text-slate-500 text-sm">Select from below</span>
+                      <span className="text-slate-500 text-sm">
+                        Select from below
+                      </span>
                     )}
                   </div>
                 );
@@ -230,14 +252,17 @@ function AdminRaceDetailPage() {
             </button>
             {selectedDrivers.length < 5 && (
               <span className="text-slate-400 text-sm">
-                Select {5 - selectedDrivers.length} more driver{5 - selectedDrivers.length !== 1 ? 's' : ''}
+                Select {5 - selectedDrivers.length} more driver
+                {5 - selectedDrivers.length !== 1 ? 's' : ''}
               </span>
             )}
           </div>
 
           {/* Available drivers */}
           <div>
-            <h3 className="text-sm font-medium text-slate-400 mb-3">Select Drivers</h3>
+            <h3 className="text-sm font-medium text-slate-400 mb-3">
+              Select Drivers
+            </h3>
             <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
               {availableDrivers.map((driver) => (
                 <button
@@ -246,8 +271,12 @@ function AdminRaceDetailPage() {
                   disabled={selectedDrivers.length >= 5}
                   className="flex flex-col items-center gap-1 p-2 rounded-lg border border-slate-700 bg-slate-800/50 hover:border-yellow-500/50 hover:bg-slate-700/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
-                  <span className="text-sm font-bold text-cyan-400">{driver.code}</span>
-                  <span className="text-xs text-slate-500">{driver.familyName}</span>
+                  <span className="text-sm font-bold text-cyan-400">
+                    {driver.code}
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    {driver.familyName}
+                  </span>
                 </button>
               ))}
             </div>

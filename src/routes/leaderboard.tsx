@@ -1,7 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
+import { Medal, Trophy } from 'lucide-react';
+
 import { api } from '../../convex/_generated/api';
-import { Trophy, Medal } from 'lucide-react';
 import PageLoader from '../components/PageLoader';
 
 export const Route = createFileRoute('/leaderboard')({
@@ -34,7 +35,10 @@ function LeaderboardPage() {
         </div>
 
         {leaderboard.length === 0 ? (
-          <div className="bg-surface border border-border rounded-xl p-8 text-center" data-testid="leaderboard-empty">
+          <div
+            className="bg-surface border border-border rounded-xl p-8 text-center"
+            data-testid="leaderboard-empty"
+          >
             <Trophy className="w-16 h-16 text-text-muted mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-text mb-2">
               No scores yet
@@ -147,7 +151,10 @@ function LeaderboardPage() {
                             {entry.raceCount}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-right" data-testid="points">
+                        <td
+                          className="px-4 py-3 text-right"
+                          data-testid="points"
+                        >
                           <span className="text-accent font-bold">
                             {entry.points}
                           </span>

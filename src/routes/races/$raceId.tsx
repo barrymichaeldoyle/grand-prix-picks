@@ -1,14 +1,15 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { SignInButton, useAuth } from '@clerk/clerk-react';
+import { createFileRoute,Link } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
-import { useAuth, SignInButton } from '@clerk/clerk-react';
-import Button from '../../components/Button';
-import InlineLoader from '../../components/InlineLoader';
+import { ArrowLeft, Calendar, Clock, Lock, LogIn, Trophy } from 'lucide-react';
+
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
-import { ArrowLeft, Calendar, Clock, Lock, LogIn, Trophy } from 'lucide-react';
+import Button from '../../components/Button';
+import InlineLoader from '../../components/InlineLoader';
+import PageLoader from '../../components/PageLoader';
 import PredictionForm from '../../components/PredictionForm';
 import RaceResults from '../../components/RaceResults';
-import PageLoader from '../../components/PageLoader';
 
 export const Route = createFileRoute('/races/$raceId')({
   component: RaceDetailPage,

@@ -1,8 +1,8 @@
 import type { Id } from '../_generated/dataModel';
 
 export function scoreTopFive(params: {
-  picks: Id<'drivers'>[]; // length 5
-  classification: Id<'drivers'>[]; // ordered
+  picks: Array<Id<'drivers'>>; // length 5
+  classification: Array<Id<'drivers'>>; // ordered
 }) {
   const { picks, classification } = params;
 

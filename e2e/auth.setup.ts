@@ -1,5 +1,6 @@
-import { test as setup, expect } from '@playwright/test';
-import path from 'path';
+import path from 'node:path';
+
+import { expect, test as setup } from '@playwright/test';
 
 const authFile = path.join(__dirname, '../playwright/.auth/user.json');
 
@@ -64,7 +65,9 @@ setup('authenticate', async ({ page }) => {
     await page.getByRole('button', { name: /continue|sign in/i }).click();
 
     // Wait for successful sign in (Clerk UserButton appears)
-    await expect(page.locator('[data-clerk-component="UserButton"]')).toBeVisible({
+    await expect(
+      page.locator('[data-clerk-component="UserButton"]'),
+    ).toBeVisible({
       timeout: 15000,
     });
 

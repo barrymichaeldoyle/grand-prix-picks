@@ -1,25 +1,20 @@
-import { useState, useEffect, useRef } from 'react';
+import { TanStackDevtools } from '@tanstack/react-devtools';
+import type { QueryClient } from '@tanstack/react-query';
 import {
   HeadContent,
   Scripts,
   createRootRouteWithContext,
 } from '@tanstack/react-router';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
-import { TanStackDevtools } from '@tanstack/react-devtools';
+import { useEffect, useRef, useState } from 'react';
 
 import Footer from '../components/Footer';
 import Header from '../components/Header';
 import ScrollToTop from '../components/ScrollToTop';
-
 import ClerkProvider from '../integrations/clerk/provider';
-
 import ConvexProvider from '../integrations/convex/provider';
-
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools';
-
 import appCss from '../styles.css?url';
-
-import type { QueryClient } from '@tanstack/react-query';
 
 interface MyRouterContext {
   queryClient: QueryClient;

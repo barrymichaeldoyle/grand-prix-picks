@@ -1,7 +1,8 @@
 import { useQuery } from 'convex/react';
+import { Check, Minus, Trophy, X } from 'lucide-react';
+
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
-import { Trophy, Check, Minus, X } from 'lucide-react';
 import InlineLoader from './InlineLoader';
 
 interface RaceResultsProps {

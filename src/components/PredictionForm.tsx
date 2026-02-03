@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
 import { useMutation, useQuery } from 'convex/react';
-import { motion, AnimatePresence, Reorder } from 'framer-motion';
+import { AnimatePresence, motion,Reorder } from 'framer-motion';
+import { Check, ChevronDown, ChevronUp, GripVertical, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
-import { ChevronUp, ChevronDown, X, Check, GripVertical } from 'lucide-react';
 import Button from './Button';
 import InlineLoader from './InlineLoader';
 
@@ -11,7 +12,7 @@ type Driver = Doc<'drivers'>;
 
 interface PredictionFormProps {
   raceId: Id<'races'>;
-  existingPicks?: Id<'drivers'>[];
+  existingPicks?: Array<Id<'drivers'>>;
 }
 
 export default function PredictionForm({
@@ -21,7 +22,7 @@ export default function PredictionForm({
   const drivers = useQuery(api.drivers.listDrivers);
   const submitPrediction = useMutation(api.predictions.submitPrediction);
 
-  const [picks, setPicks] = useState<Id<'drivers'>[]>(existingPicks ?? []);
+  const [picks, setPicks] = useState<Array<Id<'drivers'>>>(existingPicks ?? []);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<
     'idle' | 'success' | 'error'
@@ -79,7 +80,7 @@ export default function PredictionForm({
     setSubmitStatus('idle');
   };
 
-  const handleReorder = (newOrder: Id<'drivers'>[]) => {
+  const handleReorder = (newOrder: Array<Id<'drivers'>>) => {
     setPicks(newOrder);
     setSubmitStatus('idle');
   };

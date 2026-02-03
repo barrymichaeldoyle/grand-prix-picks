@@ -1,5 +1,5 @@
-import { forwardRef } from 'react';
 import { Loader2 } from 'lucide-react';
+import { forwardRef } from 'react';
 
 const base =
   'inline-flex items-center justify-center gap-2 font-semibold rounded-lg transition-colors cursor-pointer';

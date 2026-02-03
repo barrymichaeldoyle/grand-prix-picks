@@ -27,6 +27,7 @@
   "dependencies": {
     "@clerk/clerk-react": "^5.49.0",
     "@clerk/tanstack-react-start": "^0.28.1",
+    "@sentry/cli": "^2.58.4",
     "@sentry/tanstackstart-react": "^10.22.0",
     "@tailwindcss/vite": "^4.0.6",
     "@tanstack/react-devtools": "^0.7.0",

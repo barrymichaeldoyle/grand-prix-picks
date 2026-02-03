@@ -22,10 +22,15 @@ test.describe('Predictions', () => {
       await page.goto('/races');
 
       // Click on a race card to go to detail
-      await page.getByRole('link', { name: /Grand Prix/i }).first().click();
+      await page
+        .getByRole('link', { name: /Grand Prix/i })
+        .first()
+        .click();
 
       // Should see sign-in prompt
-      await expect(page.getByText('Sign in to make your prediction')).toBeVisible();
+      await expect(
+        page.getByText('Sign in to make your prediction'),
+      ).toBeVisible();
       await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible();
     });
   });
@@ -40,7 +45,9 @@ test.describe('Predictions', () => {
 
       // Click on an upcoming race that's open for predictions
       // Look for "Predict Now" badge which indicates predictions are open
-      const predictableRace = page.getByRole('link', { name: /Predict Now/i }).first();
+      const predictableRace = page
+        .getByRole('link', { name: /Predict Now/i })
+        .first();
 
       if (await predictableRace.isVisible()) {
         await predictableRace.click();
@@ -58,7 +65,9 @@ test.describe('Predictions', () => {
       await page.goto('/races');
 
       // Find and click a predictable race
-      const predictableRace = page.getByRole('link', { name: /Predict Now/i }).first();
+      const predictableRace = page
+        .getByRole('link', { name: /Predict Now/i })
+        .first();
 
       if (await predictableRace.isVisible()) {
         await predictableRace.click();
@@ -85,7 +94,9 @@ test.describe('Predictions', () => {
     test('cannot select more than 5 drivers', async ({ page }) => {
       await page.goto('/races');
 
-      const predictableRace = page.getByRole('link', { name: /Predict Now/i }).first();
+      const predictableRace = page
+        .getByRole('link', { name: /Predict Now/i })
+        .first();
 
       if (await predictableRace.isVisible()) {
         await predictableRace.click();
@@ -107,7 +118,9 @@ test.describe('Predictions', () => {
     test('can remove a selected driver', async ({ page }) => {
       await page.goto('/races');
 
-      const predictableRace = page.getByRole('link', { name: /Predict Now/i }).first();
+      const predictableRace = page
+        .getByRole('link', { name: /Predict Now/i })
+        .first();
 
       if (await predictableRace.isVisible()) {
         await predictableRace.click();
@@ -135,7 +148,9 @@ test.describe('Predictions', () => {
     test('can submit prediction successfully', async ({ page }) => {
       await page.goto('/races');
 
-      const predictableRace = page.getByRole('link', { name: /Predict Now/i }).first();
+      const predictableRace = page
+        .getByRole('link', { name: /Predict Now/i })
+        .first();
 
       if (await predictableRace.isVisible()) {
         await predictableRace.click();
@@ -152,14 +167,18 @@ test.describe('Predictions', () => {
         await page.getByTestId('submit-prediction').click();
 
         // Should see success state - button changes to "Saved"
-        await expect(page.getByTestId('submit-prediction')).toContainText('Saved');
+        await expect(page.getByTestId('submit-prediction')).toContainText(
+          'Saved',
+        );
       }
     });
 
     test('can update existing prediction', async ({ page }) => {
       await page.goto('/races');
 
-      const predictableRace = page.getByRole('link', { name: /Predict Now/i }).first();
+      const predictableRace = page
+        .getByRole('link', { name: /Predict Now/i })
+        .first();
 
       if (await predictableRace.isVisible()) {
         await predictableRace.click();
@@ -172,7 +191,9 @@ test.describe('Predictions', () => {
           await page.getByTestId(`driver-${code}`).click();
         }
         await page.getByTestId('submit-prediction').click();
-        await expect(page.getByTestId('submit-prediction')).toContainText('Saved');
+        await expect(page.getByTestId('submit-prediction')).toContainText(
+          'Saved',
+        );
 
         // Remove one and add another
         await page.getByTestId('remove-pick-5').click();
@@ -182,13 +203,17 @@ test.describe('Predictions', () => {
         await expect(page.getByTestId('unsaved-changes')).toBeVisible();
 
         // Submit should now say "Update Prediction"
-        await expect(page.getByTestId('submit-prediction')).toContainText('Update Prediction');
+        await expect(page.getByTestId('submit-prediction')).toContainText(
+          'Update Prediction',
+        );
 
         // Submit the update
         await page.getByTestId('submit-prediction').click();
 
         // Should be saved
-        await expect(page.getByTestId('submit-prediction')).toContainText('Saved');
+        await expect(page.getByTestId('submit-prediction')).toContainText(
+          'Saved',
+        );
       }
     });
   });
@@ -207,11 +232,15 @@ test.describe('My Predictions page', () => {
     await page.goto('/my-predictions');
 
     // Should show the my predictions page header
-    await expect(page.getByRole('heading', { name: 'My Predictions' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'My Predictions' }),
+    ).toBeVisible();
 
     // Will show either predictions or empty state
     const hasPredictions = await page.getByText('Total Points').isVisible();
-    const hasEmptyState = await page.getByText('No predictions yet').isVisible();
+    const hasEmptyState = await page
+      .getByText('No predictions yet')
+      .isVisible();
 
     expect(hasPredictions || hasEmptyState).toBeTruthy();
   });

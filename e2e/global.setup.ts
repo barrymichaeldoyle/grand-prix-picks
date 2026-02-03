@@ -1,5 +1,6 @@
+import { execSync } from 'node:child_process';
+
 import { test as setup } from '@playwright/test';
-import { execSync } from 'child_process';
 
 /**
  * Global setup that runs before all tests.
@@ -23,16 +24,13 @@ setup('seed test data', async () => {
     });
 
     // Clean up any existing test data
-    execSync(
-      `npx convex run testing:cleanupTestData '{"keepDrivers": true}'`,
-      {
-        stdio: 'inherit',
-        env: {
-          ...process.env,
-          CONVEX_DEPLOYMENT: process.env.CONVEX_TEST_DEPLOYMENT,
-        },
+    execSync(`npx convex run testing:cleanupTestData '{"keepDrivers": true}'`, {
+      stdio: 'inherit',
+      env: {
+        ...process.env,
+        CONVEX_DEPLOYMENT: process.env.CONVEX_TEST_DEPLOYMENT,
       },
-    );
+    });
 
     // Seed the test scenario
     // You can change this to different scenarios based on what you're testing

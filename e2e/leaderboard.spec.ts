@@ -23,8 +23,11 @@ test.describe('Leaderboard', () => {
     await page.goto('/leaderboard');
 
     // Should show either empty state or leaderboard entries
-    const hasEmptyState = await page.getByTestId('leaderboard-empty').isVisible();
-    const hasEntries = await page.getByTestId('leaderboard-entry').count() > 0;
+    const hasEmptyState = await page
+      .getByTestId('leaderboard-empty')
+      .isVisible();
+    const hasEntries =
+      (await page.getByTestId('leaderboard-entry').count()) > 0;
     const hasPodium = await page.getByText('1st').isVisible();
 
     // One of these should be true
@@ -39,7 +42,9 @@ test.describe('Leaderboard', () => {
     if (await emptyState.isVisible()) {
       await expect(page.getByText('No scores yet')).toBeVisible();
       await expect(
-        page.getByText('The leaderboard will populate once race results are published'),
+        page.getByText(
+          'The leaderboard will populate once race results are published',
+        ),
       ).toBeVisible();
     }
   });

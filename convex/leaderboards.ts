@@ -1,7 +1,8 @@
-import { query } from './_generated/server';
 import { v } from 'convex/values';
-import { getViewer } from './lib/auth';
+
 import type { Id } from './_generated/dataModel';
+import { query } from './_generated/server';
+import { getViewer } from './lib/auth';
 
 export const getSeasonLeaderboard = query({
   args: { season: v.optional(v.number()) },
