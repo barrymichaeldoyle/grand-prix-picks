@@ -6,10 +6,10 @@ import {
   createRootRouteWithContext,
 } from '@tanstack/react-router';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
-import { useEffect, useRef, useState } from 'react';
+import { PropsWithChildren, useEffect, useRef, useState } from 'react';
 
 import Footer from '../components/Footer';
-import Header from '../components/Header';
+import Header, { MEDIA_MATCH_BREAKPOINT } from '../components/Header';
 import ScrollToTop from '../components/ScrollToTop';
 import ClerkProvider from '../integrations/clerk/provider';
 import ConvexProvider from '../integrations/convex/provider';
@@ -98,37 +98,48 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
 const THEME_KEY = 'grand-prix-picks-theme';
 
-function RootDocument({ children }: { children: React.ReactNode }) {
+function RootDocument({ children }: PropsWithChildren) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const mainRef = useRef<HTMLDivElement>(null);
+  // Theme: SSR/first paint match (no localStorage), then synced on mount.
+  const [isDark, setIsDark] = useState(false);
 
-  // Apply theme on mount: use saved preference, else default to system (prefers-color-scheme)
+  // Sync theme from storage/system on mount and when system preference changes
   useEffect(() => {
-    const applyTheme = () => {
+    const resolveTheme = () => {
       const saved = localStorage.getItem(THEME_KEY);
-      const isDark =
-        saved === 'dark'
-          ? true
-          : saved === 'light'
-            ? false
-            : window.matchMedia('(prefers-color-scheme: dark)').matches;
-      document.documentElement.classList.toggle('dark', isDark);
-      document.documentElement.setAttribute(
-        'data-theme',
-        isDark ? 'dark' : 'light',
-      );
+      return saved === 'dark'
+        ? true
+        : saved === 'light'
+          ? false
+          : window.matchMedia('(prefers-color-scheme: dark)').matches;
     };
-    applyTheme();
+    const sync = () => setIsDark(resolveTheme());
+    sync();
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    mq.addEventListener('change', applyTheme);
-    return () => mq.removeEventListener('change', applyTheme);
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
   }, []);
+
+  // Apply theme to document whenever isDark changes
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDark);
+    document.documentElement.setAttribute(
+      'data-theme',
+      isDark ? 'dark' : 'light',
+    );
+  }, [isDark]);
+
+  const setTheme = (dark: boolean) => {
+    localStorage.setItem(THEME_KEY, dark ? 'dark' : 'light');
+    setIsDark(dark);
+  };
 
   // Inert main content when mobile menu is open so focus stays in header + menu
   useEffect(() => {
     const el = mainRef.current;
     if (!el) return;
-    const mq = window.matchMedia('(max-width: 640px)');
+    const mq = window.matchMedia(MEDIA_MATCH_BREAKPOINT);
     const applyInert = () => {
       if (mobileMenuOpen && mq.matches) {
         el.setAttribute('inert', '');
@@ -147,13 +158,15 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <ClerkProvider>
+        <ClerkProvider darkMode={isDark}>
           <ConvexProvider>
             <div className="flex h-[100dvh] h-screen flex-col overflow-hidden">
               <Header
                 mobileMenuOpen={mobileMenuOpen}
                 onMobileMenuOpenChange={setMobileMenuOpen}
                 themeKey={THEME_KEY}
+                isDark={isDark}
+                onThemeChange={setTheme}
               />
               <div
                 ref={mainRef}

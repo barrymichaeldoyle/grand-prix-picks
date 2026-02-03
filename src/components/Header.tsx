@@ -1,133 +1,153 @@
-import { Link } from '@tanstack/react-router'
-import { AnimatePresence, motion } from 'framer-motion'
-import { Flag, Menu, Moon, Sun, X } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { SignInButton, SignedOut } from '@clerk/clerk-react';
+import { Link } from '@tanstack/react-router';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Flag, Menu, Moon, Sun, X } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import ClerkHeader from '../integrations/clerk/header-user.tsx'
+import ClerkHeader, {
+  signInButtonClasses,
+} from '../integrations/clerk/header-user.tsx';
 
 const navLinks: Array<{ to: string; label: string; exact?: boolean }> = [
   { to: '/', label: 'Home', exact: true },
   { to: '/races', label: 'Races' },
   { to: '/leaderboard', label: 'Leaderboard' },
   { to: '/my-predictions', label: 'My Picks' },
-]
+];
 
 const FOCUSABLE_SELECTOR =
-  'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+  'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+/** Mobile menu: viewport width <= 702px is "mobile". Keep min-[703px] classes below in sync. */
+export const MEDIA_MATCH_BREAKPOINT = '(max-width: 702px)';
 
 export default function Header({
   mobileMenuOpen,
   onMobileMenuOpenChange,
   themeKey = 'grand-prix-picks-theme',
+  isDark = false,
+  onThemeChange,
 }: {
-  mobileMenuOpen: boolean
-  onMobileMenuOpenChange: (open: boolean) => void
-  themeKey?: string
+  mobileMenuOpen: boolean;
+  onMobileMenuOpenChange: (open: boolean) => void;
+  themeKey?: string;
+  /** Current theme; when provided with onThemeChange, theme is controlled by parent. */
+  isDark?: boolean;
+  /** Called when user toggles theme; when provided, parent owns theme state. */
+  onThemeChange?: (dark: boolean) => void;
 }) {
-  const headerRef = useRef<HTMLElement>(null)
-  const menuRef = useRef<HTMLElement>(null)
-  const menuButtonRef = useRef<HTMLButtonElement>(null)
-  // Initialize to false so SSR and first client render match (no localStorage on server).
-  // Sync from localStorage after mount to avoid hydration mismatch.
-  const [dark, setDark] = useState(false)
+  const headerRef = useRef<HTMLElement>(null);
+  const menuRef = useRef<HTMLElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  // Local theme state only when parent doesn't control it (e.g. Storybook)
+  const [localDark, setLocalDark] = useState(false);
+  const dark = onThemeChange !== undefined ? isDark : localDark;
 
   useEffect(() => {
+    if (onThemeChange !== undefined) return;
     const syncTheme = () => {
-      const saved = localStorage.getItem(themeKey)
-      const isDark =
+      const saved = localStorage.getItem(themeKey);
+      const next =
         saved === 'dark'
           ? true
           : saved === 'light'
             ? false
-            : window.matchMedia('(prefers-color-scheme: dark)').matches
-      setDark(isDark)
-    }
-    syncTheme()
-    const mq = window.matchMedia('(prefers-color-scheme: dark)')
-    mq.addEventListener('change', syncTheme)
-    return () => mq.removeEventListener('change', syncTheme)
-  }, [themeKey])
+            : window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setLocalDark(next);
+    };
+    syncTheme();
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    mq.addEventListener('change', syncTheme);
+    return () => mq.removeEventListener('change', syncTheme);
+  }, [themeKey, onThemeChange]);
 
   const toggleTheme = useCallback(() => {
-    const next = document.documentElement.classList.toggle('dark')
-    document.documentElement.setAttribute('data-theme', next ? 'dark' : 'light')
-    localStorage.setItem(themeKey, next ? 'dark' : 'light')
-    setDark(next)
-  }, [themeKey])
+    if (onThemeChange) {
+      onThemeChange(!dark);
+    } else {
+      const next = document.documentElement.classList.toggle('dark');
+      document.documentElement.setAttribute(
+        'data-theme',
+        next ? 'dark' : 'light',
+      );
+      localStorage.setItem(themeKey, next ? 'dark' : 'light');
+      setLocalDark(next);
+    }
+  }, [themeKey, dark, onThemeChange]);
 
   // Lock body scroll when mobile menu is open (mobile only)
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 640px)')
+    const mq = window.matchMedia(MEDIA_MATCH_BREAKPOINT);
     if (mobileMenuOpen && mq.matches) {
-      document.body.style.overflow = 'hidden'
+      document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = ''
+      document.body.style.overflow = '';
     }
     return () => {
-      document.body.style.overflow = ''
-    }
-  }, [mobileMenuOpen])
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
 
   // Focus trap: cycle Tab only within header + menu when menu is open (mobile only)
   useEffect(() => {
     if (!mobileMenuOpen || !headerRef.current) {
-      return
+      return;
     }
 
-    const mq = window.matchMedia('(max-width: 640px)')
-    if (!mq.matches) return
+    const mq = window.matchMedia(MEDIA_MATCH_BREAKPOINT);
+    if (!mq.matches) return;
 
-    const headerEl = headerRef.current
+    const headerEl = headerRef.current;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onMobileMenuOpenChange(false)
-        menuButtonRef.current?.focus()
-        return
+        onMobileMenuOpenChange(false);
+        menuButtonRef.current?.focus();
+        return;
       }
 
       if (e.key !== 'Tab' || !headerEl) {
-        return
+        return;
       }
 
       const allFocusable = Array.from(
         headerEl.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
-      ).filter((el) => !el.hasAttribute('inert') && el.offsetParent !== null)
+      ).filter((el) => !el.hasAttribute('inert') && el.offsetParent !== null);
 
-      if (allFocusable.length === 0) return
+      if (allFocusable.length === 0) return;
 
       const currentIndex = allFocusable.indexOf(
         document.activeElement as HTMLElement,
-      )
+      );
 
       const isLeavingTrap =
         currentIndex === -1 ||
         (e.shiftKey && currentIndex === 0) ||
-        (!e.shiftKey && currentIndex === allFocusable.length - 1)
+        (!e.shiftKey && currentIndex === allFocusable.length - 1);
 
       if (isLeavingTrap) {
-        e.preventDefault()
-        const nextIndex = e.shiftKey ? allFocusable.length - 1 : 0
-        allFocusable[nextIndex]?.focus()
+        e.preventDefault();
+        const nextIndex = e.shiftKey ? allFocusable.length - 1 : 0;
+        allFocusable[nextIndex]?.focus();
       }
-    }
+    };
 
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [mobileMenuOpen, onMobileMenuOpenChange])
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [mobileMenuOpen, onMobileMenuOpenChange]);
 
   // Focus first link when menu opens
   useEffect(() => {
     if (mobileMenuOpen && menuRef.current) {
-      const firstLink = menuRef.current.querySelector<HTMLElement>('a')
-      firstLink?.focus()
+      const firstLink = menuRef.current.querySelector<HTMLElement>('a');
+      firstLink?.focus();
     }
-  }, [mobileMenuOpen])
+  }, [mobileMenuOpen]);
 
   const closeMenu = useCallback(() => {
-    onMobileMenuOpenChange(false)
-    menuButtonRef.current?.focus()
-  }, [onMobileMenuOpenChange])
+    onMobileMenuOpenChange(false);
+    menuButtonRef.current?.focus();
+  }, [onMobileMenuOpenChange]);
 
   return (
     <header
@@ -144,7 +164,7 @@ export default function Header({
           </Link>
 
           {/* Desktop nav - accent link style, thick border for selected, full-area hover highlight */}
-          <nav className="hidden items-center gap-1 sm:flex">
+          <nav className="hidden items-center gap-1 min-[703px]:flex">
             {navLinks.map((link) => (
               <Link
                 key={link.to}
@@ -177,7 +197,7 @@ export default function Header({
           <motion.button
             ref={menuButtonRef}
             onClick={() => onMobileMenuOpenChange(!mobileMenuOpen)}
-            className="cursor-pointer rounded-lg p-2 transition-colors hover:bg-surface-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 sm:hidden"
+            className="cursor-pointer rounded-lg p-2 transition-colors hover:bg-surface-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 min-[703px]:hidden"
             aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-nav"
@@ -220,7 +240,7 @@ export default function Header({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 top-[57px] z-40 sm:hidden"
+              className="fixed inset-0 top-[57px] z-40 min-[703px]:hidden"
               style={{ backgroundColor: 'var(--overlay)' }}
               onClick={closeMenu}
             />
@@ -232,7 +252,7 @@ export default function Header({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="absolute top-[calc(100%-7px)] right-0 left-0 z-50 border-b border-border bg-surface shadow-xl sm:hidden"
+              className="absolute top-[calc(100%-7px)] right-0 left-0 z-50 border-b border-border bg-surface shadow-xl min-[703px]:hidden"
             >
               <div className="flex flex-col gap-1 px-4 py-3">
                 {navLinks.map((link, index) => (
@@ -256,11 +276,31 @@ export default function Header({
                     </Link>
                   </motion.div>
                 ))}
+                <SignedOut>
+                  <motion.div
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{
+                      delay: navLinks.length * 0.05,
+                      duration: 0.2,
+                    }}
+                  >
+                    <SignInButton mode="modal">
+                      <button
+                        type="button"
+                        onClick={closeMenu}
+                        className={`block w-full text-left ${signInButtonClasses}`}
+                      >
+                        Sign in
+                      </button>
+                    </SignInButton>
+                  </motion.div>
+                </SignedOut>
               </div>
             </motion.nav>
           </>
         )}
       </AnimatePresence>
     </header>
-  )
+  );
 }
