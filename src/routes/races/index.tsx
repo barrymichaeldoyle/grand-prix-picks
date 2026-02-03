@@ -7,6 +7,16 @@ import { Calendar } from 'lucide-react';
 
 export const Route = createFileRoute('/races/')({
   component: RacesPage,
+  head: () => ({
+    meta: [
+      { title: '2026 F1 Races | Grand Prix Picks' },
+      {
+        name: 'description',
+        content:
+          'View the full 2026 Formula 1 calendar. Make predictions for upcoming races and see results from past Grands Prix.',
+      },
+    ],
+  }),
 });
 
 function RacesPage() {
@@ -32,13 +42,13 @@ function RacesPage() {
 
   return (
     <div className="min-h-screen bg-page">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-text mb-2">2026 Season</h1>
-          <p className="text-text-muted">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <header className="mb-8 flex flex-col gap-1 md:flex-row md:items-baseline md:gap-3">
+          <h1 className="text-3xl font-bold text-text">2026 Season</h1>
+          <p className="text-text-muted md:text-base">
             Predict the top 5 finishers for each Grand Prix
           </p>
-        </div>
+        </header>
 
         {races.length === 0 ? (
           <div className="text-center py-16">
@@ -58,7 +68,7 @@ function RacesPage() {
                   <span className="w-2 h-2 bg-success rounded-full"></span>
                   Upcoming Races
                 </h2>
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                   {upcomingRaces.map((race) => (
                     <RaceCard
                       key={race._id}
@@ -77,7 +87,7 @@ function RacesPage() {
                   <span className="w-2 h-2 bg-warning rounded-full"></span>
                   In Progress
                 </h2>
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                   {lockedRaces.map((race) => (
                     <RaceCard key={race._id} race={race} />
                   ))}
@@ -91,7 +101,7 @@ function RacesPage() {
                   <span className="w-2 h-2 bg-text-muted rounded-full"></span>
                   Completed
                 </h2>
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                   {finishedRaces.map((race) => (
                     <RaceCard key={race._id} race={race} />
                   ))}

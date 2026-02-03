@@ -1,23 +1,27 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import { useAuth, SignInButton } from '@clerk/clerk-react';
+import Button from '../../components/Button';
+import InlineLoader from '../../components/InlineLoader';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
-import {
-  Loader2,
-  ArrowLeft,
-  Calendar,
-  Clock,
-  Lock,
-  LogIn,
-  Trophy,
-} from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Lock, LogIn, Trophy } from 'lucide-react';
 import PredictionForm from '../../components/PredictionForm';
 import RaceResults from '../../components/RaceResults';
 import PageLoader from '../../components/PageLoader';
 
 export const Route = createFileRoute('/races/$raceId')({
   component: RaceDetailPage,
+  head: () => ({
+    meta: [
+      { title: 'Race Details | Grand Prix Picks' },
+      {
+        name: 'description',
+        content:
+          'Make your prediction for this Grand Prix. Pick the top 5 finishers and compete for points.',
+      },
+    ],
+  }),
 });
 
 function formatDate(timestamp: number): string {
@@ -90,7 +94,7 @@ function RaceDetailPage() {
 
   return (
     <div className="min-h-screen bg-page">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         <Link
           to="/races"
           className="inline-flex items-center gap-2 text-text-muted hover:text-text transition-colors mb-8"
@@ -134,9 +138,7 @@ function RaceDetailPage() {
 
             {isSignedIn ? (
               existingPrediction === undefined ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-6 h-6 text-accent animate-spin" />
-                </div>
+                <InlineLoader />
               ) : (
                 <PredictionForm
                   raceId={typedRaceId}
@@ -150,9 +152,7 @@ function RaceDetailPage() {
                   Sign in to make your prediction
                 </p>
                 <SignInButton mode="modal">
-                  <button className="px-6 py-2 bg-accent hover:bg-accent-hover text-white font-medium rounded-lg transition-colors">
-                    Sign In
-                  </button>
+                  <Button size="sm">Sign In</Button>
                 </SignInButton>
               </div>
             )}

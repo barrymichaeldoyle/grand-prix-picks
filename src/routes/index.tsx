@@ -1,10 +1,24 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
-import { Flag, Trophy, Users, ChevronRight, Loader2 } from 'lucide-react';
+import { Flag, Trophy, Users, ChevronRight } from 'lucide-react';
 import RaceCard from '../components/RaceCard';
+import InlineLoader from '../components/InlineLoader';
+import { primaryButtonStyles } from '../components/Button';
 
-export const Route = createFileRoute('/')({ component: HomePage });
+export const Route = createFileRoute('/')({
+  component: HomePage,
+  head: () => ({
+    meta: [
+      { title: 'Grand Prix Picks - F1 Prediction Game' },
+      {
+        name: 'description',
+        content:
+          'Predict the top 5 finishers for each Formula 1 race and compete with friends throughout the 2026 season.',
+      },
+    ],
+  }),
+});
 
 function HomePage() {
   const nextRace = useQuery(api.races.getNextRace);
@@ -26,7 +40,7 @@ function HomePage() {
           </p>
           <Link
             to="/races"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-accent hover:bg-accent-hover text-white font-semibold rounded-lg transition-colors shadow-md"
+            className={`${primaryButtonStyles('md')} shadow-md`}
           >
             View Races
             <ChevronRight size={20} />
@@ -40,9 +54,7 @@ function HomePage() {
           Next Race
         </h2>
         {nextRace === undefined ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-6 h-6 text-accent animate-spin" />
-          </div>
+          <InlineLoader />
         ) : nextRace ? (
           <RaceCard race={nextRace} isNext />
         ) : (

@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { Calendar, Clock, Lock, Trophy, ChevronRight } from 'lucide-react';
+import { ArrowRight, Calendar, Clock, Lock, Trophy } from 'lucide-react';
 import type { Doc } from '../../convex/_generated/dataModel';
 
 type Race = Doc<'races'>;
@@ -127,14 +127,20 @@ const icons = {
   finished: <Trophy size={14} />,
 };
 
-const labels = {
+export const labels = {
   upcoming: 'Open for predictions',
   not_yet_open: 'Not yet open',
   locked: 'Predictions locked',
   finished: 'Finished',
 };
 
-function StatusBadge({ status, isNext }: { status: string; isNext?: boolean }) {
+export function StatusBadge({
+  status,
+  isNext,
+}: {
+  status: string;
+  isNext?: boolean;
+}) {
   // For upcoming races that aren't the next one, show as "not yet open"
   const effectiveStatus =
     status === 'upcoming' && !isNext ? 'not_yet_open' : status;
@@ -170,7 +176,7 @@ export default function RaceCard({
     <Link
       to="/races/$raceId"
       params={{ raceId: race._id }}
-      className={`block bg-surface border rounded-xl p-4 sm:p-5 transition-all duration-300 hover:shadow-md group ${
+      className={`group block bg-surface border rounded-xl p-4 sm:p-5 transition-all duration-300 hover:shadow-md cursor-pointer ${
         isNext
           ? 'border-accent/50 hover:border-accent'
           : 'border-border hover:border-border-strong'
@@ -181,7 +187,7 @@ export default function RaceCard({
           {/* Top row: flag, round, badges – wraps on narrow screens */}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-2">
             {countryCode && (
-              <span className="shrink-0">
+              <span className="inline-flex shrink-0 items-center">
                 <RaceFlag countryCode={countryCode} />
               </span>
             )}
@@ -219,12 +225,20 @@ export default function RaceCard({
                 Opens {formatDateLong(predictionOpenAt)}
               </span>
             )}
+            {race.status === 'locked' && (
+              <span className="text-warning font-medium w-full sm:w-auto">
+                {race.raceStartAt > Date.now()
+                  ? `Race in ${getTimeUntil(race.raceStartAt)}`
+                  : 'Results pending'}
+              </span>
+            )}
           </div>
         </div>
-
-        <ChevronRight
-          size={20}
-          className="shrink-0 text-text-muted group-hover:text-text transition-colors mt-1"
+        <ArrowRight
+          size={18}
+          strokeWidth={2}
+          className="shrink-0 mt-1 text-text-muted transition-colors group-hover:text-text"
+          aria-hidden
         />
       </div>
     </Link>

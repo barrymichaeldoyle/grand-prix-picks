@@ -4,9 +4,20 @@ import { useAuth, SignInButton } from '@clerk/clerk-react';
 import { api } from '../../convex/_generated/api';
 import { History, LogIn, Trophy, Clock, CheckCircle } from 'lucide-react';
 import PageLoader from '../components/PageLoader';
+import Button, { primaryButtonStyles } from '../components/Button';
 
 export const Route = createFileRoute('/my-predictions')({
   component: MyPredictionsPage,
+  head: () => ({
+    meta: [
+      { title: 'My Predictions | Grand Prix Picks' },
+      {
+        name: 'description',
+        content:
+          'View your F1 prediction history and track your scores across the 2026 season.',
+      },
+    ],
+  }),
 });
 
 function MyPredictionsPage() {
@@ -33,9 +44,7 @@ function MyPredictionsPage() {
               Sign in to view your prediction history.
             </p>
             <SignInButton mode="modal">
-              <button className="px-6 py-2 bg-accent hover:bg-accent-hover text-white font-medium rounded-lg transition-colors">
-                Sign In
-              </button>
+              <Button size="sm">Sign In</Button>
             </SignInButton>
           </div>
         </div>
@@ -85,10 +94,7 @@ function MyPredictionsPage() {
             <p className="text-text-muted mb-4">
               Make your first prediction to start tracking your scores.
             </p>
-            <Link
-              to="/races"
-              className="inline-flex px-6 py-2 bg-accent hover:bg-accent-hover text-white font-medium rounded-lg transition-colors"
-            >
+            <Link to="/races" className={primaryButtonStyles('sm')}>
               View Races
             </Link>
           </div>

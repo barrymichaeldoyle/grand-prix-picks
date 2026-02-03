@@ -31,9 +31,7 @@ const meta: Meta<typeof RaceCard> = {
   decorators: [
     (Story) => (
       <StorybookRouter>
-        <div style={{ maxWidth: 480 }}>
-          <Story />
-        </div>
+        <Story />
       </StorybookRouter>
     ),
   ],
@@ -43,47 +41,123 @@ export default meta;
 
 type Story = StoryObj<typeof RaceCard>;
 
-export const NextUp: Story = {
-  args: {
-    race: mockRace({ status: 'upcoming' }),
+const now = Date.now();
+const day = 24 * 60 * 60 * 1000;
+
+/** All race card states in one view (grid on large screens, stack on small). */
+const ALL_STATES = [
+  {
+    label: 'Next up (open for predictions)',
+    race: mockRace({
+      _id: 'next' as Id<'races'>,
+      round: 1,
+      name: 'Bahrain Grand Prix',
+      slug: 'bahrain-2026',
+      status: 'upcoming',
+    }),
     isNext: true,
     predictionOpenAt: null,
   },
-};
-
-export const UpcomingNotOpen: Story = {
-  args: {
+  {
+    label: 'Upcoming (not yet open)',
     race: mockRace({
+      _id: 'upcoming' as Id<'races'>,
       round: 2,
       name: 'Saudi Arabian Grand Prix',
       slug: 'saudi-2026',
       status: 'upcoming',
     }),
     isNext: false,
-    predictionOpenAt: Date.now() + 14 * 24 * 60 * 60 * 1000,
+    predictionOpenAt: now + 14 * day,
   },
-};
-
-export const Locked: Story = {
-  args: {
+  {
+    label: 'Locked (race in …)',
     race: mockRace({
+      _id: 'locked-future' as Id<'races'>,
       round: 3,
       name: 'Australian Grand Prix',
       slug: 'australia-2026',
       status: 'locked',
-      raceStartAt: Date.now() - 2 * 24 * 60 * 60 * 1000,
+      raceStartAt: now + 2 * day,
     }),
+    isNext: false,
+    predictionOpenAt: null,
   },
-};
-
-export const Finished: Story = {
-  args: {
+  {
+    label: 'Locked (results pending)',
     race: mockRace({
+      _id: 'locked' as Id<'races'>,
       round: 4,
       name: 'Japanese Grand Prix',
       slug: 'japan-2026',
-      status: 'finished',
-      raceStartAt: Date.now() - 14 * 24 * 60 * 60 * 1000,
+      status: 'locked',
+      raceStartAt: now - 2 * day,
     }),
+    isNext: false,
+    predictionOpenAt: null,
   },
+  {
+    label: 'Finished',
+    race: mockRace({
+      _id: 'finished' as Id<'races'>,
+      round: 5,
+      name: 'Monaco Grand Prix',
+      slug: 'monaco-2026',
+      status: 'finished',
+      raceStartAt: now - 14 * day,
+    }),
+    isNext: false,
+    predictionOpenAt: null,
+  },
+] as const;
+
+export const AllStates: Story = {
+  render: () => (
+    <StorybookRouter>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+        {ALL_STATES.map(({ label, race, isNext, predictionOpenAt }) => (
+          <div key={race._id} className="flex flex-col gap-2">
+            <p className="text-sm font-medium text-text-muted">{label}</p>
+            <RaceCard
+              race={race}
+              isNext={isNext}
+              predictionOpenAt={predictionOpenAt ?? undefined}
+            />
+          </div>
+        ))}
+      </div>
+    </StorybookRouter>
+  ),
+};
+
+/** Responsive showcase: largest to smallest (top to bottom). */
+const VIEWPORTS = [
+  { label: 'Large (768px)', width: 768 },
+  { label: 'Desktop (480px)', width: 480 },
+  { label: 'Mobile (375px)', width: 375 },
+] as const;
+
+export const DesktopVsMobile: Story = {
+  args: {
+    race: mockRace({ status: 'upcoming' }),
+    isNext: true,
+    predictionOpenAt: null,
+  },
+  decorators: [
+    (Story, context) => (
+      <div className="flex flex-col gap-8 p-4">
+        {VIEWPORTS.map(({ label, width }) => (
+          <div key={width} className="flex flex-col gap-2">
+            <p className="text-sm font-medium text-text-muted">{label}</p>
+            <div
+              className="rounded-lg border border-border bg-page/50 p-4"
+              style={{ width }}
+            >
+              <Story {...context} />
+            </div>
+          </div>
+        ))}
+      </div>
+    ),
+  ],
 };

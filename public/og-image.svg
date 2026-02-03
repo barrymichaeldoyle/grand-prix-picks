@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#0a0a0a"/>
+
+  <!-- Accent stripe -->
+  <rect x="0" y="0" width="8" height="630" fill="#e10600"/>
+
+  <!-- Title -->
+  <text x="100" y="280" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="800" fill="#ffffff">
+    Grand Prix Picks
+  </text>
+
+  <!-- Subtitle -->
+  <text x="100" y="360" font-family="system-ui, -apple-system, sans-serif" font-size="32" fill="#a1a1aa">
+    Predict the top 5 finishers for each F1 race
+  </text>
+
+  <!-- Decorative checkered pattern -->
+  <g transform="translate(900, 180)" opacity="0.15">
+    <rect x="0" y="0" width="50" height="50" fill="#ffffff"/>
+    <rect x="100" y="0" width="50" height="50" fill="#ffffff"/>
+    <rect x="50" y="50" width="50" height="50" fill="#ffffff"/>
+    <rect x="150" y="50" width="50" height="50" fill="#ffffff"/>
+    <rect x="0" y="100" width="50" height="50" fill="#ffffff"/>
+    <rect x="100" y="100" width="50" height="50" fill="#ffffff"/>
+    <rect x="50" y="150" width="50" height="50" fill="#ffffff"/>
+    <rect x="150" y="150" width="50" height="50" fill="#ffffff"/>
+    <rect x="0" y="200" width="50" height="50" fill="#ffffff"/>
+    <rect x="100" y="200" width="50" height="50" fill="#ffffff"/>
+  </g>
+
+  <!-- Footer -->
+  <text x="100" y="550" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#71717a">
+    grandprixpicks.com
+  </text>
+</svg>

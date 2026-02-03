@@ -3,6 +3,7 @@ import tailwindcss from '@tailwindcss/vite';
 
 const config: StorybookConfig = {
   stories: ['../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
+  addons: ['@storybook/addon-vitest'],
   framework: {
     name: '@storybook/react-vite',
     options: {},
@@ -10,7 +11,11 @@ const config: StorybookConfig = {
   viteFinal: async (config) => {
     // Exclude TanStack devtools to avoid port conflict; add Tailwind
     const plugins = (config.plugins ?? []).filter(
-      (p) => p && typeof p === 'object' && 'name' in p && (p as { name?: string }).name !== 'tanstack-devtools-vite',
+      (p) =>
+        p &&
+        typeof p === 'object' &&
+        'name' in p &&
+        (p as { name?: string }).name !== 'tanstack-devtools-vite',
     );
     return {
       ...config,

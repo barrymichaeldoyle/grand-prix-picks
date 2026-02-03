@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- F1 Red background -->
+  <rect width="32" height="32" rx="6" fill="#e10600"/>
+  <!-- Racing flag icon (simplified) -->
+  <g transform="translate(6, 5)">
+    <!-- Flag pole -->
+    <rect x="1" y="2" width="2.5" height="20" rx="1" fill="#ffffff"/>
+    <!-- Flag -->
+    <path d="M5 2 L19 2 Q20 2 20 3 L20 12 Q20 13 19 13 L5 13 L5 2Z" fill="#ffffff"/>
+    <!-- Checkered pattern on flag -->
+    <rect x="5" y="2" width="3.75" height="3.67" fill="#1a1a1a"/>
+    <rect x="12.5" y="2" width="3.75" height="3.67" fill="#1a1a1a"/>
+    <rect x="8.75" y="5.67" width="3.75" height="3.67" fill="#1a1a1a"/>
+    <rect x="16.25" y="5.67" width="3.75" height="3.67" fill="#1a1a1a"/>
+    <rect x="5" y="9.33" width="3.75" height="3.67" fill="#1a1a1a"/>
+    <rect x="12.5" y="9.33" width="3.75" height="3.67" fill="#1a1a1a"/>
+  </g>
+</svg>

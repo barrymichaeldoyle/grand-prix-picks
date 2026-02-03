@@ -1,0 +1,5 @@
+# Auth state (contains session tokens)
+.auth/user.json
+
+# Test artifacts
+test-results/

@@ -6,6 +6,16 @@ import PageLoader from '../components/PageLoader';
 
 export const Route = createFileRoute('/leaderboard')({
   component: LeaderboardPage,
+  head: () => ({
+    meta: [
+      { title: 'Leaderboard | Grand Prix Picks' },
+      {
+        name: 'description',
+        content:
+          'See who tops the 2026 F1 prediction standings. Track your ranking against other players.',
+      },
+    ],
+  }),
 });
 
 function LeaderboardPage() {
@@ -24,7 +34,7 @@ function LeaderboardPage() {
         </div>
 
         {leaderboard.length === 0 ? (
-          <div className="bg-surface border border-border rounded-xl p-8 text-center">
+          <div className="bg-surface border border-border rounded-xl p-8 text-center" data-testid="leaderboard-empty">
             <Trophy className="w-16 h-16 text-text-muted mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-text mb-2">
               No scores yet
@@ -120,13 +130,14 @@ function LeaderboardPage() {
                       <tr
                         key={entry.userId}
                         className="border-b border-border last:border-0 hover:bg-surface-muted transition-colors"
+                        data-testid="leaderboard-entry"
                       >
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3" data-testid="position">
                           <span className="text-text-muted font-medium">
                             {entry.rank}
                           </span>
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3" data-testid="username">
                           <span className="text-text font-medium">
                             {entry.displayName}
                           </span>
@@ -136,7 +147,7 @@ function LeaderboardPage() {
                             {entry.raceCount}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-right">
+                        <td className="px-4 py-3 text-right" data-testid="points">
                           <span className="text-accent font-bold">
                             {entry.points}
                           </span>
