@@ -68,7 +68,9 @@ function HomePage() {
         <h2 className="mb-4 text-lg font-semibold text-text-muted">
           Next Race
         </h2>
-        {nextRace ? (
+        {/* Loader type omits null but getNextRace can return null at runtime */}
+        {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}
+        {nextRace != null ? (
           <RaceCard race={nextRace} isNext />
         ) : (
           <div className="rounded-xl border border-border bg-surface p-6 text-center">

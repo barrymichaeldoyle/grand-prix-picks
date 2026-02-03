@@ -66,7 +66,7 @@ export const myPredictionHistory = query({
         };
 
         for (const pred of preds) {
-          const sessionType = (pred.sessionType as SessionType) ?? 'race';
+          const sessionType = (pred.sessionType ?? 'race') as SessionType;
           const score = scores.find(
             (s) => (s.sessionType ?? 'race') === sessionType,
           );
@@ -193,7 +193,7 @@ export const myWeekendPredictions = query({
     };
 
     for (const pred of allPredictions) {
-      const sessionType = (pred.sessionType as SessionType) ?? 'race';
+      const sessionType = (pred.sessionType ?? 'race') as SessionType;
       bySession[sessionType] = pred.picks;
     }
 
@@ -231,6 +231,8 @@ export const submitPrediction = mutation({
       .sort((a, b) => a.raceStartAt - b.raceStartAt);
     const nextRace = upcomingRaces[0];
 
+    // Runtime guard: type doesn't reflect that upcomingRaces can be empty or not match
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- runtime validation
     if (!nextRace || nextRace._id !== args.raceId) {
       throw new Error('Predictions are only open for the next upcoming race');
     }

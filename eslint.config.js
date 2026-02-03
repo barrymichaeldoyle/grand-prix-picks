@@ -6,6 +6,17 @@ import eslintPluginPrettier from 'eslint-plugin-prettier';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
 
 export default [
+  // Ignore build output, generated code, and config files not in tsconfig
+  {
+    ignores: [
+      '.output/**',
+      'storybook-static/**',
+      'convex/_generated/**',
+      '.storybook/**',
+      'eslint.config.js',
+      'prettier.config.js',
+    ],
+  },
   ...tanstackConfig,
   {
     plugins: {
@@ -13,6 +24,7 @@ export default [
       prettier: eslintPluginPrettier,
     },
     rules: {
+      'sort-imports': 'off', // use simple-import-sort instead
       'simple-import-sort/imports': 'error',
       'simple-import-sort/exports': 'error',
       'import/order': 'off', // use simple-import-sort instead

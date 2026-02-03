@@ -10,6 +10,7 @@ import { test as setup } from '@playwright/test';
  */
 
 setup('seed test data', async () => {
+  await Promise.resolve(); // satisfy require-await (setup uses sync execSync)
   console.log('🌱 Seeding test database...');
 
   try {

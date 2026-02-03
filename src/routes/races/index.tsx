@@ -77,7 +77,10 @@ function RacesPage() {
                     <RaceCard
                       key={race._id}
                       race={race}
-                      isNext={nextRace?._id === race._id}
+                      isNext={
+                        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- nextRace can be undefined at runtime
+                        nextRace != null && nextRace._id === race._id
+                      }
                       predictionOpenAt={getPredictionOpenAt(race)}
                     />
                   ))}

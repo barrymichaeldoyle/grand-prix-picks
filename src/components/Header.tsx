@@ -106,7 +106,7 @@ export default function Header({
         return;
       }
 
-      if (e.key !== 'Tab' || !headerEl) {
+      if (e.key !== 'Tab') {
         return;
       }
 

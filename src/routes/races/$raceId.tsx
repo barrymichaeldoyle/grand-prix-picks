@@ -99,7 +99,10 @@ function RaceDetailPage() {
   }
 
   // Only the next upcoming race is open for predictions
-  const isNextRace = nextRace?._id === race._id;
+  // nextRace can be undefined at runtime; query type is narrower
+  const isNextRace =
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    nextRace != null && nextRace._id === race._id;
   const isPredictable = race.status === 'upcoming' && isNextRace;
   const isNotYetOpen = race.status === 'upcoming' && !isNextRace;
 

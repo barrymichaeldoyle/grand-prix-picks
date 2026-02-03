@@ -212,7 +212,7 @@ export default function WeekendPredictions({ race }: WeekendPredictionsProps) {
       </div>
 
       <AnimatePresence mode="wait">
-        {!showSessionDetails && weekendPredictions?.predictions && (
+        {!showSessionDetails && (
           <motion.div
             key="summary"
             initial={{ opacity: 0, y: -10 }}
@@ -294,7 +294,7 @@ export default function WeekendPredictions({ race }: WeekendPredictionsProps) {
                 key={session}
                 session={session}
                 race={race}
-                picks={weekendPredictions?.predictions[session] ?? null}
+                picks={weekendPredictions.predictions[session] ?? null}
                 isExpanded={expandedSession === session}
                 onToggle={() =>
                   setExpandedSession(

@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test';
 import { ConvexHttpClient } from 'convex/browser';
 
 /**
@@ -34,9 +35,10 @@ export function createTestClient(): ConvexHttpClient {
  * - 'full_season': Multiple races in various states
  */
 export async function seedTestScenario(
-  client: ConvexHttpClient,
+  _client: ConvexHttpClient,
   scenario: 'upcoming_race' | 'locked_race' | 'finished_race' | 'full_season',
 ) {
+  await Promise.resolve(); // placeholder until async impl
   // Note: To call internal mutations, you need to use the Convex CLI or
   // a special admin endpoint. For tests, we'll use the dashboard API.
   //
@@ -54,7 +56,8 @@ export async function seedTestScenario(
 /**
  * Clean up test data after tests.
  */
-export async function cleanupTestData(client: ConvexHttpClient) {
+export async function cleanupTestData(_client: ConvexHttpClient) {
+  await Promise.resolve(); // placeholder until async impl
   console.log('Cleaning up test data...');
   // Same note as above - internal mutations need special handling
 }
@@ -90,7 +93,7 @@ export const TEST_USERS = {
  * Requires Clerk test mode to be enabled.
  */
 export async function signInTestUser(
-  page: import('@playwright/test').Page,
+  page: Page,
   user: keyof typeof TEST_USERS = 'regular',
 ) {
   const { email, password } = TEST_USERS[user];
@@ -114,7 +117,7 @@ export async function signInTestUser(
 /**
  * Sign out the current user.
  */
-export async function signOutUser(page: import('@playwright/test').Page) {
+export async function signOutUser(page: Page) {
   // Click user menu and sign out
   // Note: Adjust selectors based on your UI
   await page.getByTestId('user-menu').click();
