@@ -154,7 +154,7 @@ export default function Header({
           <button
             type="button"
             onClick={toggleTheme}
-            className="p-2 rounded-lg hover:bg-surface-hover transition-colors"
+            className="p-2 rounded-lg hover:bg-surface-hover transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
             aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
           >
             {dark ? (
@@ -169,7 +169,7 @@ export default function Header({
           <motion.button
             ref={menuButtonRef}
             onClick={() => onMobileMenuOpenChange(!mobileMenuOpen)}
-            className="sm:hidden p-2 rounded-lg hover:bg-surface-hover transition-colors"
+            className="sm:hidden p-2 rounded-lg hover:bg-surface-hover transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
             aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-nav"

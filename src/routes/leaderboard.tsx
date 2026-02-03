@@ -1,12 +1,20 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useQuery } from 'convex/react';
+import { ConvexHttpClient } from 'convex/browser';
 import { Medal, Trophy } from 'lucide-react';
 
 import { api } from '../../convex/_generated/api';
-import PageLoader from '../components/PageLoader';
+
+const convex = new ConvexHttpClient(import.meta.env.VITE_CONVEX_URL);
 
 export const Route = createFileRoute('/leaderboard')({
   component: LeaderboardPage,
+  loader: async () => {
+    const leaderboard = await convex.query(
+      api.leaderboards.getSeasonLeaderboard,
+      {},
+    );
+    return { leaderboard };
+  },
   head: () => ({
     meta: [
       { title: 'Leaderboard | Grand Prix Picks' },
@@ -20,11 +28,7 @@ export const Route = createFileRoute('/leaderboard')({
 });
 
 function LeaderboardPage() {
-  const leaderboard = useQuery(api.leaderboards.getSeasonLeaderboard, {});
-
-  if (leaderboard === undefined) {
-    return <PageLoader />;
-  }
+  const { leaderboard } = Route.useLoaderData();
 
   return (
     <div className="min-h-screen bg-page">

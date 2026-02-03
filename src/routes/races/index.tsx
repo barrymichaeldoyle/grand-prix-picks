@@ -1,13 +1,21 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useQuery } from 'convex/react';
+import { ConvexHttpClient } from 'convex/browser';
 import { Calendar } from 'lucide-react';
 
 import { api } from '../../../convex/_generated/api';
-import PageLoader from '../../components/PageLoader';
 import RaceCard from '../../components/RaceCard';
+
+const convex = new ConvexHttpClient(import.meta.env.VITE_CONVEX_URL);
 
 export const Route = createFileRoute('/races/')({
   component: RacesPage,
+  loader: async () => {
+    const [races, nextRace] = await Promise.all([
+      convex.query(api.races.listRaces, { season: 2026 }),
+      convex.query(api.races.getNextRace),
+    ]);
+    return { races, nextRace };
+  },
   head: () => ({
     meta: [
       { title: '2026 F1 Races | Grand Prix Picks' },
@@ -21,12 +29,7 @@ export const Route = createFileRoute('/races/')({
 });
 
 function RacesPage() {
-  const races = useQuery(api.races.listRaces, { season: 2026 });
-  const nextRace = useQuery(api.races.getNextRace);
-
-  if (races === undefined) {
-    return <PageLoader />;
-  }
+  const { races, nextRace } = Route.useLoaderData();
 
   const upcomingRaces = races.filter((r) => r.status === 'upcoming');
   const lockedRaces = races.filter((r) => r.status === 'locked');

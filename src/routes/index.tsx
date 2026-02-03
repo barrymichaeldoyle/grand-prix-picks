@@ -1,15 +1,19 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { useQuery } from 'convex/react';
+import { ConvexHttpClient } from 'convex/browser';
 import { ChevronRight, Flag, Trophy, Users } from 'lucide-react';
 
 import { api } from '../../convex/_generated/api';
 import { primaryButtonStyles } from '../components/Button';
-import ErrorBoundary from '../components/ErrorBoundary';
 import RaceCard from '../components/RaceCard';
-import RaceCardSkeleton from '../components/RaceCardSkeleton';
+
+const convex = new ConvexHttpClient(import.meta.env.VITE_CONVEX_URL);
 
 export const Route = createFileRoute('/')({
   component: HomePage,
+  loader: async () => {
+    const nextRace = await convex.query(api.races.getNextRace);
+    return { nextRace };
+  },
   head: () => ({
     meta: [
       { title: 'Grand Prix Picks - F1 Prediction Game' },
@@ -22,25 +26,9 @@ export const Route = createFileRoute('/')({
   }),
 });
 
-function NextRaceSection() {
-  const nextRace = useQuery(api.races.getNextRace);
-
-  if (nextRace === undefined) {
-    return <RaceCardSkeleton isNext />;
-  }
-
-  if (nextRace) {
-    return <RaceCard race={nextRace} isNext />;
-  }
-
-  return (
-    <div className="bg-surface border border-border rounded-xl p-6 text-center">
-      <p className="text-text-muted">No upcoming races scheduled</p>
-    </div>
-  );
-}
-
 function HomePage() {
+  const { nextRace } = Route.useLoaderData();
+
   return (
     <div className="min-h-screen bg-page">
       {/* Hero Section */}
@@ -71,15 +59,13 @@ function HomePage() {
         <h2 className="text-lg font-semibold text-text-muted mb-4">
           Next Race
         </h2>
-        <ErrorBoundary
-          fallback={
-            <div className="bg-surface border border-border rounded-xl p-6 text-center">
-              <p className="text-text-muted">Unable to load next race</p>
-            </div>
-          }
-        >
-          <NextRaceSection />
-        </ErrorBoundary>
+        {nextRace ? (
+          <RaceCard race={nextRace} isNext />
+        ) : (
+          <div className="bg-surface border border-border rounded-xl p-6 text-center">
+            <p className="text-text-muted">No upcoming races scheduled</p>
+          </div>
+        )}
       </section>
 
       {/* How It Works */}

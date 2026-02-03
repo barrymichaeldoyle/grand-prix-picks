@@ -1,25 +1,49 @@
 import { SignInButton, useAuth } from '@clerk/clerk-react';
-import { createFileRoute,Link } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
+import { ConvexHttpClient } from 'convex/browser';
 import { useQuery } from 'convex/react';
-import { ArrowLeft, Calendar, Clock, Lock, LogIn, Trophy } from 'lucide-react';
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  Flag,
+  Lock,
+  LogIn,
+  Trophy,
+} from 'lucide-react';
 
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
 import Button from '../../components/Button';
 import InlineLoader from '../../components/InlineLoader';
-import PageLoader from '../../components/PageLoader';
 import PredictionForm from '../../components/PredictionForm';
 import RaceResults from '../../components/RaceResults';
 
+const convex = new ConvexHttpClient(import.meta.env.VITE_CONVEX_URL);
+
 export const Route = createFileRoute('/races/$raceId')({
   component: RaceDetailPage,
-  head: () => ({
+  loader: async ({ params }) => {
+    const raceId = params.raceId as Id<'races'>;
+    const [race, nextRace, predictionOpenAt] = await Promise.all([
+      convex.query(api.races.getRace, { raceId }),
+      convex.query(api.races.getNextRace),
+      convex.query(api.races.getPredictionOpenAt, { raceId }),
+    ]);
+    return { race, nextRace, predictionOpenAt };
+  },
+  head: ({ loaderData }) => ({
     meta: [
-      { title: 'Race Details | Grand Prix Picks' },
+      {
+        title: loaderData?.race
+          ? `${loaderData.race.name} | Grand Prix Picks`
+          : 'Race Details | Grand Prix Picks',
+      },
       {
         name: 'description',
-        content:
-          'Make your prediction for this Grand Prix. Pick the top 5 finishers and compete for points.',
+        content: loaderData?.race
+          ? `Make your prediction for the ${loaderData.race.name}. Pick the top 5 finishers and compete for points.`
+          : 'Make your prediction for this Grand Prix. Pick the top 5 finishers and compete for points.',
       },
     ],
   }),
@@ -45,24 +69,15 @@ function formatTime(timestamp: number): string {
 function RaceDetailPage() {
   const { raceId } = Route.useParams();
   const typedRaceId = raceId as Id<'races'>;
+  const { race, nextRace, predictionOpenAt } = Route.useLoaderData();
 
-  const { isSignedIn, isLoaded: authLoaded } = useAuth();
+  const { isSignedIn } = useAuth();
 
-  const race = useQuery(api.races.getRace, { raceId: typedRaceId });
-  const nextRace = useQuery(api.races.getNextRace);
-  const predictionOpenAt = useQuery(api.races.getPredictionOpenAt, {
-    raceId: typedRaceId,
-  });
-
-  // Only fetch prediction if user is signed in
+  // Only fetch prediction if user is signed in (user-specific, must be client-side)
   const existingPrediction = useQuery(
     api.predictions.myPredictionForRace,
     isSignedIn ? { raceId: typedRaceId } : 'skip',
   );
-
-  if (race === undefined || nextRace === undefined || !authLoaded) {
-    return <PageLoader />;
-  }
 
   if (race === null) {
     return (
@@ -93,6 +108,21 @@ function RaceDetailPage() {
   const isPredictable = race.status === 'upcoming' && isNextRace;
   const isNotYetOpen = race.status === 'upcoming' && !isNextRace;
 
+  const statusStyles = isPredictable
+    ? {
+        border: 'border-accent/40',
+        background: 'bg-surface',
+      }
+    : race.status === 'locked'
+      ? {
+          border: 'border-warning/40',
+          background: 'bg-warning-muted',
+        }
+      : {
+          border: 'border-border',
+          background: 'bg-surface',
+        };
+
   return (
     <div className="min-h-screen bg-page">
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -104,103 +134,123 @@ function RaceDetailPage() {
           Back to races
         </Link>
 
-        <div className="bg-surface border border-border rounded-xl p-6 mb-6">
-          <span className="text-sm font-medium text-text-muted">
-            Round {race.round} - {race.season} Season
-          </span>
-          <h1 className="text-3xl font-bold text-text mt-2 mb-4">
-            {race.name}
-          </h1>
+        <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-sm">
+          <div className="flex flex-col gap-4 p-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm font-semibold uppercase tracking-wide text-text-muted">
+              <Flag className="h-4 w-4 text-accent" />
+              Grand Prix
+            </div>
+            <div>
+              <span className="text-sm font-medium text-text-muted">
+                Round {race.round} · Season {race.season}
+              </span>
+              <h1 className="text-3xl font-bold text-text mt-2">{race.name}</h1>
+            </div>
+          </div>
 
-          <div className="flex flex-wrap gap-6 text-text-muted">
-            <div className="flex items-center gap-2">
-              <Calendar size={18} className="text-text-muted" />
-              <span>{formatDate(race.raceStartAt)}</span>
+          <div className="px-6 pb-6">
+            <div className="flex flex-wrap gap-6 text-text-muted">
+              <div className="flex items-center gap-2">
+                <Calendar size={18} className="text-text-muted" />
+                <span>{formatDate(race.raceStartAt)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock size={18} className="text-text-muted" />
+                <span>{formatTime(race.raceStartAt)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Lock size={18} className="text-text-muted" />
+                <span>
+                  Predictions lock {formatTime(race.predictionLockAt)}
+                </span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Clock size={18} className="text-text-muted" />
-              <span>{formatTime(race.raceStartAt)}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Lock size={18} className="text-text-muted" />
-              <span>Predictions lock {formatTime(race.predictionLockAt)}</span>
+          </div>
+
+          <div className={`border-t ${statusStyles.border}`}>
+            <div className={`p-6 ${statusStyles.background}`}>
+              {isPredictable ? (
+                <>
+                  <h2 className="text-xl font-semibold text-text mb-2">
+                    Make Your Prediction
+                  </h2>
+                  <p className="text-text-muted mb-6">
+                    Select the 5 drivers you think will finish in the top 5
+                    positions.
+                  </p>
+
+                  {isSignedIn ? (
+                    existingPrediction === undefined ? (
+                      <InlineLoader />
+                    ) : (
+                      <PredictionForm
+                        raceId={typedRaceId}
+                        existingPicks={existingPrediction?.picks}
+                      />
+                    )
+                  ) : (
+                    <div className="text-center py-8 border-2 border-dashed border-border rounded-lg bg-surface">
+                      <LogIn className="w-12 h-12 text-text-muted mx-auto mb-4" />
+                      <p className="text-text-muted mb-4">
+                        Sign in to make your prediction
+                      </p>
+                      <SignInButton mode="modal">
+                        <Button size="sm">Sign In</Button>
+                      </SignInButton>
+                    </div>
+                  )}
+                </>
+              ) : isNotYetOpen ? (
+                <>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Lock className="w-5 h-5 text-text-muted" />
+                    <h2 className="text-xl font-semibold text-text">
+                      Not Yet Open
+                    </h2>
+                  </div>
+                  <div className="text-text-muted">
+                    <p>
+                      Predictions for this race will open after the previous
+                      race is complete.
+                    </p>
+                    {predictionOpenAt != null && (
+                      <p className="mt-2 text-text-muted">
+                        Predictions open{' '}
+                        <strong className="text-text">
+                          {formatDate(predictionOpenAt)} at{' '}
+                          {formatTime(predictionOpenAt)}
+                        </strong>
+                      </p>
+                    )}
+                    {predictionOpenAt == null && (
+                      <p className="mt-2">Check back soon!</p>
+                    )}
+                  </div>
+                </>
+              ) : race.status === 'locked' ? (
+                <>
+                  <h2 className="text-xl font-semibold text-text mb-2">
+                    Predictions Locked
+                  </h2>
+                  <p className="text-text-muted">
+                    Predictions are closed. Results will be available after the
+                    race.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Trophy className="w-5 h-5 text-accent" />
+                    <h2 className="text-xl font-semibold text-text">
+                      Race Results
+                    </h2>
+                  </div>
+                  <RaceResults raceId={typedRaceId} />
+                </>
+              )}
             </div>
           </div>
         </div>
-
-        {isPredictable ? (
-          <div className="bg-surface border border-accent/30 rounded-xl p-6">
-            <h2 className="text-xl font-semibold text-text mb-2">
-              Make Your Prediction
-            </h2>
-            <p className="text-text-muted mb-6">
-              Select the 5 drivers you think will finish in the top 5 positions.
-            </p>
-
-            {isSignedIn ? (
-              existingPrediction === undefined ? (
-                <InlineLoader />
-              ) : (
-                <PredictionForm
-                  raceId={typedRaceId}
-                  existingPicks={existingPrediction?.picks}
-                />
-              )
-            ) : (
-              <div className="text-center py-8 border-2 border-dashed border-border rounded-lg">
-                <LogIn className="w-12 h-12 text-text-muted mx-auto mb-4" />
-                <p className="text-text-muted mb-4">
-                  Sign in to make your prediction
-                </p>
-                <SignInButton mode="modal">
-                  <Button size="sm">Sign In</Button>
-                </SignInButton>
-              </div>
-            )}
-          </div>
-        ) : isNotYetOpen ? (
-          <div className="bg-surface border border-border rounded-xl p-6">
-            <div className="flex items-center gap-2 mb-2">
-              <Lock className="w-5 h-5 text-text-muted" />
-              <h2 className="text-xl font-semibold text-text">Not Yet Open</h2>
-            </div>
-            <div className="text-text-muted">
-              <p>
-                Predictions for this race will open after the previous race is
-                complete.
-              </p>
-              {predictionOpenAt != null && (
-                <p className="mt-2 text-text-muted">
-                  Predictions open{' '}
-                  <strong className="text-text">
-                    {formatDate(predictionOpenAt)} at{' '}
-                    {formatTime(predictionOpenAt)}
-                  </strong>
-                </p>
-              )}
-              {predictionOpenAt == null && (
-                <p className="mt-2">Check back soon!</p>
-              )}
-            </div>
-          </div>
-        ) : race.status === 'locked' ? (
-          <div className="bg-surface border border-warning/30 rounded-xl p-6">
-            <h2 className="text-xl font-semibold text-text mb-2">
-              Predictions Locked
-            </h2>
-            <p className="text-text-muted">
-              Predictions are closed. Results will be available after the race.
-            </p>
-          </div>
-        ) : (
-          <div className="bg-surface border border-border rounded-xl p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Trophy className="w-5 h-5 text-accent" />
-              <h2 className="text-xl font-semibold text-text">Race Results</h2>
-            </div>
-            <RaceResults raceId={typedRaceId} />
-          </div>
-        )}
       </div>
     </div>
   );
