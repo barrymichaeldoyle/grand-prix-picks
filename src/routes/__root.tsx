@@ -30,7 +30,7 @@ const siteConfig = {
   description:
     'Predict the top 5 finishers for each Formula 1 race and compete with friends throughout the 2026 season.',
   url: 'https://grandprixpicks.com', // Update with your actual domain
-  themeColor: '#e10600',
+  themeColor: '#0d9488',
   author: {
     name: 'Barry Michael Doyle',
     url: 'https://barrymichaeldoyle.com',
@@ -86,7 +86,6 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     links: [
       { rel: 'stylesheet', href: appCss },
       { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
-      { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
       { rel: 'apple-touch-icon', href: '/logo192.png' },
       { rel: 'manifest', href: '/manifest.json' },
       { rel: 'canonical', href: siteConfig.url },

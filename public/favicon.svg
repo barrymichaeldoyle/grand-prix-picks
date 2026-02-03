@@ -1,18 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <!-- F1 Red background -->
-  <rect width="32" height="32" rx="6" fill="#e10600"/>
-  <!-- Racing flag icon (simplified) -->
-  <g transform="translate(6, 5)">
+  <!-- Dark background matching dark mode surface -->
+  <rect width="32" height="32" rx="6" fill="#1e293b"/>
+  <!-- Flag icon in teal accent color -->
+  <g transform="translate(6, 6)" fill="none" stroke="#2dd4bf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <!-- Flag pole -->
-    <rect x="1" y="2" width="2.5" height="20" rx="1" fill="#ffffff"/>
+    <path d="M4 2v18"/>
     <!-- Flag -->
-    <path d="M5 2 L19 2 Q20 2 20 3 L20 12 Q20 13 19 13 L5 13 L5 2Z" fill="#ffffff"/>
-    <!-- Checkered pattern on flag -->
-    <rect x="5" y="2" width="3.75" height="3.67" fill="#1a1a1a"/>
-    <rect x="12.5" y="2" width="3.75" height="3.67" fill="#1a1a1a"/>
-    <rect x="8.75" y="5.67" width="3.75" height="3.67" fill="#1a1a1a"/>
-    <rect x="16.25" y="5.67" width="3.75" height="3.67" fill="#1a1a1a"/>
-    <rect x="5" y="9.33" width="3.75" height="3.67" fill="#1a1a1a"/>
-    <rect x="12.5" y="9.33" width="3.75" height="3.67" fill="#1a1a1a"/>
+    <path d="M4 2h12.5c.5 0 1 .5.5 1l-2 2.5 2 2.5c.5.5 0 1-.5 1H4"/>
   </g>
 </svg>

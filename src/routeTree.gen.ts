@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as MyPredictionsRouteImport } from './routes/my-predictions'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as IndexRouteImport } from './routes/index'
@@ -18,6 +20,16 @@ import { Route as RacesRaceIdRouteImport } from './routes/races/$raceId'
 import { Route as AdminRacesNewRouteImport } from './routes/admin/races/new'
 import { Route as AdminRacesRaceIdRouteImport } from './routes/admin/races/$raceId'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MyPredictionsRoute = MyPredictionsRouteImport.update({
   id: '/my-predictions',
   path: '/my-predictions',
@@ -63,6 +75,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/leaderboard': typeof LeaderboardRoute
   '/my-predictions': typeof MyPredictionsRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/races/$raceId': typeof RacesRaceIdRoute
   '/admin/': typeof AdminIndexRoute
   '/races/': typeof RacesIndexRoute
@@ -73,6 +87,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/leaderboard': typeof LeaderboardRoute
   '/my-predictions': typeof MyPredictionsRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/races/$raceId': typeof RacesRaceIdRoute
   '/admin': typeof AdminIndexRoute
   '/races': typeof RacesIndexRoute
@@ -84,6 +100,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/leaderboard': typeof LeaderboardRoute
   '/my-predictions': typeof MyPredictionsRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/races/$raceId': typeof RacesRaceIdRoute
   '/admin/': typeof AdminIndexRoute
   '/races/': typeof RacesIndexRoute
@@ -96,6 +114,8 @@ export interface FileRouteTypes {
     | '/'
     | '/leaderboard'
     | '/my-predictions'
+    | '/privacy'
+    | '/terms'
     | '/races/$raceId'
     | '/admin/'
     | '/races/'
@@ -106,6 +126,8 @@ export interface FileRouteTypes {
     | '/'
     | '/leaderboard'
     | '/my-predictions'
+    | '/privacy'
+    | '/terms'
     | '/races/$raceId'
     | '/admin'
     | '/races'
@@ -116,6 +138,8 @@ export interface FileRouteTypes {
     | '/'
     | '/leaderboard'
     | '/my-predictions'
+    | '/privacy'
+    | '/terms'
     | '/races/$raceId'
     | '/admin/'
     | '/races/'
@@ -127,6 +151,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LeaderboardRoute: typeof LeaderboardRoute
   MyPredictionsRoute: typeof MyPredictionsRoute
+  PrivacyRoute: typeof PrivacyRoute
+  TermsRoute: typeof TermsRoute
   RacesRaceIdRoute: typeof RacesRaceIdRoute
   AdminIndexRoute: typeof AdminIndexRoute
   RacesIndexRoute: typeof RacesIndexRoute
@@ -136,6 +162,20 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/my-predictions': {
       id: '/my-predictions'
       path: '/my-predictions'
@@ -199,6 +239,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LeaderboardRoute: LeaderboardRoute,
   MyPredictionsRoute: MyPredictionsRoute,
+  PrivacyRoute: PrivacyRoute,
+  TermsRoute: TermsRoute,
   RacesRaceIdRoute: RacesRaceIdRoute,
   AdminIndexRoute: AdminIndexRoute,
   RacesIndexRoute: RacesIndexRoute,

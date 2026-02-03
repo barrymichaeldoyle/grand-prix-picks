@@ -1,3 +1,5 @@
+import { Link } from '@tanstack/react-router';
+
 function XIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -61,9 +63,23 @@ export default function Footer() {
               <LinkedInIcon className="w-4 h-4" />
             </a>
           </p>
-          <p className="text-xs">
+          <p className="text-xs flex flex-wrap items-center gap-x-2 gap-y-1">
             This is a fan-made project. Not affiliated with Formula 1, FIA, or
             any related entities.
+            <span className="text-border">·</span>
+            <Link
+              to="/privacy"
+              className="text-text-muted hover:text-accent transition-colors"
+            >
+              Privacy
+            </Link>
+            <span className="text-border">·</span>
+            <Link
+              to="/terms"
+              className="text-text-muted hover:text-accent transition-colors"
+            >
+              Terms
+            </Link>
           </p>
         </div>
       </div>
