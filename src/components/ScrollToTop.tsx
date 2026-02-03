@@ -6,7 +6,7 @@ import { useEffect } from 'react';
  * Uses the given scroll container ref so the scrollbar stays below the sticky header.
  * Renders nothing.
  */
-export default function ScrollToTop({
+export function ScrollToTop({
   scrollContainerRef,
 }: {
   scrollContainerRef: React.RefObject<HTMLElement | null>;

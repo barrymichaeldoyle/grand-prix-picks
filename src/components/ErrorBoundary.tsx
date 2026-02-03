@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/tanstackstart-react';
 import type { ReactNode } from 'react';
 import { Component } from 'react';
 
-import ErrorFallback from './ErrorFallback';
+import { ErrorFallback } from './ErrorFallback';
 
 interface Props {
   children: ReactNode;
@@ -13,7 +13,7 @@ interface State {
   error: unknown;
 }
 
-export default class ErrorBoundary extends Component<Props, State> {
+export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false, error: null };

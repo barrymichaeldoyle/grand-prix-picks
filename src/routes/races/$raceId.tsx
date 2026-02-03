@@ -6,15 +6,15 @@ import { ArrowLeft, Calendar, Clock, Lock, LogIn, Trophy } from 'lucide-react';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { Badge } from '../../components/Badge';
-import Button from '../../components/Button';
-import ErrorBoundary from '../../components/ErrorBoundary';
+import { Button } from '../../components/Button';
+import { ErrorBoundary } from '../../components/ErrorBoundary';
 import {
   getCountryCodeForRace,
   RaceFlag,
   StatusBadge,
 } from '../../components/RaceCard';
-import RaceResults from '../../components/RaceResults';
-import WeekendPredictions from '../../components/WeekendPredictions';
+import { RaceResults } from '../../components/RaceResults';
+import { WeekendPredictions } from '../../components/WeekendPredictions';
 
 const convex = new ConvexHttpClient(import.meta.env.VITE_CONVEX_URL);
 

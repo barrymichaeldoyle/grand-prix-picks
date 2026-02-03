@@ -126,7 +126,7 @@ function getTimeUntil(timestamp: number): string {
   return `${hours}h ${minutes}m`;
 }
 
-export default function RaceCard({
+export function RaceCard({
   race,
   isNext,
   predictionOpenAt,

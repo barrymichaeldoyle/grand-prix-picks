@@ -13,7 +13,7 @@ import {
 
 import { api } from '../../convex/_generated/api';
 import { primaryButtonStyles } from '../components/Button';
-import RaceCard from '../components/RaceCard';
+import { RaceCard } from '../components/RaceCard';
 
 const convex = new ConvexHttpClient(import.meta.env.VITE_CONVEX_URL);
 

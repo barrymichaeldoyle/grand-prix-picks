@@ -3,13 +3,13 @@ import { Check, Minus, Trophy, X } from 'lucide-react';
 
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
-import InlineLoader from './InlineLoader';
+import { InlineLoader } from './InlineLoader';
 
 interface RaceResultsProps {
   raceId: Id<'races'>;
 }
 
-export default function RaceResults({ raceId }: RaceResultsProps) {
+export function RaceResults({ raceId }: RaceResultsProps) {
   const result = useQuery(api.results.getResultForRace, { raceId });
   const myScore = useQuery(api.results.getMyScoreForRace, { raceId });
 

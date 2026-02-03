@@ -12,7 +12,7 @@ const signInButtonClasses =
  * User avatar when signed in; Sign in button when signed out. Sign in is hidden
  * on mobile (min-[703px]:block) so it can live in the mobile menu; matches Header MEDIA_MATCH_BREAKPOINT.
  */
-export default function HeaderUser() {
+export function HeaderUser() {
   return (
     <>
       <SignedIn>

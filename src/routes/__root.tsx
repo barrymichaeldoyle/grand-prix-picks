@@ -9,12 +9,12 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 import type { PropsWithChildren } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
-import ErrorBoundary from '../components/ErrorBoundary';
-import Footer from '../components/Footer';
-import Header, { MEDIA_MATCH_BREAKPOINT } from '../components/Header';
-import ScrollToTop from '../components/ScrollToTop';
-import ClerkProvider from '../integrations/clerk/provider';
-import ConvexProvider from '../integrations/convex/provider';
+import { ErrorBoundary } from '../components/ErrorBoundary';
+import { Footer } from '../components/Footer';
+import { Header, MEDIA_MATCH_BREAKPOINT } from '../components/Header';
+import { ScrollToTop } from '../components/ScrollToTop';
+import { AppClerkProvider } from '../integrations/clerk/provider';
+import { AppConvexProvider } from '../integrations/convex/provider';
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools';
 import appCss from '../styles.css?url';
 
@@ -160,8 +160,8 @@ function RootDocument({ children }: PropsWithChildren) {
         <HeadContent />
       </head>
       <body>
-        <ClerkProvider darkMode={isDark}>
-          <ConvexProvider>
+        <AppClerkProvider darkMode={isDark}>
+          <AppConvexProvider>
             <div className="flex h-[100dvh] h-screen flex-col overflow-hidden">
               <Header
                 mobileMenuOpen={mobileMenuOpen}
@@ -195,8 +195,8 @@ function RootDocument({ children }: PropsWithChildren) {
                 />
               </div>
             </div>
-          </ConvexProvider>
-        </ClerkProvider>
+          </AppConvexProvider>
+        </AppClerkProvider>
         <Scripts />
       </body>
     </html>

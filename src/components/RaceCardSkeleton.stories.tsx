@@ -2,8 +2,8 @@ import type { Meta, StoryObj } from '@storybook/react';
 
 import type { Doc, Id } from '../../convex/_generated/dataModel';
 import { StorybookRouter } from '../stories/router-decorator';
-import RaceCard from './RaceCard';
-import RaceCardSkeleton from './RaceCardSkeleton';
+import { RaceCard } from './RaceCard';
+import { RaceCardSkeleton } from './RaceCardSkeleton';
 
 /** Mock race for comparison stories (no Convex). */
 function mockRace(

@@ -78,7 +78,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
 Button.displayName = 'Button';
 
-export default Button;
+export { Button };
 
 /** Class names for styling a link as a primary button (e.g. Link from react-router). */
 export function primaryButtonStyles(size: ButtonSize = 'md'): string {

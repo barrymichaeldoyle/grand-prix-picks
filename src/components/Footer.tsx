@@ -26,7 +26,7 @@ function LinkedInIcon({ className }: { className?: string }) {
   );
 }
 
-export default function Footer() {
+export function Footer() {
   return (
     <footer className="mt-auto border-t border-border bg-surface">
       <div className="mx-auto max-w-4xl px-4 py-6">

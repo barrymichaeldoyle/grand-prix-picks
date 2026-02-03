@@ -3,7 +3,7 @@ import { useRouter } from '@tanstack/react-router';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { useEffect } from 'react';
 
-import Button from './Button';
+import { Button } from './Button';
 
 interface ErrorFallbackProps {
   error: unknown;
@@ -26,7 +26,7 @@ function getErrorMessage(error: unknown): string {
   return 'An unexpected error occurred. This has been reported automatically.';
 }
 
-export default function ErrorFallback({ error, reset }: ErrorFallbackProps) {
+export function ErrorFallback({ error, reset }: ErrorFallbackProps) {
   const router = useRouter();
   const errorObj = getErrorObject(error);
 

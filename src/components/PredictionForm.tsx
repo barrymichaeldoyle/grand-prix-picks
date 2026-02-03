@@ -5,8 +5,8 @@ import { useEffect, useState } from 'react';
 
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
-import Button from './Button';
-import InlineLoader from './InlineLoader';
+import { Button } from './Button';
+import { InlineLoader } from './InlineLoader';
 
 type Driver = Doc<'drivers'>;
 type SessionType = 'quali' | 'sprint_quali' | 'sprint' | 'race';
@@ -18,7 +18,7 @@ interface PredictionFormProps {
   sessionType?: SessionType;
 }
 
-export default function PredictionForm({
+export function PredictionForm({
   raceId,
   existingPicks,
   sessionType,

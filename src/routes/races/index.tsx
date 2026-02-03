@@ -3,7 +3,7 @@ import { ConvexHttpClient } from 'convex/browser';
 import { Calendar } from 'lucide-react';
 
 import { api } from '../../../convex/_generated/api';
-import RaceCard from '../../components/RaceCard';
+import { RaceCard } from '../../components/RaceCard';
 
 const convex = new ConvexHttpClient(import.meta.env.VITE_CONVEX_URL);
 

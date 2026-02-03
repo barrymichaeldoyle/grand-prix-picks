@@ -12,7 +12,7 @@ interface AppClerkProviderProps extends PropsWithChildren {
   darkMode?: boolean;
 }
 
-export default function AppClerkProvider({
+export function AppClerkProvider({
   children,
   darkMode = false,
 }: AppClerkProviderProps) {

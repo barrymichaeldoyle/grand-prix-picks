@@ -7,7 +7,7 @@ interface RaceCardSkeletonProps {
 const FLAG_WIDTH = 40;
 const FLAG_HEIGHT = 30;
 
-export default function RaceCardSkeleton({ isNext }: RaceCardSkeletonProps) {
+export function RaceCardSkeleton({ isNext }: RaceCardSkeletonProps) {
   return (
     <div
       className={`block animate-pulse rounded-xl border bg-surface p-4 sm:p-5 ${

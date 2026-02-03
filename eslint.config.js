@@ -30,6 +30,28 @@ export default [
       'import/order': 'off', // use simple-import-sort instead
       'prettier/prettier': 'error',
       curly: ['error', 'all'],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'ExportDefaultDeclaration',
+          message:
+            'Default exports are not allowed. Use named exports instead.',
+        },
+      ],
+    },
+  },
+  // Files that require default exports (configs, frameworks, storybook)
+  {
+    files: [
+      'vite.config.ts',
+      'playwright.config.ts',
+      'convex/**/*.ts',
+      '**/*.stories.tsx',
+      '**/*.stories.ts',
+      'src/integrations/tanstack-query/devtools.tsx',
+    ],
+    rules: {
+      'no-restricted-syntax': 'off',
     },
   },
   eslintConfigPrettier,

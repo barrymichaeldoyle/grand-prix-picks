@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
 import { Badge } from './Badge';
-import PredictionForm from './PredictionForm';
+import { PredictionForm } from './PredictionForm';
 
 type Race = Doc<'races'>;
 type SessionType = 'quali' | 'sprint_quali' | 'sprint' | 'race';
@@ -162,7 +162,7 @@ function SessionTab({
   );
 }
 
-export default function WeekendPredictions({ race }: WeekendPredictionsProps) {
+export function WeekendPredictions({ race }: WeekendPredictionsProps) {
   const weekendPredictions = useQuery(api.predictions.myWeekendPredictions, {
     raceId: race._id,
   });

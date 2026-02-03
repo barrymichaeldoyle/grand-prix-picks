@@ -10,7 +10,7 @@ if (!CONVEX_URL) {
 
 const convex = new ConvexReactClient(CONVEX_URL);
 
-export default function AppConvexProvider({ children }: PropsWithChildren) {
+export function AppConvexProvider({ children }: PropsWithChildren) {
   return (
     <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
       {children}

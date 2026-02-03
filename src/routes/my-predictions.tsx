@@ -4,8 +4,8 @@ import { useQuery } from 'convex/react';
 import { CheckCircle, Clock, History, LogIn, Trophy } from 'lucide-react';
 
 import { api } from '../../convex/_generated/api';
-import Button, { primaryButtonStyles } from '../components/Button';
-import PageLoader from '../components/PageLoader';
+import { Button, primaryButtonStyles } from '../components/Button';
+import { PageLoader } from '../components/PageLoader';
 import { getCountryCodeForRace, RaceFlag } from '../components/RaceCard';
 
 export const Route = createFileRoute('/my-predictions')({

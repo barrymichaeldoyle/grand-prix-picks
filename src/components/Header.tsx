@@ -4,7 +4,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Flag, Menu, Moon, Sun, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import ClerkHeader, {
+import {
+  HeaderUser,
   signInButtonClasses,
 } from '../integrations/clerk/header-user.tsx';
 
@@ -21,7 +22,7 @@ const FOCUSABLE_SELECTOR =
 /** Mobile menu: viewport width <= 702px is "mobile". Keep min-[703px] classes below in sync. */
 export const MEDIA_MATCH_BREAKPOINT = '(max-width: 702px)';
 
-export default function Header({
+export function Header({
   mobileMenuOpen,
   onMobileMenuOpenChange,
   themeKey = 'grand-prix-picks-theme',
@@ -191,7 +192,7 @@ export default function Header({
           >
             {dark ? <Sun size={20} /> : <Moon size={20} />}
           </button>
-          <ClerkHeader />
+          <HeaderUser />
 
           {/* Mobile menu button */}
           <motion.button
