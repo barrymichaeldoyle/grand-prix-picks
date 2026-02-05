@@ -69,10 +69,12 @@ function TermsPage() {
             </h2>
             <p>
               You agree to use the app in good faith and not to cheat, abuse
-              bugs, manipulate scores, or harass other users. We may remove
-              predictions, adjust scores, or suspend or terminate accounts if we
-              reasonably believe you have violated these terms or abused the
-              service.
+              bugs, manipulate scores, or harass other users. Please choose a
+              username that is respectful; we discourage offensive, hateful,
+              discriminatory, or otherwise inappropriate usernames. We may
+              remove predictions, adjust scores, change or remove usernames, or
+              suspend or terminate accounts if we reasonably believe you have
+              violated these terms or abused the service.
             </p>
           </section>
 
