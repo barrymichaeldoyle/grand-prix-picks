@@ -3,13 +3,13 @@ import { Lock, LogIn } from 'lucide-react';
 import { useState } from 'react';
 
 import type { Doc, Id } from '../../../convex/_generated/dataModel';
-import type { SessionType } from '../../lib/sessions';
 import { Button } from '../../components/Button';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
 import { InlineLoader } from '../../components/InlineLoader';
 import { RaceResults } from '../../components/RaceResults';
 import { WeekendPredictions } from '../../components/WeekendPredictions';
 import { formatDate, formatTime } from '../../lib/date';
+import type { SessionType } from '../../lib/sessions';
 
 /** Card wrapper matching RaceResults table/block styling */
 const SECTION_CARD =

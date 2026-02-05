@@ -57,13 +57,16 @@ export function WeekendPredictions({
   });
   const drivers = useQuery(api.drivers.listDrivers);
 
-  const [internalEditing, setInternalEditing] =
-    useState<SessionType | null>(null);
+  const [internalEditing, setInternalEditing] = useState<SessionType | null>(
+    null,
+  );
 
   const isControlled = onEditingSessionChange !== undefined;
-  const editingSession = isControlled ? controlledEditing ?? null : internalEditing;
+  const editingSession = isControlled
+    ? (controlledEditing ?? null)
+    : internalEditing;
   const setEditingSession = isControlled
-    ? (s: SessionType | null) => onEditingSessionChange?.(s)
+    ? (s: SessionType | null) => onEditingSessionChange(s)
     : setInternalEditing;
 
   const sessions = getSessionsForRace(race);
@@ -106,7 +109,7 @@ export function WeekendPredictions({
           raceId={race._id}
           sessionType={editingSession}
           existingPicks={
-            weekendPredictions?.predictions?.[editingSession] ?? undefined
+            weekendPredictions.predictions[editingSession] ?? undefined
           }
           onSuccess={() => setEditingSession(null)}
         />
@@ -173,7 +176,7 @@ export function WeekendPredictions({
                   P{position + 1}
                 </td>
                 {sessions.map((session) => {
-                  const picks = weekendPredictions!.predictions[session];
+                  const picks = weekendPredictions.predictions[session];
                   const driverId = picks?.[position];
                   const driver = driverId
                     ? drivers?.find((d) => d._id === driverId)

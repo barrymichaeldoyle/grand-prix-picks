@@ -38,7 +38,7 @@ export const myPredictionHistory = query({
 
     // Build weekend summaries
     const weekends = await Promise.all(
-      Array.from(byRace.entries()).map(async ([raceId, predictions]) => {
+      Array.from(byRace.entries()).map(async ([raceId, weekendPredictions]) => {
         const race = await ctx.db.get(raceId);
         if (!race) return null;
 
@@ -65,7 +65,7 @@ export const myPredictionHistory = query({
           race: null,
         };
 
-        for (const pred of predictions) {
+        for (const pred of weekendPredictions) {
           const sessionType = pred.sessionType;
           const score = scores.find((s) => s.sessionType === sessionType);
 
@@ -87,7 +87,7 @@ export const myPredictionHistory = query({
 
         // Get latest submission time
         const latestSubmission = Math.max(
-          ...predictions.map((p) => p.submittedAt),
+          ...weekendPredictions.map((p) => p.submittedAt),
         );
 
         return {

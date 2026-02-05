@@ -53,10 +53,9 @@ function LeaderboardPage() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Client-side query loads the full first page (+ viewer context when authenticated)
-  const clientLeaderboard = useQuery(
-    api.leaderboards.getSeasonLeaderboard,
-    { limit: PAGE_SIZE },
-  );
+  const clientLeaderboard = useQuery(api.leaderboards.getSeasonLeaderboard, {
+    limit: PAGE_SIZE,
+  });
 
   // Update entries when client data loads (has viewer context)
   useEffect(() => {
