@@ -22,15 +22,9 @@ export async function getOrCreateViewer(
   if (!identity) return null;
 
   const clerkUserId = identity.subject;
-
-  const existing = await ctx.db
-    .query('users')
-    .withIndex('by_clerkUserId', (q) => q.eq('clerkUserId', clerkUserId))
-    .unique();
-
-  if (existing) return existing;
-
   const now = Date.now();
+
+  // Extract user data from Clerk identity
   const rawEmail =
     identity.email ??
     (Array.isArray(identity.emailAddresses) && identity.emailAddresses[0]);
@@ -41,11 +35,39 @@ export async function getOrCreateViewer(
     (identity.givenName && identity.familyName
       ? `${identity.givenName} ${identity.familyName}`
       : undefined);
+  const username = (identity as { preferredUsername?: string })
+    .preferredUsername;
+
+  const existing = await ctx.db
+    .query('users')
+    .withIndex('by_clerkUserId', (q) => q.eq('clerkUserId', clerkUserId))
+    .unique();
+
+  if (existing) {
+    // Sync user data from Clerk if it has changed
+    const needsUpdate =
+      existing.email !== email ||
+      existing.displayName !== displayName ||
+      existing.username !== username;
+
+    if (needsUpdate) {
+      await ctx.db.patch(existing._id, {
+        email,
+        displayName,
+        username,
+        updatedAt: now,
+      });
+      return (await ctx.db.get(existing._id)) ?? existing;
+    }
+
+    return existing;
+  }
 
   const userId = await ctx.db.insert('users', {
     clerkUserId,
     email,
     displayName,
+    username,
     isAdmin: false,
     createdAt: now,
     updatedAt: now,

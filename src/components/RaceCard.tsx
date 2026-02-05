@@ -2,7 +2,14 @@ import { Link } from '@tanstack/react-router';
 import { ArrowRight, Calendar, Clock } from 'lucide-react';
 
 import type { Doc } from '../../convex/_generated/dataModel';
+import {
+  formatDate,
+  formatDateLong,
+  formatTime,
+  getTimeUntil,
+} from '../lib/date';
 import { Badge, StatusBadge } from './Badge';
+import { Flag } from './Flag';
 
 export { StatusBadge } from './Badge';
 
@@ -47,11 +54,6 @@ export function getCountryCodeForRace(race: { slug: string }): string | null {
   return SLUG_TO_COUNTRY[key] ?? null;
 }
 
-const FLAG_CDN = 'https://flagcdn.com';
-
-const FLAG_WIDTH = 40;
-const FLAG_HEIGHT = 30;
-
 export function RaceFlag({
   countryCode,
   size = 'md',
@@ -59,24 +61,7 @@ export function RaceFlag({
   countryCode: string;
   size?: 'md' | 'lg';
 }) {
-  const w = size === 'lg' ? 56 : FLAG_WIDTH;
-  const h = size === 'lg' ? 42 : FLAG_HEIGHT;
-  return (
-    <span
-      className="inline-block shrink-0 overflow-hidden rounded shadow-sm ring-1 ring-black/5"
-      style={{ width: w, height: h }}
-    >
-      <img
-        src={`${FLAG_CDN}/w80/${countryCode}.png`}
-        srcSet={`${FLAG_CDN}/w160/${countryCode}.png 2x`}
-        alt=""
-        width={w}
-        height={h}
-        className="h-full w-full object-cover"
-        loading="lazy"
-      />
-    </span>
-  );
+  return <Flag code={countryCode} size={size === 'lg' ? 'xl' : 'lg'} />;
 }
 
 interface RaceCardProps {
@@ -86,51 +71,7 @@ interface RaceCardProps {
   predictionOpenAt?: number | null;
 }
 
-function formatDate(timestamp: number): string {
-  return new Date(timestamp).toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  });
-}
-
-function formatTime(timestamp: number): string {
-  return new Date(timestamp).toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-}
-
-function formatDateLong(timestamp: number): string {
-  return new Date(timestamp).toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
-
-function getTimeUntil(timestamp: number): string {
-  const now = Date.now();
-  const diff = timestamp - now;
-
-  if (diff <= 0) return 'Started';
-
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-
-  if (days > 0) {
-    return `${days}d ${hours}h`;
-  }
-  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  return `${hours}h ${minutes}m`;
-}
-
-export function RaceCard({
-  race,
-  isNext,
-  predictionOpenAt,
-}: RaceCardProps) {
+export function RaceCard({ race, isNext, predictionOpenAt }: RaceCardProps) {
   // Only the next upcoming race is open for predictions
   const isPredictable = race.status === 'upcoming' && isNext;
   const isNotYetOpen = race.status === 'upcoming' && !isNext;
@@ -147,27 +88,33 @@ export function RaceCard({
           : 'border-border hover:border-border-strong'
       }`}
     >
-      <div className="flex items-start gap-3 sm:gap-4">
-        <div className="min-w-0 flex-1">
-          {/* Top row: flag, round, badges – wraps on narrow screens */}
-          <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-2">
-            {countryCode && (
-              <span className="inline-flex shrink-0 items-center">
-                <RaceFlag countryCode={countryCode} />
+      <div className="flex items-stretch gap-3 sm:gap-4">
+        <div className="min-w-0 flex-1 space-y-2">
+          {/* Top row: flag + round on the left, status on the right */}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              {countryCode && (
+                <span className="inline-flex shrink-0 items-center">
+                  <RaceFlag countryCode={countryCode} />
+                </span>
+              )}
+              <span className="shrink-0 text-sm font-medium text-text-muted">
+                Round {race.round}
               </span>
+              {isNext && <Badge variant="next">NEXT UP</Badge>}
+              {race.hasSprint && <Badge variant="sprint">SPRINT</Badge>}
+            </div>
+            {!(race.status === 'upcoming' && isNext) && (
+              <StatusBadge status={race.status} isNext={isNext} />
             )}
-            <span className="shrink-0 text-sm font-medium text-text-muted">
-              Round {race.round}
-            </span>
-            {isNext && <Badge variant="next">NEXT UP</Badge>}
-            {race.hasSprint && <Badge variant="sprint">SPRINT</Badge>}
-            <StatusBadge status={race.status} isNext={isNext} />
           </div>
 
-          <h3 className="mb-2 line-clamp-2 text-lg font-semibold text-text sm:mb-3 sm:text-xl">
+          {/* Race name */}
+          <h3 className="line-clamp-2 text-lg font-semibold text-text sm:text-xl">
             {race.name}
           </h3>
 
+          {/* Date and time */}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-text-muted">
             <span className="inline-flex items-center gap-1.5">
               <Calendar size={16} className="shrink-0 text-text-muted" />
@@ -177,31 +124,39 @@ export function RaceCard({
               <Clock size={16} className="shrink-0 text-text-muted" />
               {formatTime(race.raceStartAt)}
             </span>
-            {isPredictable && (
-              <span className="w-full font-medium text-accent sm:w-auto">
-                {getTimeUntil(race.predictionLockAt)} to predict
-              </span>
-            )}
-            {isNotYetOpen && predictionOpenAt != null && (
-              <span className="w-full text-text-muted sm:w-auto">
-                Opens {formatDateLong(predictionOpenAt)}
-              </span>
-            )}
-            {race.status === 'locked' && (
-              <span className="w-full font-medium text-warning sm:w-auto">
-                {race.raceStartAt > Date.now()
-                  ? `Race in ${getTimeUntil(race.raceStartAt)}`
-                  : 'Results pending'}
-              </span>
-            )}
           </div>
+
+          {/* Contextual status strip */}
+          {(isPredictable || isNotYetOpen || race.status === 'locked') && (
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              {isPredictable && (
+                <span className="inline-flex items-center rounded-full bg-accent-muted px-3 py-1 text-xs font-medium text-accent">
+                  {getTimeUntil(race.predictionLockAt)} to predict
+                </span>
+              )}
+              {isNotYetOpen && predictionOpenAt != null && (
+                <span className="inline-flex items-center rounded-full bg-surface-muted px-3 py-1 text-xs text-text-muted">
+                  Opens {formatDateLong(predictionOpenAt)}
+                </span>
+              )}
+              {race.status === 'locked' && (
+                <span className="inline-flex items-center rounded-full bg-warning-muted px-3 py-1 text-xs font-medium text-warning">
+                  {race.raceStartAt > Date.now()
+                    ? `Race in ${getTimeUntil(race.raceStartAt)}`
+                    : 'Results pending'}
+                </span>
+              )}
+            </div>
+          )}
         </div>
-        <ArrowRight
-          size={18}
-          strokeWidth={2}
-          className="mt-1 shrink-0 text-text-muted transition-colors group-hover:text-text"
-          aria-hidden
-        />
+        <div className="flex w-0 shrink-0 items-center overflow-visible">
+          <ArrowRight
+            size={18}
+            strokeWidth={2}
+            className="shrink-0 -translate-x-1 text-text-muted transition-colors group-hover:text-text"
+            aria-hidden
+          />
+        </div>
       </div>
     </Link>
   );

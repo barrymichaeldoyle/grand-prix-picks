@@ -12,16 +12,33 @@ import { scoreTopFive } from './lib/scoring';
 
 type ScoreBreakdownItem = NonNullable<Doc<'scores'>['breakdown']>[number];
 
+const sessionTypeValidator = v.union(
+  v.literal('quali'),
+  v.literal('sprint_quali'),
+  v.literal('sprint'),
+  v.literal('race'),
+);
+
+type SessionType = 'quali' | 'sprint_quali' | 'sprint' | 'race';
+
 export const getMyScoreForRace = query({
-  args: { raceId: v.id('races') },
+  args: {
+    raceId: v.id('races'),
+    sessionType: v.optional(sessionTypeValidator),
+  },
   handler: async (ctx, args) => {
     const viewer = await getViewer(ctx);
     if (!viewer) return null;
 
+    const sessionType = args.sessionType ?? 'race';
+
     const score = await ctx.db
       .query('scores')
-      .withIndex('by_user_race', (q) =>
-        q.eq('userId', viewer._id).eq('raceId', args.raceId),
+      .withIndex('by_user_race_session', (q) =>
+        q
+          .eq('userId', viewer._id)
+          .eq('raceId', args.raceId)
+          .eq('sessionType', sessionType),
       )
       .unique();
 
@@ -49,16 +66,23 @@ export const getMyScoreForRace = query({
 });
 
 export const getResultForRace = query({
-  args: { raceId: v.id('races') },
+  args: {
+    raceId: v.id('races'),
+    sessionType: v.optional(sessionTypeValidator),
+  },
   handler: async (ctx, args) => {
+    const sessionType = args.sessionType ?? 'race';
+
     const result = await ctx.db
       .query('results')
-      .withIndex('by_race', (q) => q.eq('raceId', args.raceId))
+      .withIndex('by_race_session', (q) =>
+        q.eq('raceId', args.raceId).eq('sessionType', sessionType),
+      )
       .unique();
 
     if (!result) return null;
 
-    // Enrich classification with driver names
+    // Enrich classification with driver details
     const enrichedClassification = await Promise.all(
       result.classification.map(
         async (driverId: Id<'drivers'>, index: number) => {
@@ -68,6 +92,9 @@ export const getResultForRace = query({
             driverId,
             code: driver?.code ?? '???',
             displayName: driver?.displayName ?? 'Unknown',
+            number: driver?.number ?? null,
+            team: driver?.team ?? null,
+            nationality: driver?.nationality ?? null,
           };
         },
       ),
@@ -80,10 +107,42 @@ export const getResultForRace = query({
   },
 });
 
+// Get all available results for a race (for tabs)
+export const getAllResultsForRace = query({
+  args: { raceId: v.id('races') },
+  handler: async (ctx, args) => {
+    // Query using prefix of compound index
+    const results = await ctx.db
+      .query('results')
+      .withIndex('by_race_session', (q) => q.eq('raceId', args.raceId))
+      .collect();
+
+    const sessionTypes: Array<SessionType> = [];
+
+    for (const result of results) {
+      if (!sessionTypes.includes(result.sessionType)) {
+        sessionTypes.push(result.sessionType);
+      }
+    }
+
+    // Sort in logical order: quali, sprint_quali, sprint, race
+    const order: Array<SessionType> = [
+      'quali',
+      'sprint_quali',
+      'sprint',
+      'race',
+    ];
+    sessionTypes.sort((a, b) => order.indexOf(a) - order.indexOf(b));
+
+    return sessionTypes;
+  },
+});
+
 export const adminPublishResults = mutation({
   args: {
     raceId: v.id('races'),
     classification: v.array(v.id('drivers')),
+    sessionType: v.optional(sessionTypeValidator),
   },
   handler: async (ctx, args) => {
     const viewer = requireViewer(await getOrCreateViewer(ctx));
@@ -93,11 +152,15 @@ export const adminPublishResults = mutation({
       throw new Error('Classification must include at least top 5');
     }
 
+    const sessionType = args.sessionType ?? 'race';
     const now = Date.now();
 
+    // Check for existing result for this session
     const existing = await ctx.db
       .query('results')
-      .withIndex('by_race', (q) => q.eq('raceId', args.raceId))
+      .withIndex('by_race_session', (q) =>
+        q.eq('raceId', args.raceId).eq('sessionType', sessionType),
+      )
       .unique();
 
     if (existing) {
@@ -108,16 +171,19 @@ export const adminPublishResults = mutation({
     } else {
       await ctx.db.insert('results', {
         raceId: args.raceId,
+        sessionType,
         classification: args.classification,
         publishedAt: now,
         updatedAt: now,
       });
     }
 
-    // Compute scores for everyone who predicted this race
+    // Compute scores for everyone who predicted this session
     const predictions = await ctx.db
       .query('predictions')
-      .withIndex('by_race', (q) => q.eq('raceId', args.raceId))
+      .withIndex('by_race_session', (q) =>
+        q.eq('raceId', args.raceId).eq('sessionType', sessionType),
+      )
       .collect();
 
     for (const pred of predictions) {
@@ -128,8 +194,11 @@ export const adminPublishResults = mutation({
 
       const existingScore = await ctx.db
         .query('scores')
-        .withIndex('by_user_race', (q) =>
-          q.eq('userId', pred.userId).eq('raceId', pred.raceId),
+        .withIndex('by_user_race_session', (q) =>
+          q
+            .eq('userId', pred.userId)
+            .eq('raceId', pred.raceId)
+            .eq('sessionType', sessionType),
         )
         .unique();
 
@@ -143,6 +212,7 @@ export const adminPublishResults = mutation({
         await ctx.db.insert('scores', {
           userId: pred.userId,
           raceId: pred.raceId,
+          sessionType,
           points: total,
           breakdown,
           createdAt: now,
@@ -151,10 +221,12 @@ export const adminPublishResults = mutation({
       }
     }
 
-    // Optional: mark race finished
-    const race = await ctx.db.get(args.raceId);
-    if (race && race.status !== 'finished') {
-      await ctx.db.patch(args.raceId, { status: 'finished', updatedAt: now });
+    // Mark race as finished only when publishing race results
+    if (sessionType === 'race') {
+      const race = await ctx.db.get(args.raceId);
+      if (race && race.status !== 'finished') {
+        await ctx.db.patch(args.raceId, { status: 'finished', updatedAt: now });
+      }
     }
 
     return { ok: true, scoredCount: predictions.length };

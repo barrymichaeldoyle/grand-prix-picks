@@ -13,6 +13,7 @@ export default defineSchema({
     clerkUserId: v.string(),
     email: v.optional(v.string()),
     displayName: v.optional(v.string()),
+    username: v.optional(v.string()),
     isAdmin: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -23,11 +24,15 @@ export default defineSchema({
     givenName: v.optional(v.string()),
     familyName: v.optional(v.string()),
     displayName: v.string(), // "Max Verstappen"
+    number: v.optional(v.number()), // 1, 44, etc.
+    team: v.optional(v.string()), // "Red Bull Racing", "Ferrari", etc.
+    nationality: v.optional(v.string()), // ISO 3166-1 alpha-2: "NL", "GB", etc.
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index('by_code', ['code'])
-    .index('by_displayName', ['displayName']),
+    .index('by_displayName', ['displayName'])
+    .index('by_team', ['team']),
 
   races: defineTable({
     season: v.number(), // 2026
@@ -63,33 +68,29 @@ export default defineSchema({
   predictions: defineTable({
     userId: v.id('users'),
     raceId: v.id('races'),
-    sessionType: v.optional(sessionType), // undefined = "race" for backwards compat
+    sessionType: sessionType,
     picks: v.array(v.id('drivers')), // length 5
     submittedAt: v.number(),
     updatedAt: v.number(),
   })
-    .index('by_user_race', ['userId', 'raceId']) // legacy
     .index('by_user_race_session', ['userId', 'raceId', 'sessionType'])
-    .index('by_race', ['raceId'])
     .index('by_race_session', ['raceId', 'sessionType'])
     .index('by_user', ['userId']),
 
   // Classification results per session
   results: defineTable({
     raceId: v.id('races'),
-    sessionType: v.optional(sessionType), // undefined = "race" for backwards compat
+    sessionType: sessionType,
     classification: v.array(v.id('drivers')), // ordered, ideally full 20
     publishedAt: v.number(),
     updatedAt: v.number(),
-  })
-    .index('by_race', ['raceId']) // legacy
-    .index('by_race_session', ['raceId', 'sessionType']),
+  }).index('by_race_session', ['raceId', 'sessionType']),
 
   // Top 5 scores per session
   scores: defineTable({
     userId: v.id('users'),
     raceId: v.id('races'),
-    sessionType: v.optional(sessionType), // undefined = "race" for backwards compat
+    sessionType: sessionType,
     points: v.number(),
     breakdown: v.optional(
       v.array(
@@ -104,9 +105,7 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   })
-    .index('by_user_race', ['userId', 'raceId']) // legacy
     .index('by_user_race_session', ['userId', 'raceId', 'sessionType'])
-    .index('by_race', ['raceId'])
     .index('by_race_session', ['raceId', 'sessionType'])
     .index('by_user', ['userId'])
     .index('by_user_session', ['userId', 'sessionType']),

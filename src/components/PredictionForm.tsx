@@ -5,23 +5,26 @@ import { useEffect, useState } from 'react';
 
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
+import type { SessionType } from '../lib/sessions';
 import { Button } from './Button';
 import { InlineLoader } from './InlineLoader';
 
 type Driver = Doc<'drivers'>;
-type SessionType = 'quali' | 'sprint_quali' | 'sprint' | 'race';
 
 interface PredictionFormProps {
   raceId: Id<'races'>;
   existingPicks?: Array<Id<'drivers'>>;
   /** If provided, only update this specific session. Otherwise cascade to all. */
   sessionType?: SessionType;
+  /** Called after a successful submit (e.g. to close an edit view). */
+  onSuccess?: () => void;
 }
 
 export function PredictionForm({
   raceId,
   existingPicks,
   sessionType,
+  onSuccess,
 }: PredictionFormProps) {
   const drivers = useQuery(api.drivers.listDrivers);
   const submitPrediction = useMutation(api.predictions.submitPrediction);
@@ -99,6 +102,7 @@ export function PredictionForm({
     try {
       await submitPrediction({ raceId, picks, sessionType });
       setSubmitStatus('success');
+      onSuccess?.();
     } catch (error) {
       setSubmitStatus('error');
       setErrorMessage(

@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useMutation, useQuery } from 'convex/react';
 import { ArrowLeft, Check, Loader2, Save, Shield, Trophy } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { api } from '../../../../convex/_generated/api';
 import type { Id } from '../../../../convex/_generated/dataModel';
+import type { SessionType } from '../../../lib/sessions';
+import { getSessionsForWeekend, SESSION_LABELS } from '../../../lib/sessions';
 
 export const Route = createFileRoute('/admin/races/$raceId')({
   component: AdminRaceDetailPage,
@@ -16,8 +18,12 @@ function AdminRaceDetailPage() {
   const isAdmin = useQuery(api.users.amIAdmin);
   const race = useQuery(api.races.getRace, { raceId: typedRaceId });
   const drivers = useQuery(api.drivers.listDrivers);
+
+  const [selectedSession, setSelectedSession] = useState<SessionType>('race');
+
   const existingResult = useQuery(api.results.getResultForRace, {
     raceId: typedRaceId,
+    sessionType: selectedSession,
   });
 
   const publishResults = useMutation(api.results.adminPublishResults);
@@ -28,10 +34,15 @@ function AdminRaceDetailPage() {
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishSuccess, setPublishSuccess] = useState(false);
 
-  // Initialize selected drivers from existing result
-  if (existingResult?.classification && selectedDrivers.length === 0) {
-    setSelectedDrivers(existingResult.classification.slice(0, 5));
-  }
+  // Reset selected drivers when session changes or when result loads
+  useEffect(() => {
+    if (existingResult?.classification) {
+      setSelectedDrivers(existingResult.classification.slice(0, 5));
+    } else {
+      setSelectedDrivers([]);
+    }
+    setPublishSuccess(false);
+  }, [existingResult, selectedSession]);
 
   if (isAdmin === undefined || race === undefined || drivers === undefined) {
     return (
@@ -67,6 +78,9 @@ function AdminRaceDetailPage() {
     );
   }
 
+  // Determine which sessions are available for this race
+  const availableSessions = getSessionsForWeekend(race.hasSprint ?? false);
+
   const toggleDriver = (driverId: Id<'drivers'>) => {
     setPublishSuccess(false);
     if (selectedDrivers.includes(driverId)) {
@@ -97,6 +111,7 @@ function AdminRaceDetailPage() {
       await publishResults({
         raceId: typedRaceId,
         classification: selectedDrivers,
+        sessionType: selectedSession,
       });
       setPublishSuccess(true);
     } catch (error) {
@@ -158,8 +173,28 @@ function AdminRaceDetailPage() {
             </h2>
           </div>
 
+          {/* Session Type Tabs */}
+          <div className="mb-6">
+            <div className="flex gap-1 rounded-lg border border-slate-700 bg-slate-900/50 p-1">
+              {availableSessions.map((session) => (
+                <button
+                  key={session}
+                  onClick={() => setSelectedSession(session)}
+                  className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                    selectedSession === session
+                      ? 'bg-yellow-500 text-black'
+                      : 'text-slate-400 hover:bg-slate-700 hover:text-white'
+                  }`}
+                >
+                  {SESSION_LABELS[session]}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <p className="mb-6 text-slate-400">
-            Select the top 5 finishers in order (P1 to P5).
+            Select the top 5 finishers for {SESSION_LABELS[selectedSession]} in
+            order (P1 to P5).
           </p>
 
           {/* Selected drivers (top 5) */}
@@ -246,7 +281,7 @@ function AdminRaceDetailPage() {
               ) : (
                 <>
                   <Save size={20} />
-                  Publish Results
+                  Publish {SESSION_LABELS[selectedSession]} Results
                 </>
               )}
             </button>

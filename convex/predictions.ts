@@ -45,7 +45,7 @@ export const myPredictionHistory = query({
         // Get all scores for this race weekend
         const scores = await ctx.db
           .query('scores')
-          .withIndex('by_user_race', (q) =>
+          .withIndex('by_user_race_session', (q) =>
             q.eq('userId', viewer._id).eq('raceId', raceId),
           )
           .collect();
@@ -66,10 +66,8 @@ export const myPredictionHistory = query({
         };
 
         for (const pred of preds) {
-          const sessionType = (pred.sessionType ?? 'race') as SessionType;
-          const score = scores.find(
-            (s) => (s.sessionType ?? 'race') === sessionType,
-          );
+          const sessionType = pred.sessionType;
+          const score = scores.find((s) => s.sessionType === sessionType);
 
           sessions[sessionType] = {
             picks: pred.picks.map((driverId) => ({
@@ -129,40 +127,17 @@ export const myPredictionForRace = query({
     const viewer = await getViewer(ctx);
     if (!viewer) return null;
 
-    // If sessionType specified, use the new index
-    if (args.sessionType) {
-      return await ctx.db
-        .query('predictions')
-        .withIndex('by_user_race_session', (q) =>
-          q
-            .eq('userId', viewer._id)
-            .eq('raceId', args.raceId)
-            .eq('sessionType', args.sessionType),
-        )
-        .unique();
-    }
+    const sessionType = args.sessionType ?? 'race';
 
-    // Legacy: return race prediction (sessionType undefined or 'race')
-    // First try with sessionType 'race', then fall back to undefined (legacy)
-    const racePrediction = await ctx.db
+    return await ctx.db
       .query('predictions')
       .withIndex('by_user_race_session', (q) =>
         q
           .eq('userId', viewer._id)
           .eq('raceId', args.raceId)
-          .eq('sessionType', 'race'),
+          .eq('sessionType', sessionType),
       )
       .unique();
-
-    if (racePrediction) return racePrediction;
-
-    // Fall back to legacy prediction without sessionType
-    return await ctx.db
-      .query('predictions')
-      .withIndex('by_user_race', (q) =>
-        q.eq('userId', viewer._id).eq('raceId', args.raceId),
-      )
-      .first();
   },
 });
 
@@ -176,10 +151,10 @@ export const myWeekendPredictions = query({
     const race = await ctx.db.get(args.raceId);
     if (!race) return null;
 
-    // Get all predictions for this race weekend
+    // Get all predictions for this race weekend (query prefix of compound index)
     const allPredictions = await ctx.db
       .query('predictions')
-      .withIndex('by_user_race', (q) =>
+      .withIndex('by_user_race_session', (q) =>
         q.eq('userId', viewer._id).eq('raceId', args.raceId),
       )
       .collect();
@@ -193,8 +168,7 @@ export const myWeekendPredictions = query({
     };
 
     for (const pred of allPredictions) {
-      const sessionType = (pred.sessionType ?? 'race') as SessionType;
-      bySession[sessionType] = pred.picks;
+      bySession[pred.sessionType] = pred.picks;
     }
 
     return {

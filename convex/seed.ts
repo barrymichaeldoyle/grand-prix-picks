@@ -1,4 +1,11 @@
-import { internalMutation } from './_generated/server';
+import { v } from 'convex/values';
+
+import { internal } from './_generated/api';
+import type { Id } from './_generated/dataModel';
+import { internalAction, internalMutation } from './_generated/server';
+import { scoreTopFive } from './lib/scoring';
+
+type SessionType = 'quali' | 'sprint_quali' | 'sprint' | 'race';
 
 const F1_DRIVERS_2026 = [
   // McLaren (Constructors' Champions)
@@ -7,12 +14,18 @@ const F1_DRIVERS_2026 = [
     givenName: 'Lando',
     familyName: 'Norris',
     displayName: 'Lando Norris',
+    number: 4,
+    team: 'McLaren',
+    nationality: 'GB',
   },
   {
     code: 'PIA',
     givenName: 'Oscar',
     familyName: 'Piastri',
     displayName: 'Oscar Piastri',
+    number: 81,
+    team: 'McLaren',
+    nationality: 'AU',
   },
 
   // Ferrari
@@ -21,12 +34,18 @@ const F1_DRIVERS_2026 = [
     givenName: 'Charles',
     familyName: 'Leclerc',
     displayName: 'Charles Leclerc',
+    number: 16,
+    team: 'Ferrari',
+    nationality: 'MC',
   },
   {
     code: 'HAM',
     givenName: 'Lewis',
     familyName: 'Hamilton',
     displayName: 'Lewis Hamilton',
+    number: 44,
+    team: 'Ferrari',
+    nationality: 'GB',
   },
 
   // Red Bull Racing
@@ -35,12 +54,18 @@ const F1_DRIVERS_2026 = [
     givenName: 'Max',
     familyName: 'Verstappen',
     displayName: 'Max Verstappen',
+    number: 1,
+    team: 'Red Bull Racing',
+    nationality: 'NL',
   },
   {
     code: 'HAD',
     givenName: 'Isack',
     familyName: 'Hadjar',
     displayName: 'Isack Hadjar',
+    number: 6,
+    team: 'Red Bull Racing',
+    nationality: 'FR',
   },
 
   // Mercedes
@@ -49,12 +74,18 @@ const F1_DRIVERS_2026 = [
     givenName: 'George',
     familyName: 'Russell',
     displayName: 'George Russell',
+    number: 63,
+    team: 'Mercedes',
+    nationality: 'GB',
   },
   {
     code: 'ANT',
     givenName: 'Kimi',
     familyName: 'Antonelli',
     displayName: 'Kimi Antonelli',
+    number: 12,
+    team: 'Mercedes',
+    nationality: 'IT',
   },
 
   // Aston Martin
@@ -63,12 +94,18 @@ const F1_DRIVERS_2026 = [
     givenName: 'Fernando',
     familyName: 'Alonso',
     displayName: 'Fernando Alonso',
+    number: 14,
+    team: 'Aston Martin',
+    nationality: 'ES',
   },
   {
     code: 'STR',
     givenName: 'Lance',
     familyName: 'Stroll',
     displayName: 'Lance Stroll',
+    number: 18,
+    team: 'Aston Martin',
+    nationality: 'CA',
   },
 
   // Alpine
@@ -77,12 +114,18 @@ const F1_DRIVERS_2026 = [
     givenName: 'Pierre',
     familyName: 'Gasly',
     displayName: 'Pierre Gasly',
+    number: 10,
+    team: 'Alpine',
+    nationality: 'FR',
   },
   {
     code: 'COL',
     givenName: 'Franco',
     familyName: 'Colapinto',
     displayName: 'Franco Colapinto',
+    number: 43,
+    team: 'Alpine',
+    nationality: 'AR',
   },
 
   // Williams
@@ -91,12 +134,18 @@ const F1_DRIVERS_2026 = [
     givenName: 'Alex',
     familyName: 'Albon',
     displayName: 'Alex Albon',
+    number: 23,
+    team: 'Williams',
+    nationality: 'TH',
   },
   {
     code: 'SAI',
     givenName: 'Carlos',
     familyName: 'Sainz',
     displayName: 'Carlos Sainz',
+    number: 55,
+    team: 'Williams',
+    nationality: 'ES',
   },
 
   // Racing Bulls
@@ -105,12 +154,18 @@ const F1_DRIVERS_2026 = [
     givenName: 'Liam',
     familyName: 'Lawson',
     displayName: 'Liam Lawson',
+    number: 30,
+    team: 'Racing Bulls',
+    nationality: 'NZ',
   },
   {
     code: 'LIN',
     givenName: 'Arvid',
     familyName: 'Lindblad',
     displayName: 'Arvid Lindblad',
+    number: 41,
+    team: 'Racing Bulls',
+    nationality: 'GB',
   },
 
   // Audi (formerly Sauber)
@@ -119,12 +174,18 @@ const F1_DRIVERS_2026 = [
     givenName: 'Nico',
     familyName: 'Hülkenberg',
     displayName: 'Nico Hülkenberg',
+    number: 27,
+    team: 'Audi',
+    nationality: 'DE',
   },
   {
     code: 'BOR',
     givenName: 'Gabriel',
     familyName: 'Bortoleto',
     displayName: 'Gabriel Bortoleto',
+    number: 5,
+    team: 'Audi',
+    nationality: 'BR',
   },
 
   // Haas
@@ -133,12 +194,18 @@ const F1_DRIVERS_2026 = [
     givenName: 'Esteban',
     familyName: 'Ocon',
     displayName: 'Esteban Ocon',
+    number: 31,
+    team: 'Haas',
+    nationality: 'FR',
   },
   {
     code: 'BEA',
     givenName: 'Oliver',
     familyName: 'Bearman',
     displayName: 'Oliver Bearman',
+    number: 87,
+    team: 'Haas',
+    nationality: 'GB',
   },
 
   // Cadillac (New for 2026)
@@ -147,12 +214,18 @@ const F1_DRIVERS_2026 = [
     givenName: 'Valtteri',
     familyName: 'Bottas',
     displayName: 'Valtteri Bottas',
+    number: 77,
+    team: 'Cadillac',
+    nationality: 'FI',
   },
   {
     code: 'PER',
     givenName: 'Sergio',
     familyName: 'Pérez',
     displayName: 'Sergio Pérez',
+    number: 11,
+    team: 'Cadillac',
+    nationality: 'MX',
   },
 ];
 
@@ -161,7 +234,7 @@ export const seedDrivers = internalMutation({
   handler: async (ctx) => {
     const now = Date.now();
     let created = 0;
-    let skipped = 0;
+    let updated = 0;
 
     for (const driver of F1_DRIVERS_2026) {
       // Check if driver already exists by code
@@ -171,7 +244,12 @@ export const seedDrivers = internalMutation({
         .first();
 
       if (existing) {
-        skipped++;
+        // Update existing driver with new fields (team, number)
+        await ctx.db.patch(existing._id, {
+          ...driver,
+          updatedAt: now,
+        });
+        updated++;
         continue;
       }
 
@@ -183,7 +261,7 @@ export const seedDrivers = internalMutation({
       created++;
     }
 
-    return { created, skipped, total: F1_DRIVERS_2026.length };
+    return { created, updated, total: F1_DRIVERS_2026.length };
   },
 });
 
@@ -525,5 +603,942 @@ export const seedH2HMatchups = internalMutation({
     }
 
     return { created, skipped, total: H2H_MATCHUPS_2026.length };
+  },
+});
+
+/**
+ * Seed development data for testing post-race features.
+ * Creates finished races with results, predictions, and scores.
+ *
+ * Run via Convex dashboard or CLI:
+ *   npx convex run seed:seedDevData
+ *
+ * Optional: pass a clerkUserId to create predictions for a specific user.
+ */
+export const seedDevData = internalMutation({
+  args: {
+    clerkUserId: v.optional(v.string()),
+    numFinishedRaces: v.optional(v.number()), // defaults to 3
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const numFinished = args.numFinishedRaces ?? 3;
+
+    // Get all drivers
+    const drivers = await ctx.db.query('drivers').collect();
+    if (drivers.length < 5) {
+      throw new Error(
+        'Need at least 5 drivers. Run seedDrivers first: npx convex run seed:seedDrivers',
+      );
+    }
+    const driverIds = drivers.map((d) => d._id);
+
+    // Get races sorted by round
+    const races = await ctx.db.query('races').collect();
+    if (races.length === 0) {
+      throw new Error(
+        'No races found. Run seedRaces first: npx convex run seed:seedRaces',
+      );
+    }
+    const sortedRaces = races.sort((a, b) => a.round - b.round);
+    const racesToFinish = sortedRaces.slice(0, numFinished);
+
+    // Find or create dev user
+    let devUser = args.clerkUserId
+      ? await ctx.db
+          .query('users')
+          .withIndex('by_clerkUserId', (q) =>
+            q.eq('clerkUserId', args.clerkUserId!),
+          )
+          .unique()
+      : await ctx.db.query('users').first();
+
+    if (!devUser) {
+      // Create a dev user
+      const devUserId = await ctx.db.insert('users', {
+        clerkUserId: 'dev_test_user',
+        email: 'dev@example.com',
+        displayName: 'Dev Tester',
+        isAdmin: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      devUser = await ctx.db.get(devUserId);
+    }
+
+    if (!devUser) {
+      throw new Error('Failed to get or create dev user');
+    }
+
+    const stats = {
+      racesFinished: 0,
+      resultsCreated: 0,
+      predictionsCreated: 0,
+      scoresCreated: 0,
+    };
+
+    // Simple shuffle using Fisher-Yates
+    function shuffle<T>(arr: Array<T>): Array<T> {
+      const result = [...arr];
+      for (let i = result.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [result[i], result[j]] = [result[j], result[i]];
+      }
+      return result;
+    }
+
+    for (const race of racesToFinish) {
+      // 1. Mark race as finished (set dates in the past)
+      const pastRaceStart =
+        now - (numFinished - race.round + 1) * 7 * 24 * 60 * 60 * 1000; // weeks ago
+      await ctx.db.patch(race._id, {
+        status: 'finished',
+        raceStartAt: pastRaceStart,
+        predictionLockAt: pastRaceStart,
+        qualiStartAt: pastRaceStart - 24 * 60 * 60 * 1000,
+        qualiLockAt: pastRaceStart - 24 * 60 * 60 * 1000,
+        updatedAt: now,
+      });
+      stats.racesFinished++;
+
+      // 2. Create shuffled classification (results)
+      const classification = shuffle(driverIds);
+      const existingResult = await ctx.db
+        .query('results')
+        .withIndex('by_race_session', (q) =>
+          q.eq('raceId', race._id).eq('sessionType', 'race'),
+        )
+        .unique();
+
+      if (!existingResult) {
+        await ctx.db.insert('results', {
+          raceId: race._id,
+          sessionType: 'race',
+          classification,
+          publishedAt: now,
+          updatedAt: now,
+        });
+        stats.resultsCreated++;
+      }
+
+      // 3. Create prediction for dev user (slightly different from results for realistic scoring)
+      const existingPrediction = await ctx.db
+        .query('predictions')
+        .withIndex('by_user_race_session', (q) =>
+          q
+            .eq('userId', devUser._id)
+            .eq('raceId', race._id)
+            .eq('sessionType', 'race'),
+        )
+        .first();
+
+      let picks: typeof driverIds;
+      if (!existingPrediction) {
+        // Make predictions that partially match results (for interesting scores)
+        const top5Result = classification.slice(0, 5);
+        picks = [
+          top5Result[0], // 1st place correct
+          top5Result[2], // 3rd in 2nd slot (off by 1)
+          top5Result[1], // 2nd in 3rd slot (off by 1)
+          classification[6], // 7th place driver in 4th slot (outside top 5)
+          top5Result[4], // 5th correct
+        ];
+
+        await ctx.db.insert('predictions', {
+          userId: devUser._id,
+          raceId: race._id,
+          sessionType: 'race',
+          picks,
+          submittedAt: pastRaceStart - 60 * 60 * 1000, // 1 hour before race
+          updatedAt: pastRaceStart - 60 * 60 * 1000,
+        });
+        stats.predictionsCreated++;
+      } else {
+        picks = existingPrediction.picks;
+      }
+
+      // 4. Compute score
+      const existingScore = await ctx.db
+        .query('scores')
+        .withIndex('by_user_race_session', (q) =>
+          q
+            .eq('userId', devUser._id)
+            .eq('raceId', race._id)
+            .eq('sessionType', 'race'),
+        )
+        .unique();
+
+      if (!existingScore) {
+        const { total, breakdown } = scoreTopFive({
+          picks,
+          classification,
+        });
+
+        await ctx.db.insert('scores', {
+          userId: devUser._id,
+          raceId: race._id,
+          sessionType: 'race',
+          points: total,
+          breakdown,
+          createdAt: now,
+          updatedAt: now,
+        });
+        stats.scoresCreated++;
+      }
+    }
+
+    return {
+      ...stats,
+      devUserId: devUser._id,
+      devUserEmail: devUser.email,
+    };
+  },
+});
+
+/**
+ * Seed session results for a specific race.
+ * Useful for testing the results display with different session types.
+ *
+ * Run via Convex dashboard or CLI:
+ *   npx convex run seed:seedSessionResult --args '{"raceSlug": "china-2026", "sessionType": "quali"}'
+ */
+export const seedSessionResult = internalMutation({
+  args: {
+    raceSlug: v.string(),
+    sessionType: v.union(
+      v.literal('quali'),
+      v.literal('sprint_quali'),
+      v.literal('sprint'),
+      v.literal('race'),
+    ),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    // Find the race
+    const race = await ctx.db
+      .query('races')
+      .withIndex('by_slug', (q) => q.eq('slug', args.raceSlug))
+      .unique();
+
+    if (!race) {
+      throw new Error(`Race not found: ${args.raceSlug}`);
+    }
+
+    // Get all drivers
+    const drivers = await ctx.db.query('drivers').collect();
+    if (drivers.length < 5) {
+      throw new Error('Need at least 5 drivers. Run seedDrivers first.');
+    }
+
+    // Shuffle drivers for classification
+    const shuffled = [...drivers];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    const classification = shuffled.map((d) => d._id);
+
+    // Check for existing result
+    const existing = await ctx.db
+      .query('results')
+      .withIndex('by_race_session', (q) =>
+        q.eq('raceId', race._id).eq('sessionType', args.sessionType),
+      )
+      .unique();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        classification,
+        updatedAt: now,
+      });
+      return {
+        action: 'updated',
+        raceId: race._id,
+        raceName: race.name,
+        sessionType: args.sessionType,
+        top5: shuffled.slice(0, 5).map((d) => d.code),
+      };
+    }
+
+    await ctx.db.insert('results', {
+      raceId: race._id,
+      sessionType: args.sessionType as SessionType,
+      classification: classification as Array<Id<'drivers'>>,
+      publishedAt: now,
+      updatedAt: now,
+    });
+
+    // Also update race status to locked if it's still upcoming
+    if (race.status === 'upcoming') {
+      await ctx.db.patch(race._id, { status: 'locked', updatedAt: now });
+    }
+
+    return {
+      action: 'created',
+      raceId: race._id,
+      raceName: race.name,
+      sessionType: args.sessionType,
+      top5: shuffled.slice(0, 5).map((d) => d.code),
+    };
+  },
+});
+
+/**
+ * Sync all users from Clerk to update usernames.
+ * Requires CLERK_SECRET_KEY environment variable in Convex.
+ *
+ * First, set the env var:
+ *   npx convex env set CLERK_SECRET_KEY sk_test_...
+ *
+ * Then run:
+ *   npx convex run seed:syncUsersFromClerk
+ */
+export const syncUsersFromClerk = internalAction({
+  args: {},
+  handler: async (
+    ctx,
+  ): Promise<{ updated: number; notFound: number; total: number }> => {
+    const clerkSecretKey = process.env.CLERK_SECRET_KEY;
+    if (!clerkSecretKey) {
+      throw new Error(
+        'CLERK_SECRET_KEY not set. Run: npx convex env set CLERK_SECRET_KEY <your_key>',
+      );
+    }
+
+    // Fetch all users from Clerk
+    const response = await fetch('https://api.clerk.com/v1/users?limit=100', {
+      headers: {
+        Authorization: `Bearer ${clerkSecretKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Clerk API error: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    const clerkUsers: Array<{
+      id: string;
+      username: string | null;
+      first_name: string | null;
+      last_name: string | null;
+      email_addresses: Array<{ email_address: string }>;
+    }> = await response.json();
+
+    // Update each user in Convex
+    return await ctx.runMutation(internal.seed.syncUsersFromClerkMutation, {
+      users: clerkUsers.map((u) => ({
+        clerkUserId: u.id,
+        username: u.username,
+        displayName:
+          u.first_name && u.last_name
+            ? `${u.first_name} ${u.last_name}`
+            : (u.first_name ?? u.last_name ?? null),
+        email: u.email_addresses[0]?.email_address ?? null,
+      })),
+    });
+  },
+});
+
+export const syncUsersFromClerkMutation = internalMutation({
+  args: {
+    users: v.array(
+      v.object({
+        clerkUserId: v.string(),
+        username: v.union(v.string(), v.null()),
+        displayName: v.union(v.string(), v.null()),
+        email: v.union(v.string(), v.null()),
+      }),
+    ),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    let updated = 0;
+    let notFound = 0;
+
+    for (const clerkUser of args.users) {
+      const user = await ctx.db
+        .query('users')
+        .withIndex('by_clerkUserId', (q) =>
+          q.eq('clerkUserId', clerkUser.clerkUserId),
+        )
+        .unique();
+
+      if (!user) {
+        notFound++;
+        continue;
+      }
+
+      // Only update if there are changes
+      const updates: Record<string, unknown> = {};
+      if (clerkUser.username && user.username !== clerkUser.username) {
+        updates.username = clerkUser.username;
+      }
+      if (clerkUser.displayName && user.displayName !== clerkUser.displayName) {
+        updates.displayName = clerkUser.displayName;
+      }
+      if (clerkUser.email && user.email !== clerkUser.email) {
+        updates.email = clerkUser.email;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        updates.updatedAt = now;
+        await ctx.db.patch(user._id, updates);
+        updated++;
+      }
+    }
+
+    return { updated, notFound, total: args.users.length };
+  },
+});
+
+// Random username generator parts
+const USERNAME_ADJECTIVES = [
+  'Fast',
+  'Speed',
+  'Turbo',
+  'Racing',
+  'Quick',
+  'Swift',
+  'Rapid',
+  'Flash',
+  'Thunder',
+  'Storm',
+  'Fire',
+  'Ice',
+  'Shadow',
+  'Ghost',
+  'Phantom',
+  'Stealth',
+  'Apex',
+  'Prime',
+  'Elite',
+  'Pro',
+  'Ultra',
+  'Mega',
+  'Super',
+  'Hyper',
+  'Red',
+  'Blue',
+  'Silver',
+  'Golden',
+  'Dark',
+  'Bright',
+  'Neon',
+  'Chrome',
+];
+
+const USERNAME_NOUNS = [
+  'Racer',
+  'Driver',
+  'Pilot',
+  'Rider',
+  'Champ',
+  'Legend',
+  'Master',
+  'King',
+  'Wolf',
+  'Fox',
+  'Hawk',
+  'Eagle',
+  'Tiger',
+  'Lion',
+  'Bear',
+  'Shark',
+  'Bolt',
+  'Streak',
+  'Blaze',
+  'Fury',
+  'Force',
+  'Power',
+  'Spirit',
+  'Soul',
+  'Ace',
+  'Star',
+  'Hero',
+  'Ninja',
+  'Samurai',
+  'Viking',
+  'Knight',
+  'Warrior',
+];
+
+function generateUsername(index: number): string {
+  const adj = USERNAME_ADJECTIVES[index % USERNAME_ADJECTIVES.length];
+  const noun =
+    USERNAME_NOUNS[
+      Math.floor(index / USERNAME_ADJECTIVES.length) % USERNAME_NOUNS.length
+    ];
+  const num = Math.floor(
+    index / (USERNAME_ADJECTIVES.length * USERNAME_NOUNS.length),
+  );
+  return num > 0 ? `${adj}${noun}${num}` : `${adj}${noun}`;
+}
+
+/**
+ * Seed fake users with predictions and scores for a populated leaderboard.
+ *
+ * Run via: npx convex run seed:seedFakeLeaderboard '{"userCount": 50}'
+ */
+export const seedFakeLeaderboard = internalMutation({
+  args: {
+    userCount: v.optional(v.number()), // defaults to 50
+    clearExisting: v.optional(v.boolean()), // clear existing fake users first
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const userCount = args.userCount ?? 50;
+
+    // Get all races with results
+    const allResults = await ctx.db.query('results').collect();
+    const raceIdsWithResults = [...new Set(allResults.map((r) => r.raceId))];
+
+    if (raceIdsWithResults.length === 0) {
+      throw new Error('No results found. Seed some race results first.');
+    }
+
+    // Get results grouped by race and session
+    const resultsByRaceSession = new Map<string, (typeof allResults)[0]>();
+    for (const result of allResults) {
+      const key = `${result.raceId}_${result.sessionType}`;
+      resultsByRaceSession.set(key, result);
+    }
+
+    // Optionally clear existing fake users
+    if (args.clearExisting) {
+      const fakeUsers = await ctx.db.query('users').collect();
+      for (const user of fakeUsers) {
+        if (user.clerkUserId.startsWith('fake_user_')) {
+          // Delete scores
+          const scores = await ctx.db
+            .query('scores')
+            .withIndex('by_user', (q) => q.eq('userId', user._id))
+            .collect();
+          for (const score of scores) {
+            await ctx.db.delete(score._id);
+          }
+          // Delete predictions
+          const preds = await ctx.db
+            .query('predictions')
+            .withIndex('by_user', (q) => q.eq('userId', user._id))
+            .collect();
+          for (const pred of preds) {
+            await ctx.db.delete(pred._id);
+          }
+          // Delete user
+          await ctx.db.delete(user._id);
+        }
+      }
+    }
+
+    const stats = { usersCreated: 0, predictionsCreated: 0, scoresCreated: 0 };
+
+    for (let i = 0; i < userCount; i++) {
+      const username = generateUsername(i);
+      const clerkUserId = `fake_user_${i}_${Date.now()}`;
+
+      // Create fake user
+      const userId = await ctx.db.insert('users', {
+        clerkUserId,
+        username,
+        displayName: username,
+        email: `${username.toLowerCase()}@example.com`,
+        isAdmin: false,
+        createdAt: now,
+        updatedAt: now,
+      });
+      stats.usersCreated++;
+
+      // For each race with results, create prediction and score
+      for (const raceId of raceIdsWithResults) {
+        const race = await ctx.db.get(raceId);
+        if (!race) continue;
+
+        // Determine sessions for this race
+        const sessions: Array<SessionType> = race.hasSprint
+          ? ['quali', 'sprint_quali', 'sprint', 'race']
+          : ['quali', 'race'];
+
+        for (const sessionType of sessions) {
+          const result = resultsByRaceSession.get(`${raceId}_${sessionType}`);
+          if (!result) continue;
+
+          // Generate random-ish prediction with varied scoring
+          // Use user index + session to create varied but deterministic results
+          const seed = i * 7 + sessions.indexOf(sessionType) * 3;
+          const top5 = result.classification.slice(0, 5);
+          const others = result.classification.slice(5, 15);
+
+          // Different scoring patterns based on seed
+          const pattern = seed % 5;
+          let picks: Array<Id<'drivers'>>;
+
+          switch (pattern) {
+            case 0: // Great: 2 exact, 2 off-by-1, 1 in top5
+              picks = [top5[0], top5[1], top5[4], top5[2], top5[4]];
+              break;
+            case 1: // Good: 1 exact, 2 off-by-1, 2 in top5
+              picks = [
+                top5[0],
+                top5[2],
+                top5[1],
+                top5[4],
+                others[0] ?? top5[4],
+              ];
+              break;
+            case 2: // Medium: 1 exact, 1 off-by-1, 1 in top5, 2 wrong
+              picks = [
+                top5[0],
+                others[0] ?? top5[1],
+                top5[4],
+                others[1] ?? top5[3],
+                others[2] ?? top5[4],
+              ];
+              break;
+            case 3: // Poor: 0 exact, 2 off-by-1, 1 in top5
+              picks = [
+                top5[1],
+                top5[0],
+                top5[4],
+                others[0] ?? top5[3],
+                others[1] ?? top5[4],
+              ];
+              break;
+            default: // Bad: 0 exact, 1 off-by-1, 1 in top5
+              picks = [
+                top5[1],
+                others[0] ?? top5[1],
+                others[1] ?? top5[2],
+                top5[4],
+                others[2] ?? top5[4],
+              ];
+              break;
+          }
+
+          // Ensure picks are valid driver IDs
+          picks = picks.map((p, idx) => p || top5[idx % 5]);
+
+          // Create prediction
+          await ctx.db.insert('predictions', {
+            userId,
+            raceId,
+            sessionType,
+            picks,
+            submittedAt: now - 60 * 60 * 1000,
+            updatedAt: now,
+          });
+          stats.predictionsCreated++;
+
+          // Compute actual score
+          const { total, breakdown } = scoreTopFive({
+            picks,
+            classification: result.classification,
+          });
+
+          await ctx.db.insert('scores', {
+            userId,
+            raceId,
+            sessionType,
+            points: total,
+            breakdown,
+            createdAt: now,
+            updatedAt: now,
+          });
+          stats.scoresCreated++;
+        }
+      }
+    }
+
+    return stats;
+  },
+});
+
+/**
+ * Manually set a user's username (for users who haven't synced from Clerk yet).
+ *
+ * Run via: npx convex run seed:setUsername '{"email": "user@example.com", "username": "their_username"}'
+ */
+export const setUsername = internalMutation({
+  args: {
+    email: v.optional(v.string()),
+    clerkUserId: v.optional(v.string()),
+    username: v.string(),
+  },
+  handler: async (ctx, args) => {
+    let user;
+
+    if (args.clerkUserId) {
+      user = await ctx.db
+        .query('users')
+        .withIndex('by_clerkUserId', (q) =>
+          q.eq('clerkUserId', args.clerkUserId!),
+        )
+        .unique();
+    } else if (args.email) {
+      const users = await ctx.db.query('users').collect();
+      user = users.find((u) => u.email === args.email);
+    }
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    await ctx.db.patch(user._id, {
+      username: args.username,
+      updatedAt: Date.now(),
+    });
+
+    return {
+      userId: user._id,
+      email: user.email,
+      username: args.username,
+    };
+  },
+});
+
+/**
+ * Migration: Set sessionType='race' on all records that don't have it.
+ * Run this before updating the schema to make sessionType required.
+ *
+ * Run via: npx convex run seed:migrateSessionTypes
+ */
+export const migrateSessionTypes = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    const stats = {
+      predictions: 0,
+      results: 0,
+      scores: 0,
+    };
+
+    // Migrate predictions (for legacy data without sessionType)
+    const predictions = await ctx.db.query('predictions').collect();
+    for (const pred of predictions) {
+      if (!(pred as { sessionType?: string }).sessionType) {
+        await ctx.db.patch(pred._id, { sessionType: 'race', updatedAt: now });
+        stats.predictions++;
+      }
+    }
+
+    // Migrate results (for legacy data without sessionType)
+    const results = await ctx.db.query('results').collect();
+    for (const result of results) {
+      if (!(result as { sessionType?: string }).sessionType) {
+        await ctx.db.patch(result._id, { sessionType: 'race', updatedAt: now });
+        stats.results++;
+      }
+    }
+
+    // Migrate scores (for legacy data without sessionType)
+    const scores = await ctx.db.query('scores').collect();
+    for (const score of scores) {
+      if (!(score as { sessionType?: string }).sessionType) {
+        await ctx.db.patch(score._id, { sessionType: 'race', updatedAt: now });
+        stats.scores++;
+      }
+    }
+
+    return { migrated: stats };
+  },
+});
+
+/**
+ * Debug: List all real (non-fake) users with their data.
+ */
+export const debugListRealUsers = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const users = await ctx.db.query('users').collect();
+    return users
+      .filter((u) => !u.clerkUserId.startsWith('fake_user_'))
+      .map((u) => ({
+        id: u._id,
+        clerkUserId: u.clerkUserId,
+        username: u.username,
+        displayName: u.displayName,
+        email: u.email,
+      }));
+  },
+});
+
+/**
+ * Seed a prediction with score for a user for a specific race session.
+ * The prediction will partially match the results for interesting scoring.
+ *
+ * Run via: npx convex run seed:seedUserPrediction '{"raceSlug": "china-2026", "sessionType": "quali"}'
+ */
+export const seedUserPrediction = internalMutation({
+  args: {
+    raceSlug: v.string(),
+    sessionType: v.union(
+      v.literal('quali'),
+      v.literal('sprint_quali'),
+      v.literal('sprint'),
+      v.literal('race'),
+    ),
+    clerkUserId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    // Find the race
+    const race = await ctx.db
+      .query('races')
+      .withIndex('by_slug', (q) => q.eq('slug', args.raceSlug))
+      .unique();
+
+    if (!race) {
+      throw new Error(`Race not found: ${args.raceSlug}`);
+    }
+
+    // Find the user
+    const user = args.clerkUserId
+      ? await ctx.db
+          .query('users')
+          .withIndex('by_clerkUserId', (q) =>
+            q.eq('clerkUserId', args.clerkUserId!),
+          )
+          .unique()
+      : await ctx.db.query('users').first();
+
+    if (!user) {
+      throw new Error('No user found. Sign in first or provide clerkUserId.');
+    }
+
+    // Get the results for this session
+    const result = await ctx.db
+      .query('results')
+      .withIndex('by_race_session', (q) =>
+        q.eq('raceId', race._id).eq('sessionType', args.sessionType),
+      )
+      .unique();
+
+    if (!result) {
+      throw new Error(
+        `No results found for ${args.raceSlug} ${args.sessionType}. Run seedSessionResult first.`,
+      );
+    }
+
+    // Create a prediction that partially matches results for interesting scoring
+    const top5Result = result.classification.slice(0, 5);
+
+    // Different scoring patterns based on session type for variety
+    let picks: typeof top5Result;
+    if (args.sessionType === 'quali') {
+      // Pattern A: P1 correct, P2/P3 swapped, P4 wrong, P5 correct = 16 pts
+      picks = [
+        top5Result[0], // P1 correct = 5 pts
+        top5Result[2], // Actually P3, predicting P2 = 3 pts (off by 1)
+        top5Result[1], // Actually P2, predicting P3 = 3 pts (off by 1)
+        result.classification[7] ?? top5Result[3], // P8 driver in P4 = 0 pts
+        top5Result[4], // P5 correct = 5 pts
+      ];
+    } else if (args.sessionType === 'race') {
+      // Pattern B: P1 wrong, P2 correct, P3 off by 1, P4 correct, P5 off by 1 = 14 pts
+      picks = [
+        result.classification[6] ?? top5Result[0], // P7 driver in P1 = 0 pts
+        top5Result[1], // P2 correct = 5 pts
+        top5Result[4], // Actually P5, predicting P3 = 1 pt (in top 5)
+        top5Result[3], // P4 correct = 5 pts
+        top5Result[3], // Actually P4, predicting P5 = 3 pts (off by 1)
+      ];
+    } else if (args.sessionType === 'sprint') {
+      // Pattern C: All off by 1 = 15 pts
+      picks = [
+        top5Result[1], // P2 in P1 = 3 pts
+        top5Result[0], // P1 in P2 = 3 pts
+        top5Result[4], // P5 in P3 = 1 pt (in top 5)
+        top5Result[3], // P4 in P4 = 5 pts (actually correct!)
+        top5Result[2], // P3 in P5 = 1 pt (in top 5, off by 2)
+      ];
+    } else {
+      // sprint_quali: Pattern D: 2 correct, rest wrong = 10 pts
+      picks = [
+        top5Result[0], // P1 correct = 5 pts
+        result.classification[8] ?? top5Result[1], // Wrong
+        result.classification[9] ?? top5Result[2], // Wrong
+        result.classification[10] ?? top5Result[3], // Wrong
+        top5Result[4], // P5 correct = 5 pts
+      ];
+    }
+
+    // Check for existing prediction
+    const existingPred = await ctx.db
+      .query('predictions')
+      .withIndex('by_user_race_session', (q) =>
+        q
+          .eq('userId', user._id)
+          .eq('raceId', race._id)
+          .eq('sessionType', args.sessionType),
+      )
+      .unique();
+
+    if (existingPred) {
+      await ctx.db.patch(existingPred._id, { picks, updatedAt: now });
+    } else {
+      await ctx.db.insert('predictions', {
+        userId: user._id,
+        raceId: race._id,
+        sessionType: args.sessionType,
+        picks,
+        submittedAt: now - 60 * 60 * 1000, // 1 hour ago
+        updatedAt: now,
+      });
+    }
+
+    // Compute and store score
+    const { total, breakdown } = scoreTopFive({
+      picks,
+      classification: result.classification,
+    });
+
+    const existingScore = await ctx.db
+      .query('scores')
+      .withIndex('by_user_race_session', (q) =>
+        q
+          .eq('userId', user._id)
+          .eq('raceId', race._id)
+          .eq('sessionType', args.sessionType),
+      )
+      .unique();
+
+    if (existingScore) {
+      await ctx.db.patch(existingScore._id, {
+        points: total,
+        breakdown,
+        updatedAt: now,
+      });
+    } else {
+      await ctx.db.insert('scores', {
+        userId: user._id,
+        raceId: race._id,
+        sessionType: args.sessionType,
+        points: total,
+        breakdown,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+
+    // Get driver codes for display
+    const drivers = await ctx.db.query('drivers').collect();
+    const driverById = new Map(drivers.map((d) => [d._id.toString(), d.code]));
+
+    return {
+      raceId: race._id,
+      raceName: race.name,
+      sessionType: args.sessionType,
+      userId: user._id,
+      userEmail: user.email,
+      points: total,
+      picks: picks.map((id) => driverById.get(id.toString()) ?? '???'),
+      top5Result: top5Result.map(
+        (id) => driverById.get(id.toString()) ?? '???',
+      ),
+    };
   },
 });

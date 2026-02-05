@@ -18,7 +18,7 @@ const meta: Meta<typeof Button> = {
   argTypes: {
     variant: {
       control: 'select',
-      options: ['primary', 'saved', 'loading'],
+      options: ['primary', 'saved', 'loading', 'tab'],
     },
     size: {
       control: 'select',
@@ -83,6 +83,47 @@ export const Disabled: Story = {
     docs: {
       description: {
         story: 'Disabled primary (e.g. not enough picks selected).',
+      },
+    },
+  },
+};
+
+export const Tab: Story = {
+  args: {
+    variant: 'tab',
+    size: 'tab',
+    children: 'Qualifying',
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Tab variant for session switchers, filters, etc.',
+      },
+    },
+  },
+};
+
+export const TabActive: Story = {
+  args: {
+    variant: 'tab',
+    size: 'tab',
+    active: true,
+    children: 'Race',
+  },
+};
+
+export const WithTooltip: Story = {
+  args: {
+    variant: 'primary',
+    disabled: true,
+    tooltip: 'Results not yet published',
+    children: 'View Results',
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Disabled button with tooltip. Tooltips work on disabled buttons and use our custom component for snappy appearance.',
       },
     },
   },

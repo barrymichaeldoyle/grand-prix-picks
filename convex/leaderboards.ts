@@ -5,8 +5,16 @@ import { query } from './_generated/server';
 import { getViewer } from './lib/auth';
 
 export const getSeasonLeaderboard = query({
-  args: { season: v.optional(v.number()) },
-  handler: async (ctx) => {
+  args: {
+    season: v.optional(v.number()),
+    limit: v.optional(v.number()), // Max entries to return (default: 50)
+    offset: v.optional(v.number()), // Offset for pagination (default: 0)
+  },
+  handler: async (ctx, args) => {
+    const viewer = await getViewer(ctx);
+    const limit = args.limit ?? 50;
+    const offset = args.offset ?? 0;
+
     const scores = await ctx.db.query('scores').collect();
 
     const byUser = new Map<
@@ -30,21 +38,57 @@ export const getSeasonLeaderboard = query({
       (a, b) => b.points - a.points,
     );
 
-    // Fetch user display names
+    // Find viewer's entry (before pagination)
+    let viewerEntry: {
+      rank: number;
+      userId: Id<'users'>;
+      username: string;
+      points: number;
+      raceCount: number;
+      isViewer: boolean;
+    } | null = null;
+
+    if (viewer) {
+      const viewerIndex = rows.findIndex((r) => r.userId === viewer._id);
+      if (viewerIndex !== -1) {
+        const viewerRow = rows[viewerIndex];
+        viewerEntry = {
+          rank: viewerIndex + 1,
+          userId: viewer._id,
+          username: viewer.username ?? 'Anonymous',
+          points: viewerRow.points,
+          raceCount: viewerRow.raceCount,
+          isViewer: true,
+        };
+      }
+    }
+
+    // Paginate results
+    const paginatedRows = rows.slice(offset, offset + limit);
+    const hasMore = offset + limit < rows.length;
+
+    // Fetch usernames only (no emails or real names for privacy)
     const enrichedRows = await Promise.all(
-      rows.map(async (row, index) => {
+      paginatedRows.map(async (row, index) => {
         const user = await ctx.db.get(row.userId);
+        const isViewer = viewer ? row.userId === viewer._id : false;
         return {
-          rank: index + 1,
+          rank: offset + index + 1,
           userId: row.userId,
-          displayName: user?.displayName ?? user?.email ?? 'Anonymous',
+          username: user?.username ?? 'Anonymous',
           points: row.points,
           raceCount: row.raceCount,
+          isViewer,
         };
       }),
     );
 
-    return enrichedRows;
+    return {
+      entries: enrichedRows,
+      totalCount: rows.length,
+      hasMore,
+      viewerEntry, // Always include viewer's entry for the header
+    };
   },
 });
 
@@ -63,12 +107,13 @@ export const getRaceLeaderboard = query({
         return { status: 'locked', reason: 'sign_in', entries: [] };
       }
 
+      // Check if user has any prediction for this race
       const submitted = await ctx.db
         .query('predictions')
-        .withIndex('by_user_race', (q) =>
+        .withIndex('by_user_race_session', (q) =>
           q.eq('userId', viewer._id).eq('raceId', args.raceId),
         )
-        .unique();
+        .first();
 
       if (!submitted) {
         return { status: 'locked', reason: 'no_prediction', entries: [] };
@@ -77,19 +122,19 @@ export const getRaceLeaderboard = query({
 
     const scores = await ctx.db
       .query('scores')
-      .withIndex('by_race', (q) => q.eq('raceId', args.raceId))
+      .withIndex('by_race_session', (q) => q.eq('raceId', args.raceId))
       .collect();
 
     const sortedScores = scores.sort((a, b) => b.points - a.points);
 
-    // Fetch user display names
+    // Fetch usernames only (no emails or real names for privacy)
     const entries = await Promise.all(
       sortedScores.map(async (s, index) => {
         const user = await ctx.db.get(s.userId);
         return {
           rank: index + 1,
           userId: s.userId,
-          displayName: user?.displayName ?? user?.email ?? 'Anonymous',
+          username: user?.username ?? 'Anonymous',
           points: s.points,
           breakdown: s.breakdown,
         };

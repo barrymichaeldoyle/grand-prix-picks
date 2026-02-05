@@ -9,6 +9,7 @@ export const me = query({
 
     return {
       _id: viewer._id,
+      username: viewer.username,
       displayName: viewer.displayName,
       email: viewer.email,
       isAdmin: viewer.isAdmin ?? false,

@@ -67,12 +67,12 @@ export function Footer() {
           </div>
 
           {/* Disclaimer + legal links: grouped next to author block */}
-          <div className="flex min-w-0 flex-col gap-2">
-            <p className="max-w-sm text-xs text-text-muted">
+          <div className="flex min-w-0 flex-col gap-1">
+            <p className="max-w-lg text-xs text-text-muted">
               This is a fan-made project. Not affiliated with Formula 1, FIA, or
               any related entities.
             </p>
-            <div className="flex items-center gap-x-2 text-xs">
+            <div className="flex items-center justify-start gap-x-2 text-xs min-[803px]:justify-center">
               <Link
                 to="/privacy"
                 className="font-semibold text-accent transition-colors hover:text-accent-hover"

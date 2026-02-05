@@ -173,7 +173,7 @@ export function Header({
                 className="rounded-lg border-2 border-transparent px-3 py-2 text-sm font-semibold text-accent transition-colors hover:bg-accent-muted/50 hover:text-accent-hover"
                 activeProps={{
                   className:
-                    'px-3 py-2 rounded-lg text-accent border-2 nav-link-active transition-colors text-sm font-semibold',
+                    'pointer-events-none px-3 py-2 rounded-lg text-accent border-2 nav-link-active transition-colors text-sm font-semibold',
                 }}
                 activeOptions={link.exact ? { exact: true } : undefined}
               >
@@ -269,7 +269,7 @@ export function Header({
                       className="block rounded-lg border-2 border-transparent px-3 py-2 font-semibold text-accent transition-colors hover:bg-accent-muted/50 hover:text-accent-hover"
                       activeProps={{
                         className:
-                          'block px-3 py-2 rounded-lg text-accent border-2 nav-link-active font-semibold transition-colors',
+                          'pointer-events-none block px-3 py-2 rounded-lg text-accent border-2 nav-link-active font-semibold transition-colors',
                       }}
                       activeOptions={link.exact ? { exact: true } : undefined}
                     >

@@ -1,12 +1,18 @@
 import { SignInButton, useAuth } from '@clerk/clerk-react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
-import { CheckCircle, Clock, History, LogIn, Trophy } from 'lucide-react';
+import { History, LogIn, Trophy } from 'lucide-react';
 
 import { api } from '../../convex/_generated/api';
+import { Badge, StatusBadge } from '../components/Badge';
 import { Button, primaryButtonStyles } from '../components/Button';
 import { PageLoader } from '../components/PageLoader';
 import { getCountryCodeForRace, RaceFlag } from '../components/RaceCard';
+import {
+  getSessionsForWeekend,
+  SESSION_LABELS,
+  SESSION_LABELS_SHORT,
+} from '../lib/sessions';
 
 export const Route = createFileRoute('/my-predictions')({
   component: MyPredictionsPage,
@@ -21,28 +27,6 @@ export const Route = createFileRoute('/my-predictions')({
     ],
   }),
 });
-
-type SessionType = 'quali' | 'sprint_quali' | 'sprint' | 'race';
-
-const SESSION_LABELS: Record<SessionType, string> = {
-  quali: 'Qualifying',
-  sprint_quali: 'Sprint Quali',
-  sprint: 'Sprint',
-  race: 'Race',
-};
-
-const SESSION_LABELS_SHORT: Record<SessionType, string> = {
-  quali: 'Q',
-  sprint_quali: 'SQ',
-  sprint: 'S',
-  race: 'R',
-};
-
-function getSessionsForWeekend(hasSprint: boolean): Array<SessionType> {
-  return hasSprint
-    ? ['quali', 'sprint_quali', 'sprint', 'race']
-    : ['quali', 'race'];
-}
 
 function MyPredictionsPage() {
   const { isSignedIn, isLoaded } = useAuth();
@@ -125,7 +109,7 @@ function MyPredictionsPage() {
         ) : (
           <div className="space-y-4">
             {weekends.map((weekend) => {
-              const sessions = getSessionsForWeekend(weekend.hasSprint);
+              const sessions = getSessionsForWeekend(!!weekend.hasSprint);
               const countryCode = getCountryCodeForRace({
                 slug:
                   weekend.raceName
@@ -146,19 +130,16 @@ function MyPredictionsPage() {
                     <div className="flex min-w-0 items-center gap-3">
                       {countryCode && <RaceFlag countryCode={countryCode} />}
                       <div className="min-w-0">
-                        <div className="mb-0.5 flex items-center gap-2">
+                        <div className="mb-0.5 flex flex-wrap items-center gap-2">
                           <span className="text-sm text-text-muted">
                             Round {weekend.raceRound}
                           </span>
-                          {weekend.raceStatus === 'finished' ? (
-                            <CheckCircle className="h-4 w-4 text-success" />
-                          ) : weekend.raceStatus === 'locked' ? (
-                            <Clock className="h-4 w-4 text-warning" />
-                          ) : null}
+                          <StatusBadge
+                            status={weekend.raceStatus}
+                            isNext={false}
+                          />
                           {weekend.hasSprint && (
-                            <span className="rounded bg-purple-100 px-1.5 py-0.5 text-xs font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
-                              SPRINT
-                            </span>
+                            <Badge variant="sprint">SPRINT</Badge>
                           )}
                         </div>
                         <h3 className="truncate text-lg font-semibold text-text">

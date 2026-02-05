@@ -1,6 +1,8 @@
 import { Loader2 } from 'lucide-react';
 import { forwardRef } from 'react';
 
+import { Tooltip } from './Tooltip';
+
 const base =
   'inline-flex items-center justify-center gap-2 font-semibold rounded-lg transition-colors cursor-pointer';
 
@@ -10,11 +12,13 @@ const variants = {
   saved:
     'bg-success-muted text-success border border-success/30 cursor-default',
   loading: 'bg-button-accent text-white opacity-90 cursor-wait',
+  tab: 'font-medium text-text-muted hover:bg-surface-muted hover:text-text disabled:bg-transparent disabled:text-text-muted/50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-text-muted/50',
 } as const;
 
 const sizes = {
   sm: 'px-6 text-base py-2',
   md: 'px-6 py-3 text-base',
+  tab: 'rounded-md px-3 py-2 text-sm',
 } as const;
 
 type ButtonVariant = keyof typeof variants;
@@ -26,6 +30,10 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
   /** When true, renders saved (success) state and disables the button. */
   saved?: boolean;
+  /** Tooltip shown on hover (works even when disabled) */
+  tooltip?: string;
+  /** For variant="tab": selected/active state */
+  active?: boolean;
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -39,6 +47,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       className = '',
       children,
       type = 'button',
+      tooltip,
+      active,
       ...rest
     },
     ref,
@@ -46,21 +56,31 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const effectiveVariant = saved ? 'saved' : loading ? 'loading' : variant;
     const isDisabled = disabled || loading || saved;
 
+    const activeStyles =
+      effectiveVariant === 'tab' && active
+        ? 'bg-accent text-white hover:bg-accent hover:text-white cursor-default pointer-events-none'
+        : '';
+
     const resolvedClassName = [
       base,
       sizes[size],
       variants[effectiveVariant],
-      className,
+      activeStyles,
+      tooltip ? undefined : className,
     ]
       .filter(Boolean)
       .join(' ');
 
-    return (
+    const button = (
       <button
         ref={ref}
         type={type}
         disabled={isDisabled}
-        className={resolvedClassName}
+        aria-selected={effectiveVariant === 'tab' ? active : undefined}
+        role={effectiveVariant === 'tab' ? 'tab' : undefined}
+        className={
+          tooltip ? `${resolvedClassName} w-full`.trim() : resolvedClassName
+        }
         {...rest}
       >
         {loading ? (
@@ -73,6 +93,16 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         )}
       </button>
     );
+
+    if (tooltip) {
+      return (
+        <Tooltip content={tooltip} triggerClassName={className || undefined}>
+          <span className="block w-full">{button}</span>
+        </Tooltip>
+      );
+    }
+
+    return button;
   },
 );
 

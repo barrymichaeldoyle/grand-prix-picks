@@ -81,21 +81,33 @@ export const createTestRace = internalMutation({
   },
 });
 
+const sessionTypeValidator = v.union(
+  v.literal('quali'),
+  v.literal('sprint_quali'),
+  v.literal('sprint'),
+  v.literal('race'),
+);
+
 // Create test prediction for a user
 export const createTestPrediction = internalMutation({
   args: {
     userId: v.id('users'),
     raceId: v.id('races'),
     picks: v.array(v.id('drivers')),
+    sessionType: v.optional(sessionTypeValidator),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
+    const sessionType = args.sessionType ?? 'race';
 
     // Check if prediction already exists
     const existing = await ctx.db
       .query('predictions')
-      .withIndex('by_user_race', (q) =>
-        q.eq('userId', args.userId).eq('raceId', args.raceId),
+      .withIndex('by_user_race_session', (q) =>
+        q
+          .eq('userId', args.userId)
+          .eq('raceId', args.raceId)
+          .eq('sessionType', sessionType),
       )
       .unique();
 
@@ -110,6 +122,7 @@ export const createTestPrediction = internalMutation({
     return await ctx.db.insert('predictions', {
       userId: args.userId,
       raceId: args.raceId,
+      sessionType,
       picks: args.picks,
       submittedAt: now,
       updatedAt: now,
@@ -122,13 +135,17 @@ export const publishTestResults = internalMutation({
   args: {
     raceId: v.id('races'),
     classification: v.array(v.id('drivers')),
+    sessionType: v.optional(sessionTypeValidator),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
+    const sessionType = args.sessionType ?? 'race';
 
     const existing = await ctx.db
       .query('results')
-      .withIndex('by_race', (q) => q.eq('raceId', args.raceId))
+      .withIndex('by_race_session', (q) =>
+        q.eq('raceId', args.raceId).eq('sessionType', sessionType),
+      )
       .unique();
 
     if (existing) {
@@ -141,6 +158,7 @@ export const publishTestResults = internalMutation({
 
     return await ctx.db.insert('results', {
       raceId: args.raceId,
+      sessionType,
       classification: args.classification,
       publishedAt: now,
       updatedAt: now,
@@ -293,6 +311,7 @@ export const seedTestScenario = internalMutation({
       await ctx.db.insert('predictions', {
         userId,
         raceId,
+        sessionType: 'race',
         picks: driverIds.slice(0, 5),
         submittedAt: now - 2 * HOUR,
         updatedAt: now - 2 * HOUR,
@@ -320,6 +339,7 @@ export const seedTestScenario = internalMutation({
       await ctx.db.insert('predictions', {
         userId,
         raceId,
+        sessionType: 'race',
         picks,
         submittedAt: now - 2 * DAY,
         updatedAt: now - 2 * DAY,
@@ -338,6 +358,7 @@ export const seedTestScenario = internalMutation({
 
       await ctx.db.insert('results', {
         raceId,
+        sessionType: 'race',
         classification,
         publishedAt: now - 12 * HOUR,
         updatedAt: now - 12 * HOUR,
@@ -372,6 +393,7 @@ export const seedTestScenario = internalMutation({
       await ctx.db.insert('predictions', {
         userId,
         raceId: finishedRaceId,
+        sessionType: 'race',
         picks: driverIds.slice(0, 5),
         submittedAt: now - 15 * DAY,
         updatedAt: now - 15 * DAY,
@@ -379,6 +401,7 @@ export const seedTestScenario = internalMutation({
 
       await ctx.db.insert('results', {
         raceId: finishedRaceId,
+        sessionType: 'race',
         classification: driverIds,
         publishedAt: now - 13 * DAY,
         updatedAt: now - 13 * DAY,
