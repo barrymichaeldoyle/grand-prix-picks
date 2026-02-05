@@ -1,10 +1,11 @@
 import { Loader2 } from 'lucide-react';
+import type { ButtonHTMLAttributes } from 'react';
 import { forwardRef } from 'react';
 
 import { Tooltip } from './Tooltip';
 
 const base =
-  'inline-flex items-center justify-center gap-2 font-semibold rounded-lg transition-colors cursor-pointer';
+  'inline-flex items-center justify-center gap-2 font-semibold rounded-lg transition-colors';
 
 const variants = {
   primary:
@@ -24,7 +25,7 @@ const sizes = {
 type ButtonVariant = keyof typeof variants;
 export type ButtonSize = keyof typeof sizes;
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
   loading?: boolean;

@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { useMutation, useQuery } from 'convex/react';
 import { ArrowLeft, Loader2, Save, Shield } from 'lucide-react';
+import type { SubmitEvent } from 'react';
 import { useState } from 'react';
 
 import { api } from '../../../../convex/_generated/api';
@@ -66,7 +67,7 @@ function AdminNewRacePage() {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
 

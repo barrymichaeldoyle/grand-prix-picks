@@ -115,7 +115,7 @@ interface ResultsSectionProps {
 
 export function ResultsSection({ raceId, race }: ResultsSectionProps) {
   return (
-    <div className="p-4">
+    <div>
       <ErrorBoundary>
         <div className="md:hidden">
           <RaceResults raceId={raceId} race={race} />

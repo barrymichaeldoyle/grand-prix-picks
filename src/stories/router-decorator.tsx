@@ -5,9 +5,10 @@ import {
   Outlet,
   RouterProvider,
 } from '@tanstack/react-router';
+import type { PropsWithChildren, ReactNode } from 'react';
 import { createContext, useContext } from 'react';
 
-const StoryContext = createContext<React.ReactNode>(null);
+const StoryContext = createContext<ReactNode>(null);
 
 function StoryOutlet() {
   const story = useContext(StoryContext);
@@ -39,7 +40,7 @@ const router = createRouter({
   defaultPreload: 'intent',
 });
 
-export function StorybookRouter({ children }: { children: React.ReactNode }) {
+export function StorybookRouter({ children }: PropsWithChildren) {
   return (
     <StoryContext.Provider value={children}>
       <RouterProvider router={router} />

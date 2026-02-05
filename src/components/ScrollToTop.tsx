@@ -1,4 +1,5 @@
 import { useLocation } from '@tanstack/react-router';
+import type { RefObject } from 'react';
 import { useEffect } from 'react';
 
 /**
@@ -9,7 +10,7 @@ import { useEffect } from 'react';
 export function ScrollToTop({
   scrollContainerRef,
 }: {
-  scrollContainerRef: React.RefObject<HTMLElement | null>;
+  scrollContainerRef: RefObject<HTMLElement | null>;
 }) {
   const location = useLocation();
 

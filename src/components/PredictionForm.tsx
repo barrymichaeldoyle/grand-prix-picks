@@ -1,12 +1,15 @@
 import { useMutation, useQuery } from 'convex/react';
 import { AnimatePresence, motion, Reorder } from 'framer-motion';
-import { Check, ChevronDown, ChevronUp, GripVertical, X } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, X } from 'lucide-react';
+import type { DragEvent } from 'react';
 import { useEffect, useState } from 'react';
 
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
 import type { SessionType } from '../lib/sessions';
 import { Button } from './Button';
+import { TEAM_COLORS } from './DriverBadge';
+import { Flag } from './Flag';
 import { InlineLoader } from './InlineLoader';
 
 type Driver = Doc<'drivers'>;
@@ -62,6 +65,15 @@ export function PredictionForm({
 
   const removeDriver = (driverId: Id<'drivers'>) => {
     setPicks(picks.filter((id) => id !== driverId));
+    setSubmitStatus('idle');
+  };
+
+  /** Insert driver at slot index (0–4). Used when dropping from pool onto a row. */
+  const addDriverAtPosition = (driverId: Id<'drivers'>, slotIndex: number) => {
+    const without = picks.filter((id) => id !== driverId);
+    const next = [...without];
+    next.splice(slotIndex, 0, driverId);
+    setPicks(next.slice(0, 5));
     setSubmitStatus('idle');
   };
 
@@ -133,15 +145,15 @@ export function PredictionForm({
             Your Picks
           </h3>
           <div
-            className="flex gap-0 overflow-hidden rounded-xl border border-border bg-surface"
+            className="flex overflow-hidden rounded-xl border border-border bg-surface"
             data-testid="picks-list"
           >
-            {/* Static position labels + vertical divider */}
+            {/* Static position lanes (tier-list style) */}
             <div className="flex shrink-0 flex-col border-r border-border bg-surface-muted/50">
               {[1, 2, 3, 4, 5].map((n) => (
                 <div
                   key={n}
-                  className="flex h-11 w-9 shrink-0 items-center justify-center border-b border-border text-sm font-bold text-accent sm:h-[56px] sm:w-11"
+                  className="flex h-14 w-9 shrink-0 items-center justify-center border-b border-border text-sm font-bold text-accent last:border-b-0 sm:h-16 sm:w-11"
                   aria-hidden
                 >
                   {n}
@@ -149,7 +161,7 @@ export function PredictionForm({
               ))}
             </div>
 
-            {/* Draggable cards + empty slots (lane borders) */}
+            {/* Draggable cards + empty slots (cards move between lanes) */}
             <Reorder.Group
               as="div"
               axis="y"
@@ -161,59 +173,95 @@ export function PredictionForm({
                 {picks.map((driverId, index) => {
                   const driver = drivers.find((d) => d._id === driverId);
                   if (!driver) return null;
+                  const position = index + 1;
                   return (
                     <Reorder.Item
                       key={driverId}
                       value={driverId}
                       as="div"
-                      data-testid={`picked-driver-${index + 1}`}
-                      className="relative flex h-11 shrink-0 cursor-grab touch-none items-center gap-1.5 border-b border-border bg-surface-muted px-2 py-1.5 active:cursor-grabbing sm:h-[56px] sm:gap-2 sm:px-3 sm:py-2"
+                      data-testid={`picked-driver-${position}`}
+                      className="relative flex h-14 shrink-0 cursor-grab touch-none items-stretch gap-0 border-b border-transparent bg-surface-muted active:cursor-grabbing sm:h-16"
                       transition={{
                         type: 'spring',
                         stiffness: 150,
                         damping: 22,
                       }}
                       whileDrag={{
-                        scale: 1.02,
                         boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                       }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        if (e.dataTransfer.types.includes('text/plain'))
+                          e.dataTransfer.dropEffect = 'copy';
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const id = e.dataTransfer.getData('text/plain');
+                        if (id) addDriverAtPosition(id as Id<'drivers'>, index);
+                      }}
                     >
-                      <span className="shrink-0 text-text-muted" aria-hidden>
-                        <GripVertical size={16} />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <span className="block truncate font-medium text-text">
-                          {driver.displayName}
-                        </span>
-                        <span className="text-sm text-text-muted">
+                      <div
+                        className="flex w-12 shrink-0 cursor-grab flex-col items-center justify-center py-1 text-white active:cursor-grabbing sm:w-14"
+                        style={{
+                          backgroundColor:
+                            driver.team && (TEAM_COLORS[driver.team] ?? '#666'),
+                        }}
+                      >
+                        {driver.number != null && (
+                          <span className="font-mono text-sm leading-none font-bold sm:text-base">
+                            {driver.number}
+                          </span>
+                        )}
+                        <span className="font-mono text-[10px] leading-none font-bold tracking-wider text-white/90 sm:text-xs">
                           {driver.code}
                         </span>
                       </div>
-                      <div className="flex shrink-0 items-center gap-0.5">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            moveUp(index);
-                          }}
-                          disabled={index === 0}
-                          className="rounded p-1 transition-colors hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-30 sm:p-1.5"
-                          aria-label="Move up"
-                        >
-                          <ChevronUp size={16} className="text-text-muted" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            moveDown(index);
-                          }}
-                          disabled={index >= picks.length - 1}
-                          className="rounded p-1 transition-colors hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-30 sm:p-1.5"
-                          aria-label="Move down"
-                        >
-                          <ChevronDown size={16} className="text-text-muted" />
-                        </button>
+                      <div className="flex min-w-0 flex-1 flex-col justify-center gap-0 px-2 py-1.5 sm:px-3 sm:py-2">
+                        <div className="flex items-center gap-2">
+                          {driver.nationality && (
+                            <Flag
+                              code={driver.nationality}
+                              size="xs"
+                              className="shrink-0"
+                            />
+                          )}
+                          <span className="truncate font-medium text-text">
+                            {driver.displayName}
+                          </span>
+                        </div>
+                        {driver.team && (
+                          <span className="truncate text-xs text-text-muted">
+                            {driver.team}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex shrink-0 items-center gap-0.5 border-l border-border/50 pr-0.5 pl-1 sm:pl-2">
+                        <div className="flex flex-col">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              moveUp(index);
+                            }}
+                            disabled={index === 0}
+                            className="rounded p-1 transition-colors hover:bg-accent-muted/40 disabled:opacity-30 sm:p-1.5"
+                            aria-label="Move up"
+                          >
+                            <ChevronUp size={16} className="text-accent" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              moveDown(index);
+                            }}
+                            disabled={index >= picks.length - 1}
+                            className="rounded p-1 transition-colors hover:bg-accent-muted/40 disabled:opacity-30 sm:p-1.5"
+                            aria-label="Move down"
+                          >
+                            <ChevronDown size={16} className="text-accent" />
+                          </button>
+                        </div>
                         <button
                           type="button"
                           onClick={(e) => {
@@ -222,7 +270,7 @@ export function PredictionForm({
                           }}
                           className="rounded p-1 transition-colors hover:bg-error-muted sm:p-1.5"
                           aria-label="Remove"
-                          data-testid={`remove-pick-${index + 1}`}
+                          data-testid={`remove-pick-${position}`}
                         >
                           <X size={16} className="text-error" />
                         </button>
@@ -232,17 +280,31 @@ export function PredictionForm({
                 })}
               </AnimatePresence>
 
-              {/* Empty slots */}
-              {Array.from({ length: emptySlots }).map((_, i) => (
-                <div
-                  key={`empty-${i}`}
-                  className="flex h-11 shrink-0 items-center gap-2 border-x-0 border-t-0 border-b border-dashed border-border bg-surface px-2 py-1.5 sm:h-[56px] sm:gap-3 sm:px-3 sm:py-2"
-                >
-                  <span className="flex-1 text-sm text-text-muted">
-                    Select a driver
-                  </span>
-                </div>
-              ))}
+              {/* Empty lanes */}
+              {Array.from({ length: emptySlots }).map((_, i) => {
+                const slotIndex = picks.length + i;
+                return (
+                  <div
+                    key={`empty-${i}`}
+                    className="flex h-14 shrink-0 items-center border-b border-dashed border-border bg-surface last:border-b-0 sm:h-16"
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      if (e.dataTransfer.types.includes('text/plain'))
+                        e.dataTransfer.dropEffect = 'copy';
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const id = e.dataTransfer.getData('text/plain');
+                      if (id)
+                        addDriverAtPosition(id as Id<'drivers'>, slotIndex);
+                    }}
+                  >
+                    <span className="flex-1 px-2 py-1.5 text-sm text-text-muted sm:px-3 sm:py-2">
+                      Select a driver
+                    </span>
+                  </div>
+                );
+              })}
             </Reorder.Group>
           </div>
 
@@ -321,33 +383,63 @@ export function PredictionForm({
             layout
             className="grid grid-cols-3 gap-1.5 sm:grid-cols-4 sm:gap-2 md:grid-cols-5 lg:grid-cols-4"
             data-testid="driver-selection"
+            onDragOver={(e: DragEvent) => {
+              e.preventDefault();
+              if (e.dataTransfer.types.includes('application/x-pick-from-list'))
+                e.dataTransfer.dropEffect = 'move';
+            }}
+            onDrop={(e: DragEvent) => {
+              e.preventDefault();
+              const id = e.dataTransfer.getData('application/x-pick-from-list');
+              if (id) removeDriver(id as Id<'drivers'>);
+            }}
           >
             <AnimatePresence mode="popLayout">
               {availableDrivers.map((driver) => (
-                <motion.button
+                <motion.div
                   key={driver._id}
                   layout
-                  type="button"
-                  data-testid={`driver-${driver.code}`}
                   initial={false}
+                  tabIndex={-1}
                   transition={{
                     type: 'spring',
                     stiffness: 500,
                     damping: 30,
                   }}
-                  onClick={() => addDriver(driver._id)}
-                  disabled={picks.length >= 5}
-                  className="flex flex-col items-center gap-0.5 rounded-lg border border-border bg-surface p-2 transition-colors hover:border-accent/50 hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-40 sm:gap-1 sm:p-3"
                   whileHover={{ scale: picks.length >= 5 ? 1 : 1.05 }}
                   whileTap={{ scale: picks.length >= 5 ? 1 : 0.95 }}
                 >
-                  <span className="text-lg font-bold text-accent">
-                    {driver.code}
-                  </span>
-                  <span className="text-center text-xs leading-tight text-text-muted">
-                    {driver.familyName || driver.displayName.split(' ').pop()}
-                  </span>
-                </motion.button>
+                  <button
+                    type="button"
+                    data-testid={`driver-${driver.code}`}
+                    onClick={() => addDriver(driver._id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        addDriver(driver._id);
+                      }
+                    }}
+                    disabled={picks.length >= 5}
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData('text/plain', driver._id);
+                      e.dataTransfer.effectAllowed = 'copy';
+                    }}
+                    className="flex h-full w-full flex-col items-center justify-center gap-0 rounded-lg border border-transparent py-2 font-mono text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 sm:py-3"
+                    style={{
+                      backgroundColor:
+                        driver.team && (TEAM_COLORS[driver.team] ?? '#666'),
+                    }}
+                  >
+                    {driver.number != null && (
+                      <span className="text-sm leading-none font-bold sm:text-base">
+                        {driver.number}
+                      </span>
+                    )}
+                    <span className="text-xs leading-none font-bold tracking-wider sm:text-sm">
+                      {driver.code}
+                    </span>
+                  </button>
+                </motion.div>
               ))}
             </AnimatePresence>
           </motion.div>

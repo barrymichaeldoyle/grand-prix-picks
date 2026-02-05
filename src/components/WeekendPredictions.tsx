@@ -97,7 +97,7 @@ export function WeekendPredictions({
         <button
           type="button"
           onClick={() => setEditingSession(null)}
-          className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-text-muted transition-colors hover:text-text"
+          className="inline-flex items-center gap-2 text-sm font-medium text-text-muted transition-colors hover:text-text"
         >
           <ArrowLeft size={18} />
           Back to summary
@@ -153,7 +153,7 @@ export function WeekendPredictions({
                         <button
                           type="button"
                           onClick={() => setEditingSession(session)}
-                          className="inline-flex cursor-pointer items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium text-accent transition-colors hover:bg-accent-muted/50"
+                          className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium text-accent transition-colors hover:bg-accent-muted/50"
                           title={`Edit ${SESSION_LABELS[session]}`}
                         >
                           <Pencil size={14} />
@@ -172,7 +172,7 @@ export function WeekendPredictions({
                 key={position}
                 className="border-b border-border last:border-0"
               >
-                <td className="px-2 py-1.5 text-text-muted sm:px-4 sm:py-2">
+                <td className="px-2 py-1.5 font-bold text-accent sm:px-4 sm:py-2">
                   P{position + 1}
                 </td>
                 {sessions.map((session) => {

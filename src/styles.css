@@ -109,6 +109,16 @@ code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
+/* Buttons and button-like elements get pointer cursor by default */
+button:not(:disabled),
+[role='button']:not([aria-disabled='true']) {
+  cursor: pointer;
+}
+button:disabled,
+[role='button'][aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
 /* Nav link active state: thick accent border (wins over merged Tailwind classes) */
 .nav-link-active {
   border-color: var(--accent) !important;

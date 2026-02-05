@@ -4,7 +4,7 @@ import {
   ChevronRight,
   Clock,
   Flag,
-  HelpCircle,
+  Info,
   Lock,
   Target,
   Trophy,
@@ -13,6 +13,7 @@ import {
 
 import { api } from '../../convex/_generated/api';
 import { primaryButtonStyles } from '../components/Button';
+import { FaqItem, FaqSection } from '../components/Faq';
 import { RaceCard } from '../components/RaceCard';
 
 const convex = new ConvexHttpClient(import.meta.env.VITE_CONVEX_URL);
@@ -126,100 +127,79 @@ function HomePage() {
         </div>
       </section>
 
-      {/* FAQ Section */}
-      <section className="mx-auto max-w-4xl px-6 py-12">
-        <div className="mb-8 flex items-center justify-center gap-2">
-          <HelpCircle className="h-6 w-6 text-accent" />
-          <h2 className="text-center text-2xl font-bold text-text">
-            Frequently Asked Questions
-          </h2>
-        </div>
+      <FaqSection title="Frequently Asked Questions">
+        <FaqItem icon={Target} question="How does scoring work?">
+          <p className="mb-3 text-text-muted">
+            The same points system applies to qualifying, sprint qualifying (on
+            sprint weekends), the sprint, and the race. You pick the top 5 for
+            each session; points are awarded by how close your picks are to the
+            actual result:
+          </p>
+          <ul className="space-y-2 text-sm">
+            <li className="flex items-center gap-2">
+              <span className="w-16 font-bold text-accent">5 points</span>
+              <span className="text-text-muted">Exact position match</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="w-16 font-bold text-accent">3 points</span>
+              <span className="text-text-muted">Off by one position</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="w-16 font-bold text-accent">1 point</span>
+              <span className="text-text-muted">
+                Driver in top 5, but off by 2+ positions
+              </span>
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="w-16 font-bold text-text-muted">0 points</span>
+              <span className="text-text-muted">
+                Driver finishes outside the top 5
+              </span>
+            </li>
+          </ul>
+          <p className="mt-3 text-sm text-text-muted">
+            Each session scores up to 25 points (all 5 correct). Your weekend
+            total is the sum of quali, sprint (if applicable), and race
+            scores—so sprint weekends can earn you more points.
+          </p>
+        </FaqItem>
 
-        <div className="space-y-4">
-          <div className="rounded-xl border border-border bg-surface p-6">
-            <h3 className="mb-3 flex items-center gap-3 text-lg font-semibold text-text">
-              <Target className="h-5 w-5 shrink-0 text-accent" />
-              How does scoring work?
-            </h3>
-            <div className="pl-8">
-              <p className="mb-3 text-text-muted">
-                The same points system applies to qualifying, sprint qualifying
-                (on sprint weekends), the sprint, and the race. You pick the top
-                5 for each session; points are awarded by how close your picks
-                are to the actual result:
-              </p>
-              <ul className="space-y-2 text-sm">
-                <li className="flex items-center gap-2">
-                  <span className="w-16 font-bold text-accent">5 points</span>
-                  <span className="text-text-muted">Exact position match</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="w-16 font-bold text-accent">3 points</span>
-                  <span className="text-text-muted">Off by one position</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="w-16 font-bold text-accent">1 point</span>
-                  <span className="text-text-muted">
-                    Driver in top 5, but off by 2+ positions
-                  </span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="w-16 font-bold text-text-muted">
-                    0 points
-                  </span>
-                  <span className="text-text-muted">
-                    Driver finishes outside the top 5
-                  </span>
-                </li>
-              </ul>
-              <p className="mt-3 text-sm text-text-muted">
-                Each session scores up to 25 points (all 5 correct). Your
-                weekend total is the sum of quali, sprint (if applicable), and
-                race scores—so sprint weekends can earn you more points.
-              </p>
-            </div>
-          </div>
+        <FaqItem icon={Lock} question="When do predictions lock?">
+          <p className="text-text-muted">
+            Each session locks at its scheduled start time: qualifying, sprint
+            qualifying (on sprint weekends), the sprint, and the race each have
+            their own deadline. Once a session is locked, you can't change those
+            picks—submit before each deadline!
+          </p>
+        </FaqItem>
 
-          <div className="rounded-xl border border-border bg-surface p-6">
-            <h3 className="mb-3 flex items-center gap-3 text-lg font-semibold text-text">
-              <Lock className="h-5 w-5 shrink-0 text-accent" />
-              When do predictions lock?
-            </h3>
-            <p className="pl-8 text-text-muted">
-              Each session locks at its scheduled start time: qualifying, sprint
-              qualifying (on sprint weekends), the sprint, and the race each
-              have their own deadline. Once a session is locked, you can't
-              change those picks—submit before each deadline!
-            </p>
-          </div>
+        <FaqItem icon={Clock} question="When can I make predictions?">
+          <p className="text-text-muted">
+            You predict for the current weekend only. For each session (quali,
+            sprint quali, sprint, race), you can submit or edit picks until that
+            session's scheduled start time. Future weekends open once the
+            current one is done.
+          </p>
+        </FaqItem>
 
-          <div className="rounded-xl border border-border bg-surface p-6">
-            <h3 className="mb-3 flex items-center gap-3 text-lg font-semibold text-text">
-              <Clock className="h-5 w-5 shrink-0 text-accent" />
-              When can I make predictions?
-            </h3>
-            <p className="pl-8 text-text-muted">
-              You predict for the current weekend only. For each session (quali,
-              sprint quali, sprint, race), you can submit or edit picks until
-              that session's scheduled start time. Future weekends open once the
-              current one is done, keeping things fair.
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-border bg-surface p-6">
-            <h3 className="mb-3 flex items-center gap-3 text-lg font-semibold text-text">
-              <Trophy className="h-5 w-5 shrink-0 text-accent" />
-              How is the leaderboard calculated?
-            </h3>
-            <p className="pl-8 text-text-muted">
-              Your total season score is the sum of all your session scores:
-              qualifying, sprint (when applicable), and the race for every
-              weekend. The leaderboard ranks players by that total. Compete
-              throughout the 2026 season to claim the top spot!
-            </p>
-          </div>
-        </div>
-      </section>
+        <FaqItem icon={Trophy} question="How is the leaderboard calculated?">
+          <p className="text-text-muted">
+            Your total season score is the sum of all your session scores:
+            qualifying, sprint events (when applicable), and the race for every
+            weekend. The leaderboard ranks players by that total. Compete
+            throughout the 2026 season to claim the top spot!
+          </p>
+        </FaqItem>
+        <FaqItem icon={Info} question="Is this an official F1 app?">
+          <p className="text-text-muted">
+            No. Grand Prix Picks is not affiliated with, endorsed by, or
+            connected to Formula 1 or any official F1 entities. You will notice
+            there are no copyright materials or existing Formula 1 trademarks
+            used anywhere in this app—it is an independent fan-made prediction
+            game.
+          </p>
+        </FaqItem>
+      </FaqSection>
     </div>
   );
 }

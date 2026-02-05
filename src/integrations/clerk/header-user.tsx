@@ -6,7 +6,7 @@ import {
 } from '@clerk/clerk-react';
 
 const signInButtonClasses =
-  'inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-lg bg-button-accent text-white hover:bg-button-accent-hover transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-not-allowed disabled:opacity-50';
+  'inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-lg bg-button-accent text-white hover:bg-button-accent-hover transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:opacity-50';
 
 /**
  * User avatar when signed in; Sign in button when signed out. Sign in is hidden

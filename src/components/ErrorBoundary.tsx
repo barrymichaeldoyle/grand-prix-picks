@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/tanstackstart-react';
-import type { ReactNode } from 'react';
+import type { ErrorInfo, ReactNode } from 'react';
 import { Component } from 'react';
 
 import { ErrorFallback } from './ErrorFallback';
@@ -23,7 +23,7 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: unknown, errorInfo: React.ErrorInfo) {
+  componentDidCatch(error: unknown, errorInfo: ErrorInfo) {
     Sentry.captureException(error, {
       tags: {
         location:
