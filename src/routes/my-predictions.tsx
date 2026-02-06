@@ -1,7 +1,7 @@
 import { SignInButton, useAuth } from '@clerk/clerk-react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
-import { History, LogIn, Star, Trophy } from 'lucide-react';
+import { History, Info, LogIn, Star, Trophy } from 'lucide-react';
 
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
@@ -13,6 +13,7 @@ import {
   TEAM_COLORS,
 } from '../components/DriverBadge';
 import { Flag } from '../components/Flag';
+import { Tooltip } from '../components/Tooltip';
 import { PageLoader } from '../components/PageLoader';
 import { getCountryCodeForRace, RaceFlag } from '../components/RaceCard';
 import {
@@ -208,6 +209,18 @@ function MyPredictionsPage() {
               <h2 className="text-sm font-semibold text-text">
                 Your Favorite Pick
               </h2>
+              <Tooltip
+                placement="top"
+                content={
+                  <span className="block max-w-[240px] rounded bg-text px-2 py-1.5 text-xs font-medium text-white shadow-sm">
+                    Weighted by where you picked them: P1 = 5 pts, P2 = 4, P3
+                    = 3, P4 = 2, P5 = 1. This is the driver you’ve picked in
+                    top positions most.
+                  </span>
+                }
+              >
+                <Info className="h-4 w-4 shrink-0 text-text-muted" />
+              </Tooltip>
             </div>
             <div className="flex items-stretch">
               <div
