@@ -12,8 +12,9 @@ export const getSeasonLeaderboard = query({
   },
   handler: async (ctx, args) => {
     const viewer = await getViewer(ctx);
-    const limit = args.limit ?? 50;
-    const offset = args.offset ?? 0;
+    const MAX_LIMIT = 100;
+    const limit = Math.min(MAX_LIMIT, Math.max(1, args.limit ?? 50));
+    const offset = Math.max(0, args.offset ?? 0);
 
     const scores = await ctx.db.query('scores').collect();
 

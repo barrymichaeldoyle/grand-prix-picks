@@ -3,6 +3,12 @@ import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
 import { getOrCreateViewer, requireAdmin, requireViewer } from './lib/auth';
 
+const raceStatusValidator = v.union(
+  v.literal('upcoming'),
+  v.literal('locked'),
+  v.literal('finished'),
+);
+
 export const listRaces = query({
   args: { season: v.optional(v.number()) },
   handler: async (ctx, args) => {
@@ -66,7 +72,7 @@ export const adminUpsertRace = mutation({
     slug: v.string(),
     raceStartAt: v.number(),
     predictionLockAt: v.number(),
-    status: v.string(),
+    status: raceStatusValidator,
   },
   handler: async (ctx, args) => {
     const viewer = requireViewer(await getOrCreateViewer(ctx));
