@@ -28,9 +28,7 @@ function LinkedInIcon({ className }: { className?: string }) {
 
 export function Footer() {
   return (
-    <footer
-      className="mt-auto border-t border-border bg-surface pb-[max(5rem,env(safe-area-inset-bottom,0px))] sm:pb-6"
-    >
+    <footer className="mt-auto border-t border-border bg-surface pb-[max(5rem,env(safe-area-inset-bottom,0px))] sm:pb-6">
       <div className="mx-auto max-w-4xl px-4 py-6">
         <div className="flex flex-col gap-4 text-sm text-text-muted sm:flex-row sm:items-center sm:gap-10">
           {/* Author + social: one row, wraps as a unit */}

@@ -338,11 +338,8 @@ export const myH2HPicksByRace = query({
       .withIndex('by_user_race_session', (q) => q.eq('userId', viewer._id))
       .collect();
 
-    const byRace = new Map<
-      Id<'races'>,
-      Record<SessionType, boolean>
-    >();
-    const sessionTypes: SessionType[] = [
+    const byRace = new Map<Id<'races'>, Record<SessionType, boolean>>();
+    const sessionTypes: Array<SessionType> = [
       'quali',
       'sprint_quali',
       'sprint',
