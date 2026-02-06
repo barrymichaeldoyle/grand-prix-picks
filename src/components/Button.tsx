@@ -9,10 +9,11 @@ const base =
 
 const variants = {
   primary:
-    'bg-button-accent hover:bg-button-accent-hover text-white disabled:bg-surface-muted disabled:text-text-muted disabled:cursor-not-allowed',
+    'border border-transparent bg-button-accent hover:bg-button-accent-hover text-white disabled:bg-surface-muted disabled:text-text-muted disabled:cursor-not-allowed',
   saved:
-    'bg-success-muted text-success border border-success/30 cursor-default',
-  loading: 'bg-button-accent text-white opacity-90 cursor-wait',
+    'border border-success/30 bg-success-muted text-success cursor-default',
+  loading:
+    'border border-transparent bg-button-accent text-white opacity-90 cursor-wait',
   tab: 'font-medium text-text-muted hover:bg-surface-muted hover:text-text disabled:bg-transparent disabled:text-text-muted/50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-text-muted/50',
 } as const;
 

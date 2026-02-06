@@ -1,3 +1,4 @@
+import confetti from 'canvas-confetti';
 import { useMutation, useQuery } from 'convex/react';
 import { AnimatePresence, motion, Reorder } from 'framer-motion';
 import { Check, ChevronDown, ChevronUp, X } from 'lucide-react';
@@ -114,6 +115,13 @@ export function PredictionForm({
     try {
       await submitPrediction({ raceId, picks, sessionType });
       setSubmitStatus('success');
+      if (existingPicks && existingPicks.length > 0) {
+        confetti({
+          particleCount: 80,
+          spread: 60,
+          origin: { y: 0.7 },
+        });
+      }
       onSuccess?.();
     } catch (error) {
       setSubmitStatus('error');
@@ -128,6 +136,11 @@ export function PredictionForm({
   const hasChanges = existingPicks
     ? JSON.stringify(picks) !== JSON.stringify(existingPicks)
     : picks.length > 0;
+
+  /** When editing existing picks: current selection matches saved → show Saved, disable button */
+  const isUnchangedFromSaved = Boolean(
+    existingPicks?.length === 5 && picks.length === 5 && !hasChanges,
+  );
 
   // Empty slots needed
   const emptySlots = 5 - pickedDrivers.length;
@@ -315,20 +328,14 @@ export function PredictionForm({
               size="md"
               className="w-100 max-w-full"
               loading={isSubmitting}
-              saved={
-                submitStatus === 'success' && !hasChanges && picks.length === 5
-              }
+              saved={isUnchangedFromSaved}
               disabled={
-                picks.length !== 5 ||
-                isSubmitting ||
-                (submitStatus === 'success' && !hasChanges)
+                picks.length !== 5 || isSubmitting || isUnchangedFromSaved
               }
               onClick={handleSubmit}
               data-testid="submit-prediction"
             >
-              {submitStatus === 'success' &&
-              !hasChanges &&
-              picks.length === 5 ? (
+              {isUnchangedFromSaved ? (
                 <>
                   <Check size={20} className="shrink-0" />
                   Saved
@@ -349,15 +356,6 @@ export function PredictionForm({
               >
                 Select {5 - picks.length} more driver
                 {5 - picks.length !== 1 ? 's' : ''}
-              </span>
-            )}
-
-            {submitStatus === 'success' && hasChanges && (
-              <span
-                className="text-sm text-warning"
-                data-testid="unsaved-changes"
-              >
-                Unsaved changes
               </span>
             )}
 

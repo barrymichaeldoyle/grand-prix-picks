@@ -199,9 +199,6 @@ test.describe('Predictions', () => {
         await page.getByTestId('remove-pick-5').click();
         await page.getByTestId('driver-PIA').click();
 
-        // Should show unsaved changes
-        await expect(page.getByTestId('unsaved-changes')).toBeVisible();
-
         // Submit should now say "Update Prediction"
         await expect(page.getByTestId('submit-prediction')).toContainText(
           'Update Prediction',

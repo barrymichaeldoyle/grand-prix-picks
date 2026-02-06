@@ -44,19 +44,21 @@ export async function getOrCreateViewer(
     .unique();
 
   if (existing) {
-    // Sync user data from Clerk if it has changed
-    const needsUpdate =
-      existing.email !== email ||
-      existing.displayName !== displayName ||
-      existing.username !== username;
+    // Sync user data from Clerk if it has changed.
+    // Only overwrite fields that Clerk actually provides (not undefined)
+    // to avoid clearing data we already have.
+    const patch: Partial<
+      Pick<Doc<'users'>, 'email' | 'displayName' | 'username' | 'updatedAt'>
+    > = {};
+    if (email !== undefined && existing.email !== email) patch.email = email;
+    if (displayName !== undefined && existing.displayName !== displayName)
+      patch.displayName = displayName;
+    if (username !== undefined && existing.username !== username)
+      patch.username = username;
 
-    if (needsUpdate) {
-      await ctx.db.patch(existing._id, {
-        email,
-        displayName,
-        username,
-        updatedAt: now,
-      });
+    if (Object.keys(patch).length > 0) {
+      patch.updatedAt = now;
+      await ctx.db.patch(existing._id, patch);
       return (await ctx.db.get(existing._id)) ?? existing;
     }
 

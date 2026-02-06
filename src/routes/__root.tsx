@@ -1,14 +1,19 @@
+import { useAuth } from '@clerk/clerk-react';
 import { TanStackDevtools } from '@tanstack/react-devtools';
 import type { QueryClient } from '@tanstack/react-query';
 import {
   createRootRouteWithContext,
   HeadContent,
+  Link,
   Scripts,
 } from '@tanstack/react-router';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
+import { useMutation } from 'convex/react';
+import { Flag, Home, Trophy } from 'lucide-react';
 import type { PropsWithChildren } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
+import { api } from '../../convex/_generated/api';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { Footer } from '../components/Footer';
 import { Header, MEDIA_MATCH_BREAKPOINT } from '../components/Header';
@@ -95,8 +100,63 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     ],
   }),
 
+  notFoundComponent: NotFoundPage,
   shellComponent: RootDocument,
 });
+
+function NotFoundPage() {
+  return (
+    <div className="flex min-h-[50vh] items-center justify-center px-4">
+      <div className="w-full max-w-md text-center">
+        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-warning-muted">
+          <Flag className="h-8 w-8 text-warning" />
+        </div>
+
+        <h1 className="mb-2 text-2xl font-bold text-text">
+          Page not found
+        </h1>
+
+        <p className="mb-8 text-text-muted">
+          Looks like you've taken a wrong turn. This page doesn't exist or has
+          been moved.
+        </p>
+
+        <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 rounded-lg bg-button-accent px-6 py-2.5 font-semibold text-white transition-colors hover:bg-button-accent-hover"
+          >
+            <Home className="h-4 w-4" />
+            Go home
+          </Link>
+          <Link
+            to="/leaderboard"
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-6 py-2.5 font-semibold text-text transition-colors hover:bg-surface-muted"
+          >
+            <Trophy className="h-4 w-4" />
+            Leaderboard
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Syncs the user's Clerk profile to Convex once per app load. */
+function ProfileSync() {
+  const { isSignedIn } = useAuth();
+  const syncProfile = useMutation(api.users.syncProfile);
+  const hasSynced = useRef(false);
+
+  useEffect(() => {
+    if (isSignedIn && !hasSynced.current) {
+      hasSynced.current = true;
+      void syncProfile();
+    }
+  }, [isSignedIn, syncProfile]);
+
+  return null;
+}
 
 const THEME_KEY = 'grand-prix-picks-theme';
 
@@ -162,6 +222,7 @@ function RootDocument({ children }: PropsWithChildren) {
       <body>
         <AppClerkProvider darkMode={isDark}>
           <AppConvexProvider>
+            <ProfileSync />
             <div className="flex h-[100dvh] h-screen flex-col overflow-hidden">
               <Header
                 mobileMenuOpen={mobileMenuOpen}

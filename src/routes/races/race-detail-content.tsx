@@ -32,22 +32,31 @@ export function PredictionSection({
 
   return (
     <div className="space-y-2 p-4">
-      {!editingSession && (
+      <div
+        className={`overflow-hidden transition-all duration-200 ease-out ${
+          editingSession ? 'max-h-0 opacity-0' : 'max-h-20 opacity-100'
+        }`}
+      >
         <h2 className="text-xl font-semibold text-text">
           {hasPredictions ? 'Your Predictions' : 'Make Your Prediction'}
         </h2>
-      )}
+      </div>
 
       {!isLoaded ? (
         <InlineLoader />
       ) : isSignedIn ? (
-        <ErrorBoundary>
-          <WeekendPredictions
-            race={race}
-            editingSession={editingSession}
-            onEditingSessionChange={setEditingSession}
-          />
-        </ErrorBoundary>
+        <div
+          key={editingSession ?? 'summary'}
+          className="race-detail-content-in"
+        >
+          <ErrorBoundary>
+            <WeekendPredictions
+              race={race}
+              editingSession={editingSession}
+              onEditingSessionChange={setEditingSession}
+            />
+          </ErrorBoundary>
+        </div>
       ) : (
         <div className="rounded-lg border-2 border-dashed border-border py-8 text-center">
           <LogIn className="mx-auto mb-4 h-12 w-12 text-text-muted" />

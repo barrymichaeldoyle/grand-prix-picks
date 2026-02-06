@@ -1,5 +1,5 @@
-import { query } from './_generated/server';
-import { getViewer, isAdmin } from './lib/auth';
+import { mutation, query } from './_generated/server';
+import { getOrCreateViewer, getViewer, isAdmin } from './lib/auth';
 
 export const me = query({
   args: {},
@@ -14,6 +14,14 @@ export const me = query({
       email: viewer.email,
       isAdmin: viewer.isAdmin ?? false,
     };
+  },
+});
+
+/** Sync the current user's profile from Clerk identity claims. */
+export const syncProfile = mutation({
+  args: {},
+  handler: async (ctx) => {
+    await getOrCreateViewer(ctx);
   },
 });
 
