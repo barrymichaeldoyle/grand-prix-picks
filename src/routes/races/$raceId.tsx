@@ -17,7 +17,7 @@ import {
   NotYetOpenSection,
   ResultsSection,
   Top5PredictionSection,
-} from './race-detail-content';
+} from './-race-detail-content';
 
 const convex = new ConvexHttpClient(import.meta.env.VITE_CONVEX_URL);
 

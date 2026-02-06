@@ -34,6 +34,14 @@ const config = defineConfig(({ mode }) => {
       devtools(),
       nitro({
         preset: nitroPreset,
+        // Avoid bundling native .node binaries (e.g. fsevents on macOS) in node-server build
+        rollupConfig: {
+          external: (id) =>
+            id === 'fsevents' ||
+            id === 'chokidar' ||
+            id.includes('fsevents') ||
+            id.endsWith('.node'),
+        },
       }),
       viteTsConfigPaths({
         projects: ['./tsconfig.json'],
