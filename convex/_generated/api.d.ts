@@ -9,6 +9,7 @@
  */
 
 import type * as drivers from "../drivers.js";
+import type * as h2h from "../h2h.js";
 import type * as leaderboards from "../leaderboards.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_scoring from "../lib/scoring.js";
@@ -27,6 +28,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   drivers: typeof drivers;
+  h2h: typeof h2h;
   leaderboards: typeof leaderboards;
   "lib/auth": typeof lib_auth;
   "lib/scoring": typeof lib_scoring;

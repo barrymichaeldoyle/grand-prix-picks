@@ -1,7 +1,7 @@
 import { SignInButton, useAuth } from '@clerk/clerk-react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
-import { History, Info, LogIn, Star, Trophy } from 'lucide-react';
+import { History, Info, LogIn, Star, Swords, Trophy } from 'lucide-react';
 
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
@@ -13,9 +13,9 @@ import {
   TEAM_COLORS,
 } from '../components/DriverBadge';
 import { Flag } from '../components/Flag';
-import { Tooltip } from '../components/Tooltip';
 import { PageLoader } from '../components/PageLoader';
 import { getCountryCodeForRace, RaceFlag } from '../components/RaceCard';
+import { Tooltip } from '../components/Tooltip';
 import {
   getSessionsForWeekend,
   SESSION_LABELS,
@@ -137,6 +137,10 @@ function MyPredictionsPage() {
     api.predictions.myPredictionHistory,
     isSignedIn ? {} : 'skip',
   );
+  const h2hHistory = useQuery(
+    api.h2h.myH2HPredictionHistory,
+    isSignedIn ? {} : 'skip',
+  );
   const drivers = useQuery(api.drivers.listDrivers);
 
   if (!isLoaded) {
@@ -213,9 +217,9 @@ function MyPredictionsPage() {
                 placement="top"
                 content={
                   <span className="block max-w-[240px] rounded bg-text px-2 py-1.5 text-xs font-medium text-white shadow-sm">
-                    Weighted by where you picked them: P1 = 5 pts, P2 = 4, P3
-                    = 3, P4 = 2, P5 = 1. This is the driver you’ve picked in
-                    top positions most.
+                    Weighted by where you picked them: P1 = 5 pts, P2 = 4, P3 =
+                    3, P4 = 2, P5 = 1. This is the driver you’ve picked in top
+                    positions most.
                   </span>
                 }
               >
@@ -434,6 +438,40 @@ function MyPredictionsPage() {
                         </div>
                       </div>
                     )}
+
+                    {/* H2H row */}
+                    {(() => {
+                      const h2hWeekend = h2hHistory?.find(
+                        (h) => h.raceId === weekend.raceId,
+                      );
+                      if (!h2hWeekend) return null;
+                      return (
+                        <div className="grid grid-cols-[auto_1fr] border-t border-border/50">
+                          <div className="flex w-12 items-center justify-center py-2 sm:w-16">
+                            <Swords className="h-4 w-4 text-accent" />
+                          </div>
+                          <div
+                            className={`grid ${weekend.hasSprint ? 'grid-cols-4' : 'grid-cols-2'}`}
+                          >
+                            {sessions.map((session) => {
+                              const h2hSession = h2hWeekend.sessions[session];
+                              return (
+                                <div
+                                  key={session}
+                                  className="px-2 py-2 text-center"
+                                >
+                                  <span className="text-xs font-medium text-text-muted">
+                                    {h2hSession
+                                      ? `${h2hSession.correctPicks}/${h2hSession.totalPicks}`
+                                      : '—'}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </Link>
               );

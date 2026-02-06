@@ -15,13 +15,15 @@ export interface TooltipProps {
   children: ReactNode;
   /** Placement relative to trigger */
   placement?: 'top' | 'bottom';
+  /** Pixels between trigger and tooltip (avoids overlap on small touch targets) */
+  distance?: number;
   /** Extra classes for the trigger wrapper (e.g. flex-1 for flex layouts) */
   triggerClassName?: string;
   /** Pre-render tooltip content immediately (for preloading images) */
   prerender?: boolean;
 }
 
-const GAP = 6;
+const DEFAULT_DISTANCE = 6;
 const VIEWPORT_PADDING = 8;
 const OPEN_DELAY_MS = 250;
 
@@ -30,6 +32,7 @@ function computeConstrainedPosition(
   tooltipWidth: number,
   tooltipHeight: number,
   preferredPlacement: 'top' | 'bottom',
+  distance: number,
 ): { top: number; left: number; placement: 'top' | 'bottom' } {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
@@ -46,20 +49,20 @@ function computeConstrainedPosition(
   let top: number;
 
   if (placement === 'top') {
-    const tooltipBottom = triggerRect.top - GAP;
+    const tooltipBottom = triggerRect.top - distance;
     const tooltipTop = tooltipBottom - tooltipHeight;
     if (tooltipTop < pad) {
       placement = 'bottom';
-      top = triggerRect.bottom + GAP;
+      top = triggerRect.bottom + distance;
     } else {
       top = tooltipBottom;
     }
   } else {
-    top = triggerRect.bottom + GAP;
+    top = triggerRect.bottom + distance;
     const tooltipBottom = top + tooltipHeight;
     if (tooltipBottom > vh - pad) {
       placement = 'top';
-      top = triggerRect.top - GAP;
+      top = triggerRect.top - distance;
     }
   }
 
@@ -75,12 +78,14 @@ export function Tooltip({
   content,
   children,
   placement = 'top',
+  distance = DEFAULT_DISTANCE,
   triggerClassName,
   prerender = false,
 }: TooltipProps) {
   const triggerRef = useRef<HTMLSpanElement>(null);
   const tooltipRef = useRef<HTMLSpanElement>(null);
   const openTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const openedByTouchRef = useRef(false);
   const [isVisible, setIsVisible] = useState(false);
   const [hasBeenVisible, setHasBeenVisible] = useState(false);
   const [doAnimate, setDoAnimate] = useState(false);
@@ -88,6 +93,22 @@ export function Tooltip({
   const [effectivePlacement, setEffectivePlacement] = useState<
     'top' | 'bottom'
   >(placement);
+
+  const openAtTrigger = useCallback(() => {
+    const el = triggerRef.current;
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      setCoords({
+        top:
+          placement === 'top'
+            ? rect.top - distance
+            : rect.bottom + distance,
+        left: rect.left + rect.width / 2,
+      });
+      setEffectivePlacement(placement);
+    }
+    setIsVisible(true);
+  }, [placement, distance]);
 
   const updatePosition = useCallback(() => {
     const triggerEl = triggerRef.current;
@@ -106,10 +127,11 @@ export function Tooltip({
       tooltipRect.width,
       tooltipRect.height,
       placement,
+      distance,
     );
     setCoords({ top, left });
     setEffectivePlacement(p);
-  }, [placement]);
+  }, [placement, distance]);
 
   useLayoutEffect(() => {
     if (!isVisible || !tooltipRef.current) return;
@@ -132,7 +154,10 @@ export function Tooltip({
     }
     // Track that tooltip has been shown (keeps content mounted for caching)
     setHasBeenVisible(true);
-    const handleScroll = () => setIsVisible(false);
+    const handleScroll = () => {
+      openedByTouchRef.current = false;
+      setIsVisible(false);
+    };
     const handleResize = () => updatePosition();
     window.addEventListener('scroll', handleScroll, true);
     window.addEventListener('resize', handleResize);
@@ -144,23 +169,39 @@ export function Tooltip({
     };
   }, [isVisible, updatePosition]);
 
-  const handleMouseEnter = () => {
+  // On mobile: close when user taps outside (tooltip was opened by touch)
+  useEffect(() => {
+    if (!isVisible || !openedByTouchRef.current) return;
+    const handlePointerDown = (e: PointerEvent) => {
+      if (triggerRef.current?.contains(e.target as Node)) return;
+      openedByTouchRef.current = false;
+      setIsVisible(false);
+    };
+    document.addEventListener('pointerdown', handlePointerDown, true);
+    return () =>
+      document.removeEventListener('pointerdown', handlePointerDown, true);
+  }, [isVisible]);
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (e.pointerType !== 'touch') return;
+    if (openTimeoutRef.current) {
+      clearTimeout(openTimeoutRef.current);
+      openTimeoutRef.current = null;
+    }
+    openedByTouchRef.current = true;
+    openAtTrigger();
+  };
+
+  const handlePointerEnter = (e: React.PointerEvent) => {
+    if (e.pointerType !== 'mouse') return;
     openTimeoutRef.current = setTimeout(() => {
       openTimeoutRef.current = null;
-      const el = triggerRef.current;
-      if (el) {
-        const rect = el.getBoundingClientRect();
-        setCoords({
-          top: placement === 'top' ? rect.top - GAP : rect.bottom + GAP,
-          left: rect.left + rect.width / 2,
-        });
-        setEffectivePlacement(placement);
-      }
-      setIsVisible(true);
+      openAtTrigger();
     }, OPEN_DELAY_MS);
   };
 
-  const handleMouseLeave = () => {
+  const handlePointerLeave = (e: React.PointerEvent) => {
+    if (e.pointerType !== 'mouse') return;
     if (openTimeoutRef.current) {
       clearTimeout(openTimeoutRef.current);
       openTimeoutRef.current = null;
@@ -208,8 +249,9 @@ export function Tooltip({
       <span
         ref={triggerRef}
         className={`inline-flex cursor-help ${triggerClassName ?? ''}`.trim()}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
+        onPointerDown={handlePointerDown}
+        onPointerEnter={handlePointerEnter}
+        onPointerLeave={handlePointerLeave}
       >
         {children}
       </span>

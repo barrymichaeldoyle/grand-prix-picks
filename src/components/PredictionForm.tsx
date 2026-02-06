@@ -12,6 +12,12 @@ import { Button } from './Button';
 import { TEAM_COLORS } from './DriverBadge';
 import { Flag } from './Flag';
 import { InlineLoader } from './InlineLoader';
+import { Tooltip } from './Tooltip';
+
+const DRIVER_SLOT_TOOLTIP = {
+  narrow: 'Select from the driver cards below',
+  lg: 'Select from the driver cards to the right',
+};
 
 type Driver = Doc<'drivers'>;
 
@@ -46,6 +52,24 @@ export function PredictionForm({
       setPicks(existingPicks);
     }
   }, [existingPicks]);
+
+  // Tooltip for empty slot: "cards below" on narrow, "cards to the right" on lg+ (matches layout)
+  const [driverSlotTooltip, setDriverSlotTooltip] = useState(() =>
+    typeof window !== 'undefined' &&
+    window.matchMedia('(min-width: 1024px)').matches
+      ? DRIVER_SLOT_TOOLTIP.lg
+      : DRIVER_SLOT_TOOLTIP.narrow,
+  );
+  useEffect(() => {
+    const mql = window.matchMedia('(min-width: 1024px)');
+    const handler = () => {
+      setDriverSlotTooltip(
+        mql.matches ? DRIVER_SLOT_TOOLTIP.lg : DRIVER_SLOT_TOOLTIP.narrow,
+      );
+    };
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, []);
 
   if (drivers === undefined) {
     return <InlineLoader />;
@@ -297,25 +321,27 @@ export function PredictionForm({
               {Array.from({ length: emptySlots }).map((_, i) => {
                 const slotIndex = picks.length + i;
                 return (
-                  <div
-                    key={`empty-${i}`}
-                    className="flex h-14 shrink-0 items-center border-b border-dashed border-border bg-surface last:border-b-0 sm:h-16"
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      if (e.dataTransfer.types.includes('text/plain'))
-                        e.dataTransfer.dropEffect = 'copy';
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      const id = e.dataTransfer.getData('text/plain');
-                      if (id)
-                        addDriverAtPosition(id as Id<'drivers'>, slotIndex);
-                    }}
-                  >
-                    <span className="flex-1 px-2 py-1.5 text-sm text-text-muted sm:px-3 sm:py-2">
-                      Select a driver
-                    </span>
-                  </div>
+                  <Tooltip content={driverSlotTooltip}>
+                    <div
+                      key={`empty-${i}`}
+                      className="flex h-14 shrink-0 items-center border-b border-dashed border-border bg-surface last:border-b-0 sm:h-16"
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        if (e.dataTransfer.types.includes('text/plain'))
+                          e.dataTransfer.dropEffect = 'copy';
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const id = e.dataTransfer.getData('text/plain');
+                        if (id)
+                          addDriverAtPosition(id as Id<'drivers'>, slotIndex);
+                      }}
+                    >
+                      <span className="flex-1 cursor-help px-2 py-1.5 text-sm text-text-muted sm:px-3 sm:py-2">
+                        Select a driver
+                      </span>
+                    </div>
+                  </Tooltip>
                 );
               })}
             </Reorder.Group>

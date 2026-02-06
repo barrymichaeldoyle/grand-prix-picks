@@ -3,15 +3,19 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { ConvexHttpClient } from 'convex/browser';
 import { useQuery } from 'convex/react';
 import { ArrowLeft } from 'lucide-react';
+import { useState } from 'react';
 
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
+import type { SessionType } from '../../lib/sessions';
 import { InlineLoader } from '../../components/InlineLoader';
 import { RaceDetailHeader } from '../../components/RaceDetailHeader';
 import {
+  H2HResultsSection,
+  H2HSection,
   LockedSection,
   NotYetOpenSection,
-  PredictionSection,
+  Top5PredictionSection,
   ResultsSection,
 } from './race-detail-content';
 
@@ -89,6 +93,10 @@ function getStatusStyles(
 function RaceDetailPage() {
   const { race, nextRace, predictionOpenAt } = Route.useLoaderData();
   const { isLoaded: isAuthLoaded } = useAuth();
+  const [top5EditingSession, setTop5EditingSession] =
+    useState<SessionType | null>(null);
+  const [h2hEditingSession, setH2hEditingSession] =
+    useState<SessionType | null>(null);
 
   const myScore = useQuery(
     api.results.getMyScoreForRace,
@@ -140,10 +148,22 @@ function RaceDetailPage() {
                     <InlineLoader />
                   </div>
                 ) : (
-                  <PredictionSection
-                    race={race}
-                    hasPredictions={!!hasPredictions}
-                  />
+                  <>
+                    {!h2hEditingSession && (
+                      <Top5PredictionSection
+                        race={race}
+                        editingSession={top5EditingSession}
+                        onEditingSessionChange={setTop5EditingSession}
+                      />
+                    )}
+                    {hasPredictions && !top5EditingSession && (
+                      <H2HSection
+                        race={race}
+                        editingSession={h2hEditingSession}
+                        onEditingSessionChange={setH2hEditingSession}
+                      />
+                    )}
+                  </>
                 )
               ) : isNotYetOpen ? (
                 <NotYetOpenSection
@@ -152,7 +172,11 @@ function RaceDetailPage() {
               ) : race.status === 'locked' ? (
                 <LockedSection />
               ) : (
-                <ResultsSection raceId={race._id} race={race} />
+                <>
+                  <ResultsSection raceId={race._id} race={race} />
+                  <div className="border-t border-border" />
+                  <H2HResultsSection raceId={race._id} race={race} />
+                </>
               )}
             </div>
           </div>

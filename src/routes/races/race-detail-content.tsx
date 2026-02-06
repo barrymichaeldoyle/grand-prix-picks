@@ -1,34 +1,50 @@
 import { SignInButton, useAuth } from '@clerk/clerk-react';
-import { Lock, LogIn } from 'lucide-react';
+import { useQuery } from 'convex/react';
+import { Check, Lock, LogIn, Swords, Trophy, X } from 'lucide-react';
 import { useState } from 'react';
 
+import { api } from '../../../convex/_generated/api';
 import type { Doc, Id } from '../../../convex/_generated/dataModel';
 import { Button } from '../../components/Button';
+import { DriverBadge } from '../../components/DriverBadge';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
+import { H2HWeekendSummary } from '../../components/H2HWeekendSummary';
 import { InlineLoader } from '../../components/InlineLoader';
 import { RaceResults } from '../../components/RaceResults';
 import { WeekendPredictions } from '../../components/WeekendPredictions';
 import { formatDate, formatTime } from '../../lib/date';
 import type { SessionType } from '../../lib/sessions';
+import {
+  getSessionsForWeekend,
+  SESSION_LABELS,
+  SESSION_LABELS_SHORT,
+} from '../../lib/sessions';
 
 /** Card wrapper matching RaceResults table/block styling */
 const SECTION_CARD =
   'overflow-hidden rounded-lg border border-border bg-surface';
 
-interface PredictionSectionProps {
+interface Top5PredictionSectionProps {
   race: Doc<'races'>;
-  /** When true, user has already submitted predictions for this weekend. */
-  hasPredictions?: boolean;
+  /** When provided, section is controlled by parent (e.g. to hide other section while editing). */
+  editingSession?: SessionType | null;
+  onEditingSessionChange?: (session: SessionType | null) => void;
 }
 
-export function PredictionSection({
+export function Top5PredictionSection({
   race,
-  hasPredictions = false,
-}: PredictionSectionProps) {
+  editingSession: controlledEditing,
+  onEditingSessionChange,
+}: Top5PredictionSectionProps) {
   const { isLoaded, isSignedIn } = useAuth();
-  const [editingSession, setEditingSession] = useState<SessionType | null>(
+  const [internalEditing, setInternalEditing] = useState<SessionType | null>(
     null,
   );
+  const editingSession =
+    onEditingSessionChange !== undefined
+      ? (controlledEditing ?? null)
+      : internalEditing;
+  const setEditingSession = onEditingSessionChange ?? setInternalEditing;
 
   return (
     <div className="space-y-2 p-4">
@@ -37,9 +53,10 @@ export function PredictionSection({
           editingSession ? 'max-h-0 opacity-0' : 'max-h-20 opacity-100'
         }`}
       >
-        <h2 className="text-xl font-semibold text-text">
-          {hasPredictions ? 'Your Predictions' : 'Make Your Prediction'}
-        </h2>
+        <div className="flex items-center gap-2">
+          <Trophy className="h-5 w-5 shrink-0 text-accent" />
+          <h2 className="text-xl font-semibold text-text">Top 5 Predictions</h2>
+        </div>
       </div>
 
       {!isLoaded ? (
@@ -133,6 +150,233 @@ export function ResultsSection({ raceId, race }: ResultsSectionProps) {
           <RaceResults raceId={raceId} race={race} hideHeader />
         </div>
       </ErrorBoundary>
+    </div>
+  );
+}
+
+// ───────────────────────── H2H Sections ─────────────────────────
+
+interface H2HSectionProps {
+  race: Doc<'races'>;
+  /** When provided, section is controlled by parent (e.g. to hide other section while editing). */
+  editingSession?: SessionType | null;
+  onEditingSessionChange?: (session: SessionType | null) => void;
+}
+
+export function H2HSection({
+  race,
+  editingSession: controlledEditing,
+  onEditingSessionChange,
+}: H2HSectionProps) {
+  const [internalEditing, setInternalEditing] = useState<SessionType | null>(
+    null,
+  );
+  const editingSession =
+    onEditingSessionChange !== undefined
+      ? (controlledEditing ?? null)
+      : internalEditing;
+  const setEditingSession = onEditingSessionChange ?? setInternalEditing;
+
+  return (
+    <div className="space-y-2 p-4">
+      <div
+        className={`overflow-hidden transition-all duration-200 ease-out ${
+          editingSession ? 'max-h-0 opacity-0' : 'max-h-20 opacity-100'
+        }`}
+      >
+        <div className="flex items-center gap-2">
+          <Swords className="h-5 w-5 text-accent" />
+          <h2 className="text-xl font-semibold text-text">
+            Head-to-Head Predictions
+          </h2>
+        </div>
+      </div>
+
+      <ErrorBoundary>
+        <H2HWeekendSummary
+          race={race}
+          editingSession={editingSession}
+          onEditingSessionChange={setEditingSession}
+        />
+      </ErrorBoundary>
+    </div>
+  );
+}
+
+interface H2HResultsSectionProps {
+  raceId: Id<'races'>;
+  race: Doc<'races'>;
+}
+
+export function H2HResultsSection({ raceId, race }: H2HResultsSectionProps) {
+  const sessions = getSessionsForWeekend(!!race.hasSprint);
+  const [selectedSession, setSelectedSession] = useState<SessionType>(
+    sessions[sessions.length - 1],
+  );
+
+  const h2hResults = useQuery(api.h2h.getH2HResultsForRace, {
+    raceId,
+    sessionType: selectedSession,
+  });
+  const myH2HScore = useQuery(api.h2h.getMyH2HScoreForRace, {
+    raceId,
+    sessionType: selectedSession,
+  });
+  const myH2HPredictions = useQuery(api.h2h.myH2HPredictionsForRace, {
+    raceId,
+  });
+
+  if (!h2hResults) return null;
+
+  const sessionPicks = myH2HPredictions?.[selectedSession];
+
+  return (
+    <div className="p-4">
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Swords className="h-5 w-5 text-accent" />
+          <h2 className="text-xl font-semibold text-text">
+            Head-to-Head Results
+          </h2>
+        </div>
+        {myH2HScore && (
+          <span className="rounded-full bg-accent-muted px-3 py-1 text-sm font-semibold text-accent">
+            {myH2HScore.correctPicks}/{myH2HScore.totalPicks} correct ={' '}
+            {myH2HScore.points} pts
+          </span>
+        )}
+      </div>
+
+      {/* Session tabs */}
+      {sessions.length > 1 && (
+        <div className="mb-4 flex gap-1 rounded-lg border border-border bg-surface-muted/50 p-1">
+          {sessions.map((session) => (
+            <Button
+              key={session}
+              variant="tab"
+              size="tab"
+              active={selectedSession === session}
+              onClick={() => setSelectedSession(session)}
+              className="flex-1"
+            >
+              <span className="hidden sm:inline">
+                {SESSION_LABELS[session]}
+              </span>
+              <span className="sm:hidden">{SESSION_LABELS_SHORT[session]}</span>
+            </Button>
+          ))}
+        </div>
+      )}
+
+      {/* Results table */}
+      <div className="overflow-hidden rounded-lg border border-border bg-surface">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-border text-sm">
+              <th className="px-2 py-2 text-left text-text-muted sm:px-4">
+                Team
+              </th>
+              <th className="px-2 py-2 text-center text-text-muted sm:px-4">
+                Winner
+              </th>
+              {sessionPicks && (
+                <>
+                  <th className="px-2 py-2 text-center text-text-muted sm:px-4">
+                    Your Pick
+                  </th>
+                  <th className="w-12 px-2 py-2 text-center text-text-muted sm:px-4" />
+                </>
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {h2hResults.map((result) => {
+              const myPick = sessionPicks
+                ? sessionPicks[result.matchupId]
+                : undefined;
+              const isCorrect = myPick === result.winnerId;
+              const pickDriver =
+                myPick === result.driver1?._id
+                  ? result.driver1
+                  : myPick === result.driver2?._id
+                    ? result.driver2
+                    : null;
+
+              return (
+                <tr
+                  key={result.matchupId}
+                  className="border-b border-border last:border-0"
+                >
+                  <td className="px-2 py-1.5 sm:px-4 sm:py-2">
+                    <span className="text-xs font-medium text-text-muted">
+                      {result.team}
+                    </span>
+                  </td>
+                  <td className="px-2 py-1.5 text-center sm:px-4 sm:py-2">
+                    <div className="flex h-8 items-center justify-center">
+                      <DriverBadge
+                        code={result.winnerCode}
+                        team={result.team}
+                        displayName={
+                          result.winnerId === result.driver1?._id
+                            ? result.driver1.displayName
+                            : result.driver2?.displayName
+                        }
+                        number={
+                          result.winnerId === result.driver1?._id
+                            ? result.driver1.number
+                            : result.driver2?.number
+                        }
+                        nationality={
+                          result.winnerId === result.driver1?._id
+                            ? result.driver1.nationality
+                            : result.driver2?.nationality
+                        }
+                      />
+                    </div>
+                  </td>
+                  {sessionPicks && (
+                    <>
+                      <td className="px-2 py-1.5 text-center sm:px-4 sm:py-2">
+                        <div className="flex h-8 items-center justify-center">
+                          {pickDriver ? (
+                            <DriverBadge
+                              code={pickDriver.code}
+                              team={pickDriver.team}
+                              displayName={pickDriver.displayName}
+                              number={pickDriver.number}
+                              nationality={pickDriver.nationality}
+                            />
+                          ) : (
+                            <span className="text-text-muted/50">—</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-2 py-1.5 text-center sm:px-4 sm:py-2">
+                        {myPick && (
+                          <span
+                            className={`inline-flex h-6 w-6 items-center justify-center rounded-full ${
+                              isCorrect
+                                ? 'bg-success-muted text-success'
+                                : 'bg-error-muted text-error'
+                            }`}
+                          >
+                            {isCorrect ? (
+                              <Check size={14} strokeWidth={3} />
+                            ) : (
+                              <X size={14} strokeWidth={3} />
+                            )}
+                          </span>
+                        )}
+                      </td>
+                    </>
+                  )}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

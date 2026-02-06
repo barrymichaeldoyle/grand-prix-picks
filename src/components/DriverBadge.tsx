@@ -45,7 +45,7 @@ export function DriverBadge({
   const hasTooltip = displayName || number != null || team || nationality;
 
   const tooltipContent = hasTooltip ? (
-    <div className="relative rounded-xl border border-border bg-surface shadow-lg">
+    <div className="relative w-max max-w-[min(100vw-2rem,28rem)] rounded-xl border border-border bg-surface shadow-lg">
       {/* Driver Profile Card */}
       <div className="flex items-stretch">
         {/* Number block with team color */}
@@ -68,7 +68,9 @@ export function DriverBadge({
           <div className="flex items-center gap-2">
             {nationality && <Flag code={nationality} size="sm" />}
             {displayName && (
-              <span className="font-semibold text-text">{displayName}</span>
+              <span className="whitespace-nowrap font-semibold text-text">
+                {displayName}
+              </span>
             )}
           </div>
           {team && <span className="text-xs text-text-muted">{team}</span>}

@@ -128,7 +128,7 @@ export default defineSchema({
   h2hPredictions: defineTable({
     userId: v.id('users'),
     raceId: v.id('races'),
-    sessionType: sessionType, // "quali" or "race" (no sprint for H2H to keep it simple)
+    sessionType: sessionType,
     matchupId: v.id('h2hMatchups'),
     predictedWinnerId: v.id('drivers'), // must be driver1 or driver2 from matchup
     submittedAt: v.number(),

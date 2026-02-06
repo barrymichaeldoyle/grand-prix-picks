@@ -221,14 +221,148 @@ export const adminPublishResults = mutation({
       }
     }
 
+    // ===== H2H Auto-Scoring =====
+
+    const race = await ctx.db.get(args.raceId);
+    const season = race?.season ?? 2026;
+
+    const matchups = await ctx.db
+      .query('h2hMatchups')
+      .withIndex('by_season', (q) => q.eq('season', season))
+      .collect();
+
+    // Build position map from classification
+    const classificationPosition = new Map<Id<'drivers'>, number>();
+    for (let i = 0; i < args.classification.length; i++) {
+      classificationPosition.set(args.classification[i], i + 1);
+    }
+
+    // Determine H2H winner for each matchup and upsert h2hResults
+    for (const matchup of matchups) {
+      const pos1 = classificationPosition.get(matchup.driver1Id);
+      const pos2 = classificationPosition.get(matchup.driver2Id);
+
+      // If one DNF (not in classification), the other wins.
+      // If both DNF, skip — no H2H result for this matchup.
+      let winnerId: Id<'drivers'> | null = null;
+      if (pos1 !== undefined && pos2 !== undefined) {
+        winnerId = pos1 < pos2 ? matchup.driver1Id : matchup.driver2Id;
+      } else if (pos1 !== undefined) {
+        winnerId = matchup.driver1Id;
+      } else if (pos2 !== undefined) {
+        winnerId = matchup.driver2Id;
+      }
+
+      if (winnerId) {
+        const existingH2HResult = await ctx.db
+          .query('h2hResults')
+          .withIndex('by_race_session_matchup', (q) =>
+            q
+              .eq('raceId', args.raceId)
+              .eq('sessionType', sessionType)
+              .eq('matchupId', matchup._id),
+          )
+          .unique();
+
+        if (existingH2HResult) {
+          await ctx.db.patch(existingH2HResult._id, {
+            winnerId,
+            publishedAt: now,
+          });
+        } else {
+          await ctx.db.insert('h2hResults', {
+            raceId: args.raceId,
+            sessionType,
+            matchupId: matchup._id,
+            winnerId,
+            publishedAt: now,
+          });
+        }
+      }
+    }
+
+    // Score all users who submitted H2H predictions for this session
+    const h2hPredictions = await ctx.db
+      .query('h2hPredictions')
+      .withIndex('by_race_session', (q) =>
+        q.eq('raceId', args.raceId).eq('sessionType', sessionType),
+      )
+      .collect();
+
+    // Group by userId
+    const h2hByUser = new Map<Id<'users'>, typeof h2hPredictions>();
+    for (const pred of h2hPredictions) {
+      const userPreds = h2hByUser.get(pred.userId) ?? [];
+      userPreds.push(pred);
+      h2hByUser.set(pred.userId, userPreds);
+    }
+
+    // Build H2H result lookup
+    const h2hResults = await ctx.db
+      .query('h2hResults')
+      .withIndex('by_race_session', (q) =>
+        q.eq('raceId', args.raceId).eq('sessionType', sessionType),
+      )
+      .collect();
+    const h2hResultMap = new Map(
+      h2hResults.map((r) => [r.matchupId.toString(), r.winnerId]),
+    );
+
+    for (const [userId, userPreds] of h2hByUser) {
+      let correctPicks = 0;
+      const totalPicks = userPreds.length;
+
+      for (const pred of userPreds) {
+        const actualWinner = h2hResultMap.get(pred.matchupId.toString());
+        if (actualWinner && pred.predictedWinnerId === actualWinner) {
+          correctPicks++;
+        }
+      }
+
+      const points = correctPicks;
+
+      const existingH2HScore = await ctx.db
+        .query('h2hScores')
+        .withIndex('by_user_race_session', (q) =>
+          q
+            .eq('userId', userId)
+            .eq('raceId', args.raceId)
+            .eq('sessionType', sessionType),
+        )
+        .unique();
+
+      if (existingH2HScore) {
+        await ctx.db.patch(existingH2HScore._id, {
+          points,
+          correctPicks,
+          totalPicks,
+          updatedAt: now,
+        });
+      } else {
+        await ctx.db.insert('h2hScores', {
+          userId,
+          raceId: args.raceId,
+          sessionType,
+          points,
+          correctPicks,
+          totalPicks,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    }
+
     // Mark race as finished only when publishing race results
     if (sessionType === 'race') {
-      const race = await ctx.db.get(args.raceId);
       if (race && race.status !== 'finished') {
         await ctx.db.patch(args.raceId, { status: 'finished', updatedAt: now });
       }
     }
 
-    return { ok: true, scoredCount: predictions.length };
+    return {
+      ok: true,
+      scoredCount: predictions.length,
+      h2hScoredCount: h2hByUser.size,
+    };
   },
 });

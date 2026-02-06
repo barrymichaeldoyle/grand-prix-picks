@@ -3,28 +3,23 @@ import { ArrowLeft, Pencil } from 'lucide-react';
 import { useState } from 'react';
 
 import { api } from '../../convex/_generated/api';
-import type { Doc } from '../../convex/_generated/dataModel';
+import type { Doc, Id } from '../../convex/_generated/dataModel';
 import type { SessionType } from '../lib/sessions';
 import {
   getSessionsForWeekend,
   SESSION_LABELS,
   SESSION_LABELS_SHORT,
 } from '../lib/sessions';
-import { DriverBadge, DriverBadgeSkeleton } from './DriverBadge';
-import { PredictionForm } from './PredictionForm';
-import { Tooltip } from './Tooltip';
+import { DriverBadge } from './DriverBadge';
+import { H2HPredictionForm } from './H2HPredictionForm';
 
 type Race = Doc<'races'>;
 
-interface WeekendPredictionsProps {
+interface H2HWeekendSummaryProps {
   race: Race;
   /** Controlled editing: when set, parent can hide its own header. */
   editingSession?: SessionType | null;
   onEditingSessionChange?: (session: SessionType | null) => void;
-}
-
-function getSessionsForRace(race: Race): ReadonlyArray<SessionType> {
-  return getSessionsForWeekend(!!race.hasSprint);
 }
 
 function getSessionLockTime(
@@ -48,15 +43,15 @@ function isSessionLocked(race: Race, session: SessionType): boolean {
   return lockTime !== undefined && Date.now() >= lockTime;
 }
 
-export function WeekendPredictions({
+export function H2HWeekendSummary({
   race,
   editingSession: controlledEditing,
   onEditingSessionChange,
-}: WeekendPredictionsProps) {
-  const weekendPredictions = useQuery(api.predictions.myWeekendPredictions, {
+}: H2HWeekendSummaryProps) {
+  const h2hPredictions = useQuery(api.h2h.myH2HPredictionsForRace, {
     raceId: race._id,
   });
-  const drivers = useQuery(api.drivers.listDrivers);
+  const matchups = useQuery(api.h2h.getMatchupsForSeason, {});
 
   const [internalEditing, setInternalEditing] = useState<SessionType | null>(
     null,
@@ -70,29 +65,30 @@ export function WeekendPredictions({
     ? (s: SessionType | null) => onEditingSessionChange(s)
     : setInternalEditing;
 
-  const sessions = getSessionsForRace(race);
-  const hasPredictions =
-    weekendPredictions?.predictions &&
-    Object.values(weekendPredictions.predictions).some((p) => p !== null);
+  const sessions = getSessionsForWeekend(!!race.hasSprint);
+  const hasH2HPredictions =
+    h2hPredictions && Object.values(h2hPredictions).some((p) => p !== null);
 
-  // If user has no predictions yet, show the simple form
-  if (!hasPredictions) {
+  // If user has no H2H predictions yet, show the form
+  if (!hasH2HPredictions) {
     return (
       <div>
         <p className="mb-4 text-text-muted">
-          Pick your top 5 drivers. This prediction will apply to{' '}
+          Pick which teammate finishes ahead in each pairing. This prediction
+          will apply to{' '}
           {race.hasSprint
             ? 'Qualifying, Sprint Qualifying, Sprint, and Race'
             : 'Qualifying and Race'}
           . You can fine-tune individual sessions after submitting.
         </p>
-        <PredictionForm raceId={race._id} />
+        <H2HPredictionForm raceId={race._id} />
       </div>
     );
   }
 
-  // Editing a single session: show form, return to table on save
+  // Editing a single session
   if (editingSession) {
+    const existingPicks = h2hPredictions[editingSession] ?? undefined;
     return (
       <div className="space-y-4">
         <button
@@ -104,32 +100,30 @@ export function WeekendPredictions({
           Back to summary
         </button>
         <h3 className="text-lg font-semibold text-text">
-          Edit {SESSION_LABELS[editingSession]}
+          Edit H2H — {SESSION_LABELS[editingSession]}
         </h3>
-        <PredictionForm
+        <H2HPredictionForm
           raceId={race._id}
           sessionType={editingSession}
-          existingPicks={
-            weekendPredictions.predictions[editingSession] ?? undefined
-          }
+          existingPicks={existingPicks}
           onSuccess={() => setEditingSession(null)}
         />
       </div>
     );
   }
 
-  // Summary table with edit buttons in each session header
+  // Summary table: rows are matchups, columns are sessions
   return (
     <div className="space-y-4">
       <p className="text-text-muted">
-        Your predictions are set for this weekend.
+        Your head-to-head picks are set for this weekend.
       </p>
       <div className="overflow-hidden rounded-lg border border-border bg-surface">
         <table className="w-full">
           <thead>
             <tr className="border-b border-border text-sm">
               <th className="px-2 py-2 text-left text-text-muted sm:px-4">
-                Pos
+                Team
               </th>
               {sessions.map((session) => {
                 const locked = isSessionLocked(race, session);
@@ -142,17 +136,9 @@ export function WeekendPredictions({
                       <span className="hidden sm:inline">
                         {SESSION_LABELS[session]}
                       </span>
-                      {race.hasSprint ? (
-                        <span className="sm:hidden">
-                          <Tooltip content={SESSION_LABELS[session]}>
-                            <span>{SESSION_LABELS_SHORT[session]}</span>
-                          </Tooltip>
-                        </span>
-                      ) : (
-                        <span className="sm:hidden">
-                          {SESSION_LABELS[session]}
-                        </span>
-                      )}
+                      <span className="sm:hidden">
+                        {SESSION_LABELS_SHORT[session]}
+                      </span>
                       {locked ? (
                         <span
                           className="inline-block h-1.5 w-1.5 rounded-full bg-warning"
@@ -176,36 +162,44 @@ export function WeekendPredictions({
             </tr>
           </thead>
           <tbody>
-            {[0, 1, 2, 3, 4].map((position) => (
+            {matchups?.map((matchup) => (
               <tr
-                key={position}
+                key={matchup._id}
                 className="border-b border-border last:border-0"
               >
-                <td className="px-2 py-1.5 font-bold text-accent sm:px-4 sm:py-2">
-                  P{position + 1}
+                <td className="px-2 py-1.5 sm:px-4 sm:py-2">
+                  <span className="text-xs font-medium text-text-muted">
+                    {matchup.team}
+                  </span>
                 </td>
                 {sessions.map((session) => {
-                  const picks = weekendPredictions.predictions[session];
-                  const driverId = picks?.[position];
-                  const driver = driverId
-                    ? drivers?.find((d) => d._id === driverId)
-                    : null;
+                  const sessionPicks = h2hPredictions[session];
+                  const winnerId = sessionPicks
+                    ? (sessionPicks[matchup._id as string] as
+                        | Id<'drivers'>
+                        | undefined)
+                    : undefined;
+                  const winner =
+                    winnerId === matchup.driver1._id
+                      ? matchup.driver1
+                      : winnerId === matchup.driver2._id
+                        ? matchup.driver2
+                        : null;
+
                   return (
                     <td
                       key={session}
                       className="px-2 py-1.5 text-center sm:px-4 sm:py-2"
                     >
                       <div className="flex h-8 items-center justify-center">
-                        {driver ? (
+                        {winner ? (
                           <DriverBadge
-                            code={driver.code}
-                            team={driver.team}
-                            displayName={driver.displayName}
-                            number={driver.number}
-                            nationality={driver.nationality}
+                            code={winner.code}
+                            team={winner.team}
+                            displayName={winner.displayName}
+                            number={winner.number}
+                            nationality={winner.nationality}
                           />
-                        ) : driverId && drivers === undefined ? (
-                          <DriverBadgeSkeleton />
                         ) : (
                           <span className="text-text-muted/50">—</span>
                         )}

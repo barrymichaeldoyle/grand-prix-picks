@@ -112,9 +112,7 @@ function NotFoundPage() {
           <Flag className="h-8 w-8 text-warning" />
         </div>
 
-        <h1 className="mb-2 text-2xl font-bold text-text">
-          Page not found
-        </h1>
+        <h1 className="mb-2 text-2xl font-bold text-text">Page not found</h1>
 
         <p className="mb-8 text-text-muted">
           Looks like you've taken a wrong turn. This page doesn't exist or has
