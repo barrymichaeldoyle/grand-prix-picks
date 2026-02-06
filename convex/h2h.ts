@@ -326,6 +326,49 @@ export const myH2HPredictionHistory = query({
   },
 });
 
+/** Returns which races have H2H picks (for showing on My Predictions before results). */
+export const myH2HPicksByRace = query({
+  args: {},
+  handler: async (ctx) => {
+    const viewer = await getViewer(ctx);
+    if (!viewer) return [];
+
+    const predictions = await ctx.db
+      .query('h2hPredictions')
+      .withIndex('by_user_race_session', (q) => q.eq('userId', viewer._id))
+      .collect();
+
+    const byRace = new Map<
+      Id<'races'>,
+      Record<SessionType, boolean>
+    >();
+    const sessionTypes: SessionType[] = [
+      'quali',
+      'sprint_quali',
+      'sprint',
+      'race',
+    ];
+    for (const pred of predictions) {
+      let sessions = byRace.get(pred.raceId);
+      if (!sessions) {
+        sessions = {
+          quali: false,
+          sprint_quali: false,
+          sprint: false,
+          race: false,
+        };
+        byRace.set(pred.raceId, sessions);
+      }
+      sessions[pred.sessionType] = true;
+    }
+
+    return Array.from(byRace.entries()).map(([raceId, sessions]) => ({
+      raceId,
+      sessions,
+    }));
+  },
+});
+
 // ───────────────────────── Mutations ─────────────────────────
 
 export const submitH2HPredictions = mutation({

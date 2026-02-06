@@ -141,6 +141,10 @@ function MyPredictionsPage() {
     api.h2h.myH2HPredictionHistory,
     isSignedIn ? {} : 'skip',
   );
+  const h2hPicksByRace = useQuery(
+    api.h2h.myH2HPicksByRace,
+    isSignedIn ? {} : 'skip',
+  );
   const drivers = useQuery(api.drivers.listDrivers);
 
   if (!isLoaded) {
@@ -439,12 +443,16 @@ function MyPredictionsPage() {
                       </div>
                     )}
 
-                    {/* H2H row */}
+                    {/* H2H row: show when user has H2H scores or H2H picks for this race */}
                     {(() => {
                       const h2hWeekend = h2hHistory?.find(
                         (h) => h.raceId === weekend.raceId,
                       );
-                      if (!h2hWeekend) return null;
+                      const h2hPicks = h2hPicksByRace?.find(
+                        (p) => p.raceId === weekend.raceId,
+                      );
+                      const hasH2H = h2hWeekend ?? h2hPicks;
+                      if (!hasH2H) return null;
                       return (
                         <div className="grid grid-cols-[auto_1fr] border-t border-border/50">
                           <div className="flex w-12 items-center justify-center py-2 sm:w-16">
@@ -454,7 +462,8 @@ function MyPredictionsPage() {
                             className={`grid ${weekend.hasSprint ? 'grid-cols-4' : 'grid-cols-2'}`}
                           >
                             {sessions.map((session) => {
-                              const h2hSession = h2hWeekend.sessions[session];
+                              const h2hSession = h2hWeekend?.sessions[session];
+                              const hasPicks = h2hPicks?.sessions[session];
                               return (
                                 <div
                                   key={session}
@@ -463,7 +472,9 @@ function MyPredictionsPage() {
                                   <span className="text-xs font-medium text-text-muted">
                                     {h2hSession
                                       ? `${h2hSession.correctPicks}/${h2hSession.totalPicks}`
-                                      : '—'}
+                                      : hasPicks
+                                        ? 'Picked'
+                                        : '—'}
                                   </span>
                                 </div>
                               );
