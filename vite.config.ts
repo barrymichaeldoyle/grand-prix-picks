@@ -34,13 +34,21 @@ const config = defineConfig(({ mode }) => {
       devtools(),
       nitro({
         preset: nitroPreset,
-        // Avoid bundling native .node binaries (e.g. fsevents on macOS) in node-server build
         rollupConfig: {
-          external: (id) =>
-            id === 'fsevents' ||
-            id === 'chokidar' ||
-            id.includes('fsevents') ||
-            id.endsWith('.node'),
+          external: (id) => {
+            // Cloudflare runtime modules (provided at runtime, not resolvable at build time)
+            if (id.startsWith('cloudflare:')) return true;
+            // Only for node-server: avoid bundling native .node binaries (e.g. fsevents on macOS)
+            if (nitroPreset === 'node-server') {
+              return (
+                id === 'fsevents' ||
+                id === 'chokidar' ||
+                id.includes('fsevents') ||
+                id.endsWith('.node')
+              );
+            }
+            return false;
+          },
         },
       }),
       viteTsConfigPaths({
