@@ -99,10 +99,7 @@ export function Tooltip({
     if (el) {
       const rect = el.getBoundingClientRect();
       setCoords({
-        top:
-          placement === 'top'
-            ? rect.top - distance
-            : rect.bottom + distance,
+        top: placement === 'top' ? rect.top - distance : rect.bottom + distance,
         left: rect.left + rect.width / 2,
       });
       setEffectivePlacement(placement);

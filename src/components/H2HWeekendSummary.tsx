@@ -12,6 +12,7 @@ import {
 } from '../lib/sessions';
 import { DriverBadge } from './DriverBadge';
 import { H2HPredictionForm } from './H2HPredictionForm';
+import { Tooltip } from './Tooltip';
 
 type Race = Doc<'races'>;
 
@@ -136,9 +137,17 @@ export function H2HWeekendSummary({
                       <span className="hidden sm:inline">
                         {SESSION_LABELS[session]}
                       </span>
-                      <span className="sm:hidden">
-                        {SESSION_LABELS_SHORT[session]}
-                      </span>
+                      {race.hasSprint ? (
+                        <span className="sm:hidden">
+                          <Tooltip content={SESSION_LABELS[session]}>
+                            <span>{SESSION_LABELS_SHORT[session]}</span>
+                          </Tooltip>
+                        </span>
+                      ) : (
+                        <span className="sm:hidden">
+                          {SESSION_LABELS[session]}
+                        </span>
+                      )}
                       {locked ? (
                         <span
                           className="inline-block h-1.5 w-1.5 rounded-full bg-warning"

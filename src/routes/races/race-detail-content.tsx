@@ -11,6 +11,7 @@ import { ErrorBoundary } from '../../components/ErrorBoundary';
 import { H2HWeekendSummary } from '../../components/H2HWeekendSummary';
 import { InlineLoader } from '../../components/InlineLoader';
 import { RaceResults } from '../../components/RaceResults';
+import { Tooltip } from '../../components/Tooltip';
 import { WeekendPredictions } from '../../components/WeekendPredictions';
 import { formatDate, formatTime } from '../../lib/date';
 import type { SessionType } from '../../lib/sessions';
@@ -262,7 +263,15 @@ export function H2HResultsSection({ raceId, race }: H2HResultsSectionProps) {
               <span className="hidden sm:inline">
                 {SESSION_LABELS[session]}
               </span>
-              <span className="sm:hidden">{SESSION_LABELS_SHORT[session]}</span>
+              {race.hasSprint ? (
+                <span className="sm:hidden">
+                  <Tooltip content={SESSION_LABELS[session]}>
+                    <span>{SESSION_LABELS_SHORT[session]}</span>
+                  </Tooltip>
+                </span>
+              ) : (
+                <span className="sm:hidden">{SESSION_LABELS[session]}</span>
+              )}
             </Button>
           ))}
         </div>

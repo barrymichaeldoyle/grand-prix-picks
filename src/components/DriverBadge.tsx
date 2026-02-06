@@ -68,7 +68,7 @@ export function DriverBadge({
           <div className="flex items-center gap-2">
             {nationality && <Flag code={nationality} size="sm" />}
             {displayName && (
-              <span className="whitespace-nowrap font-semibold text-text">
+              <span className="font-semibold whitespace-nowrap text-text">
                 {displayName}
               </span>
             )}

@@ -7,16 +7,16 @@ import { useState } from 'react';
 
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
-import type { SessionType } from '../../lib/sessions';
 import { InlineLoader } from '../../components/InlineLoader';
 import { RaceDetailHeader } from '../../components/RaceDetailHeader';
+import type { SessionType } from '../../lib/sessions';
 import {
   H2HResultsSection,
   H2HSection,
   LockedSection,
   NotYetOpenSection,
-  Top5PredictionSection,
   ResultsSection,
+  Top5PredictionSection,
 } from './race-detail-content';
 
 const convex = new ConvexHttpClient(import.meta.env.VITE_CONVEX_URL);
