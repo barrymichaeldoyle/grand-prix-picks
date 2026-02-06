@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/tanstackstart-react';
-import { useRouter } from '@tanstack/react-router';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { Link, useRouter } from '@tanstack/react-router';
+import { AlertTriangle, Home, RefreshCw } from 'lucide-react';
 import { useEffect } from 'react';
 
 import { Button } from './Button';
@@ -59,12 +59,21 @@ export function ErrorFallback({ error, reset }: ErrorFallbackProps) {
           Oops! Something went wrong
         </h1>
 
-        <p className="mb-6 text-text-muted">{getErrorMessage(error)}</p>
+        <p className="mb-8 text-text-muted">{getErrorMessage(error)}</p>
 
-        <Button onClick={handleRetry} variant="primary">
-          <RefreshCw className="mr-2 h-4 w-4" />
-          Try Again
-        </Button>
+        <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+          <Button onClick={handleRetry} variant="primary" size="sm">
+            <RefreshCw className="h-4 w-4" />
+            Try Again
+          </Button>
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-6 py-2 font-semibold text-text transition-colors hover:bg-surface-muted"
+          >
+            <Home className="h-4 w-4" />
+            Go home
+          </Link>
+        </div>
 
         {import.meta.env.DEV && (
           <details className="mt-8 text-left">
