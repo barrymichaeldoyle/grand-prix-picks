@@ -340,12 +340,6 @@ export const myH2HPicksByRace = query({
       .collect();
 
     const byRace = new Map<Id<'races'>, Record<SessionType, boolean>>();
-    const sessionTypes: Array<SessionType> = [
-      'quali',
-      'sprint_quali',
-      'sprint',
-      'race',
-    ];
     for (const pred of predictions) {
       let sessions = byRace.get(pred.raceId);
       if (!sessions) {
