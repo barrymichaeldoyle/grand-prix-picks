@@ -2,23 +2,7 @@
   "short_name": "GP Picks",
   "name": "Grand Prix Picks - F1 Prediction Game",
   "description": "Predict the top 5 finishers for each Formula 1 race and compete with friends throughout the season.",
-  "icons": [
-    {
-      "src": "favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
-    },
-    {
-      "src": "logo192.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "logo512.png",
-      "type": "image/png",
-      "sizes": "512x512"
-    }
-  ],
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }],
   "start_url": "/",
   "display": "standalone",
   "theme_color": "#0d9488",
