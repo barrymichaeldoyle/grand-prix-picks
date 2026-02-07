@@ -4,6 +4,7 @@ import {
   SignInButton,
   UserButton,
 } from '@clerk/clerk-react';
+import { Settings } from 'lucide-react';
 
 const signInButtonClasses =
   'inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-lg bg-button-accent text-white hover:bg-button-accent-hover transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:opacity-50';
@@ -23,7 +24,15 @@ export function HeaderUser() {
                 'rounded-lg border border-border bg-surface px-2 py-1 transition-colors hover:bg-surface-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
             },
           }}
-        />
+        >
+          <UserButton.MenuItems>
+            <UserButton.Link
+              label="Settings"
+              labelIcon={<Settings className="h-4 w-4" />}
+              href="/settings"
+            />
+          </UserButton.MenuItems>
+        </UserButton>
       </SignedIn>
       <SignedOut>
         <div className="hidden min-[703px]:block">

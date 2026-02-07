@@ -37,6 +37,7 @@ export async function getOrCreateViewer(
       : undefined);
   const username = (identity as { preferredUsername?: string })
     .preferredUsername;
+  const avatarUrl = identity.pictureUrl;
 
   const existing = await ctx.db
     .query('users')
@@ -47,14 +48,14 @@ export async function getOrCreateViewer(
     // Sync user data from Clerk if it has changed.
     // Only overwrite fields that Clerk actually provides (not undefined)
     // to avoid clearing data we already have.
+    // Only sync email and avatarUrl from Clerk for existing users.
+    // displayName and username are now user-managed via updateProfile.
     const patch: Partial<
-      Pick<Doc<'users'>, 'email' | 'displayName' | 'username' | 'updatedAt'>
+      Pick<Doc<'users'>, 'email' | 'avatarUrl' | 'updatedAt'>
     > = {};
     if (email !== undefined && existing.email !== email) patch.email = email;
-    if (displayName !== undefined && existing.displayName !== displayName)
-      patch.displayName = displayName;
-    if (username !== undefined && existing.username !== username)
-      patch.username = username;
+    if (avatarUrl !== undefined && existing.avatarUrl !== avatarUrl)
+      patch.avatarUrl = avatarUrl;
 
     if (Object.keys(patch).length > 0) {
       patch.updatedAt = now;
@@ -70,6 +71,7 @@ export async function getOrCreateViewer(
     email,
     displayName,
     username,
+    avatarUrl,
     isAdmin: false,
     createdAt: now,
     updatedAt: now,

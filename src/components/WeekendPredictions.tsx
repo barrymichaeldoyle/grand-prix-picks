@@ -104,7 +104,7 @@ export function WeekendPredictions({
           Back to summary
         </button>
         <h3 className="text-lg font-semibold text-text">
-          Edit {SESSION_LABELS[editingSession]}
+          Top 5 - Edit {SESSION_LABELS[editingSession]}
         </h3>
         <PredictionForm
           raceId={race._id}

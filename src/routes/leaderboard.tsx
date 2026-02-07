@@ -1,8 +1,8 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { ConvexHttpClient } from 'convex/browser';
 import { useQuery } from 'convex/react';
 import { Loader2, Medal, Swords, Trophy, User } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { api } from '../../convex/_generated/api';
 import { Button } from '../components/Button';
@@ -76,8 +76,6 @@ function LeaderboardPage() {
   const viewerEntry = data.viewerEntry;
   const totalCount = data.totalCount;
 
-  const loadMoreRef = useRef<HTMLDivElement>(null);
-
   const loadMore = useCallback(async () => {
     if (isLoadingMore || !hasMore) return;
 
@@ -94,25 +92,6 @@ function LeaderboardPage() {
       setIsLoadingMore(false);
     }
   }, [offset, hasMore, isLoadingMore]);
-
-  useEffect(() => {
-    if (activeTab !== 'top5') return;
-
-    const observer = new IntersectionObserver(
-      (observerEntries) => {
-        if (observerEntries[0].isIntersecting && hasMore && !isLoadingMore) {
-          void loadMore();
-        }
-      },
-      { rootMargin: '200px' },
-    );
-
-    if (loadMoreRef.current) {
-      observer.observe(loadMoreRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [activeTab, hasMore, isLoadingMore, loadMore]);
 
   const podiumEntries = entries.slice(0, 3);
   const tableEntries = entries.slice(3);
@@ -235,12 +214,23 @@ function LeaderboardPage() {
                   )}
                 </div>
 
-                <div ref={loadMoreRef} className="py-4 text-center">
-                  {isLoadingMore && (
-                    <div className="flex items-center justify-center gap-2 text-text-muted">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Loading more...
-                    </div>
+                <div className="flex min-h-[3rem] flex-col items-center justify-center py-4">
+                  {hasMore && (
+                    <button
+                      type="button"
+                      disabled={isLoadingMore}
+                      onClick={() => void loadMore()}
+                      className="inline-flex min-w-[7.5rem] items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-text-muted transition-colors hover:bg-surface-muted hover:text-text disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-surface-muted disabled:hover:text-text-muted"
+                    >
+                      {isLoadingMore ? (
+                        <>
+                          <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                          <span>Loading...</span>
+                        </>
+                      ) : (
+                        'Load more'
+                      )}
+                    </button>
                   )}
                   {!hasMore && entries.length > PAGE_SIZE && (
                     <p className="text-sm text-text-muted">
@@ -348,45 +338,7 @@ function H2HLeaderboardContent() {
           <tbody>
             {tableEntries.length > 0
               ? tableEntries.map((entry) => (
-                  <tr
-                    key={entry.userId}
-                    className={`border-b border-border transition-colors last:border-0 ${
-                      entry.isViewer
-                        ? 'bg-accent-muted hover:bg-accent-muted'
-                        : 'hover:bg-surface-muted'
-                    }`}
-                  >
-                    <td className="px-4 py-3">
-                      <span
-                        className={`font-medium ${entry.isViewer ? 'text-accent' : 'text-text-muted'}`}
-                      >
-                        {entry.rank}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="flex items-center gap-2 font-medium text-text">
-                        {entry.isViewer && (
-                          <User className="h-4 w-4 text-accent" />
-                        )}
-                        {entry.username}
-                        {entry.isViewer && (
-                          <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-bold text-white">
-                            YOU
-                          </span>
-                        )}
-                      </span>
-                    </td>
-                    <td className="hidden px-4 py-3 text-right sm:table-cell">
-                      <span className="text-sm text-text-muted">
-                        {entry.correctPicks}/{entry.totalPicks}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <span className="font-bold text-accent">
-                        {entry.points}
-                      </span>
-                    </td>
-                  </tr>
+                  <H2HTableRow key={entry.userId} entry={entry} />
                 ))
               : null}
           </tbody>
@@ -402,15 +354,84 @@ function H2HLeaderboardContent() {
 
 // ───────────────────────── Shared Components ─────────────────────────
 
-function LeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
+function H2HTableRow({ entry }: { entry: H2HLeaderboardEntry }) {
+  const navigate = useNavigate();
   return (
     <tr
-      className={`border-b border-border transition-colors last:border-0 ${
+      role="link"
+      tabIndex={0}
+      className={`cursor-pointer border-b border-border transition-colors last:border-0 ${
+        entry.isViewer
+          ? 'bg-accent-muted hover:bg-accent-muted'
+          : 'hover:bg-surface-muted'
+      }`}
+      onClick={() =>
+        navigate({ to: '/p/$username', params: { username: entry.username } })
+      }
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          navigate({
+            to: '/p/$username',
+            params: { username: entry.username },
+          });
+        }
+      }}
+    >
+      <td className="px-4 py-3">
+        <span
+          className={`font-medium ${entry.isViewer ? 'text-accent' : 'text-text-muted'}`}
+        >
+          {entry.rank}
+        </span>
+      </td>
+      <td className="px-4 py-3">
+        <span className="flex items-center gap-2 font-medium text-text">
+          {entry.isViewer && <User className="h-4 w-4 text-accent" />}
+          <span className="font-semibold text-accent">{entry.username}</span>
+          {entry.isViewer && (
+            <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-bold text-white">
+              YOU
+            </span>
+          )}
+        </span>
+      </td>
+      <td className="hidden px-4 py-3 text-right sm:table-cell">
+        <span className="text-sm text-text-muted">
+          {entry.correctPicks}/{entry.totalPicks}
+        </span>
+      </td>
+      <td className="px-4 py-3 text-right">
+        <span className="font-bold text-accent">{entry.points}</span>
+      </td>
+    </tr>
+  );
+}
+
+function LeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
+  const navigate = useNavigate();
+  return (
+    <tr
+      role="link"
+      tabIndex={0}
+      className={`cursor-pointer border-b border-border transition-colors last:border-0 ${
         entry.isViewer
           ? 'bg-accent-muted hover:bg-accent-muted'
           : 'hover:bg-surface-muted'
       }`}
       data-testid="leaderboard-entry"
+      onClick={() =>
+        navigate({ to: '/p/$username', params: { username: entry.username } })
+      }
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          navigate({
+            to: '/p/$username',
+            params: { username: entry.username },
+          });
+        }
+      }}
     >
       <td className="px-4 py-3" data-testid="position">
         <span
@@ -422,7 +443,7 @@ function LeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
       <td className="px-4 py-3" data-testid="username">
         <span className="flex items-center gap-2 font-medium text-text">
           {entry.isViewer && <User className="h-4 w-4 text-accent" />}
-          {entry.username}
+          <span className="font-semibold text-accent">{entry.username}</span>
           {entry.isViewer && (
             <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-bold text-white">
               YOU
@@ -463,9 +484,11 @@ function SmallLeaderboard({ entries }: { entries: Array<LeaderboardEntry> }) {
   return (
     <div className="p-4">
       {entries.map((entry) => (
-        <div
+        <Link
           key={entry.userId}
-          className={`flex items-center justify-between border-b border-border py-2 last:border-0 ${
+          to="/p/$username"
+          params={{ username: entry.username }}
+          className={`flex cursor-pointer items-center justify-between border-b border-border py-2 transition-colors hover:opacity-90 last:border-0 ${
             entry.isViewer ? 'rounded-lg bg-accent-muted px-2' : ''
           }`}
         >
@@ -480,7 +503,9 @@ function SmallLeaderboard({ entries }: { entries: Array<LeaderboardEntry> }) {
               {entry.rank}
             </span>
             <span className="flex items-center gap-2 font-medium text-text">
-              {entry.username}
+              <span className="font-semibold text-accent">
+                {entry.username}
+              </span>
               {entry.isViewer && (
                 <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-bold text-white">
                   YOU
@@ -494,7 +519,7 @@ function SmallLeaderboard({ entries }: { entries: Array<LeaderboardEntry> }) {
               {entry.raceCount} race{entry.raceCount !== 1 ? 's' : ''}
             </div>
           </div>
-        </div>
+        </Link>
       ))}
     </div>
   );
@@ -535,8 +560,10 @@ function PodiumCard({
   const placeLabels = { 1: '1st', 2: '2nd', 3: '3rd' };
 
   return (
-    <div
-      className={`${marginTop} rounded-xl border p-4 text-center ${borderStyle}`}
+    <Link
+      to="/p/$username"
+      params={{ username: entry.username }}
+      className={`${marginTop} block cursor-pointer rounded-xl border p-4 text-center transition-[box-shadow,transform] hover:shadow-lg hover:-translate-y-0.5 ${borderStyle}`}
     >
       <div
         className={`mx-auto mb-2 flex items-center justify-center rounded-full ${bgColor} ${
@@ -551,10 +578,10 @@ function PodiumCard({
       <div
         className={`mt-1 flex items-center justify-center gap-1.5 truncate ${
           isFirst ? 'font-semibold' : 'font-medium'
-        } text-text`}
+        }`}
       >
         {entry.isViewer && <User className="h-4 w-4 text-accent" />}
-        {entry.username}
+        <span className="font-semibold text-accent">{entry.username}</span>
         {entry.isViewer && (
           <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-bold text-white">
             YOU
@@ -569,6 +596,6 @@ function PodiumCard({
       <div className="text-xs text-text-muted">
         {entry.raceCount} race{entry.raceCount !== 1 ? 's' : ''}
       </div>
-    </div>
+    </Link>
   );
 }

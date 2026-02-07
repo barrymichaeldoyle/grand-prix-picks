@@ -14,10 +14,15 @@ export default defineSchema({
     email: v.optional(v.string()),
     displayName: v.optional(v.string()),
     username: v.optional(v.string()),
+    avatarUrl: v.optional(v.string()),
+    usernameChangedAt: v.optional(v.number()),
+    showOnLeaderboard: v.optional(v.boolean()),
     isAdmin: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index('by_clerkUserId', ['clerkUserId']),
+  })
+    .index('by_clerkUserId', ['clerkUserId'])
+    .index('by_username', ['username']),
 
   drivers: defineTable({
     code: v.string(), // "VER"

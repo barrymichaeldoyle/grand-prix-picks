@@ -136,7 +136,7 @@ export function H2HPredictionForm({
                 {matchup.team}
               </div>
 
-              {/* Driver buttons */}
+              {/* Driver options: whole area is clickable, with "Pick" label beside content */}
               <div className="flex">
                 {[matchup.driver1, matchup.driver2].map((driver) => {
                   const isSelected = selected === driver._id;
@@ -145,40 +145,51 @@ export function H2HPredictionForm({
                       key={driver._id}
                       type="button"
                       onClick={() => toggleSelection(matchup._id, driver._id)}
-                      className={`relative flex flex-1 flex-col items-center gap-0.5 px-2 py-3 transition-all ${
+                      className={`relative flex flex-1 flex-col items-stretch px-3 py-2 transition-all ${
                         isSelected
                           ? 'bg-accent-muted ring-2 ring-accent ring-inset'
                           : 'hover:bg-surface-muted'
                       } ${driver === matchup.driver1 ? 'border-r border-border' : ''}`}
                     >
-                      {isSelected && (
-                        <span className="absolute top-1 right-1">
-                          <Check
-                            size={14}
-                            className="text-accent"
-                            strokeWidth={3}
-                          />
-                        </span>
-                      )}
-                      <span
-                        className="rounded px-1.5 py-0.5 font-mono text-sm font-bold text-white"
-                        style={{ backgroundColor: teamColor }}
-                      >
-                        {driver.code}
-                      </span>
-                      <span className="flex items-center gap-1 text-xs text-text">
-                        {driver.nationality && (
-                          <Flag code={driver.nationality} size="xs" />
+                      {/* Left-aligned: badge (with number under) + name top-aligned next to it */}
+                      <div className="flex min-w-0 flex-1 items-start justify-start gap-x-1.5">
+                        <div className="flex shrink-0 flex-col items-center">
+                          <span
+                            className="rounded px-1 py-0.5 font-mono text-xs font-bold text-white"
+                            style={{ backgroundColor: teamColor }}
+                          >
+                            {driver.code}
+                          </span>
+                          {driver.number != null && (
+                            <span className="mt-0.5 text-[10px] text-text-muted">
+                              #{driver.number}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex min-w-0 items-center gap-1 pt-0.5">
+                          {driver.nationality && (
+                            <Flag code={driver.nationality} size="xs" />
+                          )}
+                          <span className="truncate text-xs text-text">
+                            {driver.displayName.split(' ').pop()}
+                          </span>
+                        </div>
+                      </div>
+                      {/* Bottom right: "Pick" or check + "Picked" (inside button padding so card overflow doesn't clip) */}
+                      <span className="absolute right-3 bottom-1.5 flex shrink-0 items-center justify-end gap-1 text-right text-xs font-semibold">
+                        {isSelected ? (
+                          <>
+                            <Check
+                              size={12}
+                              className="shrink-0 text-accent"
+                              strokeWidth={3}
+                            />
+                            <span className="text-accent">Picked</span>
+                          </>
+                        ) : (
+                          <span className="text-accent">Pick</span>
                         )}
-                        <span className="truncate">
-                          {driver.displayName.split(' ').pop()}
-                        </span>
                       </span>
-                      {driver.number != null && (
-                        <span className="text-[10px] text-text-muted">
-                          #{driver.number}
-                        </span>
-                      )}
                     </button>
                   );
                 })}

@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as MyPredictionsRouteImport } from './routes/my-predictions'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
@@ -17,12 +18,18 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as RacesIndexRouteImport } from './routes/races/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as RacesRaceIdRouteImport } from './routes/races/$raceId'
+import { Route as PUsernameRouteImport } from './routes/p/$username'
 import { Route as AdminRacesNewRouteImport } from './routes/admin/races/new'
 import { Route as AdminRacesRaceIdRouteImport } from './routes/admin/races/$raceId'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -60,6 +67,11 @@ const RacesRaceIdRoute = RacesRaceIdRouteImport.update({
   path: '/races/$raceId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PUsernameRoute = PUsernameRouteImport.update({
+  id: '/p/$username',
+  path: '/p/$username',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRacesNewRoute = AdminRacesNewRouteImport.update({
   id: '/admin/races/new',
   path: '/admin/races/new',
@@ -76,7 +88,9 @@ export interface FileRoutesByFullPath {
   '/leaderboard': typeof LeaderboardRoute
   '/my-predictions': typeof MyPredictionsRoute
   '/privacy': typeof PrivacyRoute
+  '/settings': typeof SettingsRoute
   '/terms': typeof TermsRoute
+  '/p/$username': typeof PUsernameRoute
   '/races/$raceId': typeof RacesRaceIdRoute
   '/admin/': typeof AdminIndexRoute
   '/races/': typeof RacesIndexRoute
@@ -88,7 +102,9 @@ export interface FileRoutesByTo {
   '/leaderboard': typeof LeaderboardRoute
   '/my-predictions': typeof MyPredictionsRoute
   '/privacy': typeof PrivacyRoute
+  '/settings': typeof SettingsRoute
   '/terms': typeof TermsRoute
+  '/p/$username': typeof PUsernameRoute
   '/races/$raceId': typeof RacesRaceIdRoute
   '/admin': typeof AdminIndexRoute
   '/races': typeof RacesIndexRoute
@@ -101,7 +117,9 @@ export interface FileRoutesById {
   '/leaderboard': typeof LeaderboardRoute
   '/my-predictions': typeof MyPredictionsRoute
   '/privacy': typeof PrivacyRoute
+  '/settings': typeof SettingsRoute
   '/terms': typeof TermsRoute
+  '/p/$username': typeof PUsernameRoute
   '/races/$raceId': typeof RacesRaceIdRoute
   '/admin/': typeof AdminIndexRoute
   '/races/': typeof RacesIndexRoute
@@ -115,7 +133,9 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/my-predictions'
     | '/privacy'
+    | '/settings'
     | '/terms'
+    | '/p/$username'
     | '/races/$raceId'
     | '/admin/'
     | '/races/'
@@ -127,7 +147,9 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/my-predictions'
     | '/privacy'
+    | '/settings'
     | '/terms'
+    | '/p/$username'
     | '/races/$raceId'
     | '/admin'
     | '/races'
@@ -139,7 +161,9 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/my-predictions'
     | '/privacy'
+    | '/settings'
     | '/terms'
+    | '/p/$username'
     | '/races/$raceId'
     | '/admin/'
     | '/races/'
@@ -152,7 +176,9 @@ export interface RootRouteChildren {
   LeaderboardRoute: typeof LeaderboardRoute
   MyPredictionsRoute: typeof MyPredictionsRoute
   PrivacyRoute: typeof PrivacyRoute
+  SettingsRoute: typeof SettingsRoute
   TermsRoute: typeof TermsRoute
+  PUsernameRoute: typeof PUsernameRoute
   RacesRaceIdRoute: typeof RacesRaceIdRoute
   AdminIndexRoute: typeof AdminIndexRoute
   RacesIndexRoute: typeof RacesIndexRoute
@@ -167,6 +193,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -218,6 +251,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RacesRaceIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/p/$username': {
+      id: '/p/$username'
+      path: '/p/$username'
+      fullPath: '/p/$username'
+      preLoaderRoute: typeof PUsernameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/races/new': {
       id: '/admin/races/new'
       path: '/admin/races/new'
@@ -240,7 +280,9 @@ const rootRouteChildren: RootRouteChildren = {
   LeaderboardRoute: LeaderboardRoute,
   MyPredictionsRoute: MyPredictionsRoute,
   PrivacyRoute: PrivacyRoute,
+  SettingsRoute: SettingsRoute,
   TermsRoute: TermsRoute,
+  PUsernameRoute: PUsernameRoute,
   RacesRaceIdRoute: RacesRaceIdRoute,
   AdminIndexRoute: AdminIndexRoute,
   RacesIndexRoute: RacesIndexRoute,

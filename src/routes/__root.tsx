@@ -67,8 +67,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       { charSet: 'utf-8' },
       {
         name: 'viewport',
-        content:
-          'width=device-width, initial-scale=1, viewport-fit=cover',
+        content: 'width=device-width, initial-scale=1, viewport-fit=cover',
       },
       { title: siteConfig.title },
       { name: 'description', content: siteConfig.description },

@@ -35,11 +35,11 @@ export const getSeasonLeaderboard = query({
       byUser.set(key, existing);
     }
 
-    const rows = Array.from(byUser.values()).sort(
+    const allRows = Array.from(byUser.values()).sort(
       (a, b) => b.points - a.points,
     );
 
-    // Find viewer's entry (before pagination)
+    // Find viewer's entry from ALL rows (before privacy filtering)
     let viewerEntry: {
       rank: number;
       userId: Id<'users'>;
@@ -50,9 +50,9 @@ export const getSeasonLeaderboard = query({
     } | null = null;
 
     if (viewer) {
-      const viewerIndex = rows.findIndex((r) => r.userId === viewer._id);
+      const viewerIndex = allRows.findIndex((r) => r.userId === viewer._id);
       if (viewerIndex !== -1) {
-        const viewerRow = rows[viewerIndex];
+        const viewerRow = allRows[viewerIndex];
         viewerEntry = {
           rank: viewerIndex + 1,
           userId: viewer._id,
@@ -64,25 +64,37 @@ export const getSeasonLeaderboard = query({
       }
     }
 
+    // Filter out users who opted out of leaderboard (but always include viewer)
+    const userDocs = new Map<string, { showOnLeaderboard?: boolean }>();
+    for (const row of allRows) {
+      const user = await ctx.db.get(row.userId);
+      if (user) userDocs.set(row.userId, user);
+    }
+
+    const rows = allRows.filter((row) => {
+      if (viewer && row.userId === viewer._id) return true;
+      const user = userDocs.get(row.userId);
+      return user?.showOnLeaderboard !== false;
+    });
+
     // Paginate results
     const paginatedRows = rows.slice(offset, offset + limit);
     const hasMore = offset + limit < rows.length;
 
-    // Fetch usernames only (no emails or real names for privacy)
-    const enrichedRows = await Promise.all(
-      paginatedRows.map(async (row, index) => {
-        const user = await ctx.db.get(row.userId);
-        const isViewer = viewer ? row.userId === viewer._id : false;
-        return {
-          rank: offset + index + 1,
-          userId: row.userId,
-          username: user?.username ?? 'Anonymous',
-          points: row.points,
-          raceCount: row.raceCount,
-          isViewer,
-        };
-      }),
-    );
+    const enrichedRows = paginatedRows.map((row, index) => {
+      const user = userDocs.get(row.userId);
+      const isViewer = viewer ? row.userId === viewer._id : false;
+      return {
+        rank: offset + index + 1,
+        userId: row.userId,
+        username:
+          (user as { username?: string } | undefined)?.username ?? 'Anonymous',
+        avatarUrl: (user as { avatarUrl?: string } | undefined)?.avatarUrl,
+        points: row.points,
+        raceCount: row.raceCount,
+        isViewer,
+      };
+    });
 
     return {
       entries: enrichedRows,
@@ -128,19 +140,27 @@ export const getRaceLeaderboard = query({
 
     const sortedScores = scores.sort((a, b) => b.points - a.points);
 
-    // Fetch usernames only (no emails or real names for privacy)
-    const entries = await Promise.all(
-      sortedScores.map(async (s, index) => {
+    // Filter out users who opted out (but keep viewer)
+    const filteredScores = await Promise.all(
+      sortedScores.map(async (s) => {
         const user = await ctx.db.get(s.userId);
-        return {
-          rank: index + 1,
-          userId: s.userId,
-          username: user?.username ?? 'Anonymous',
-          points: s.points,
-          breakdown: s.breakdown,
-        };
+        return { score: s, user };
       }),
     );
+
+    const visibleScores = filteredScores.filter(({ score, user }) => {
+      if (viewer && score.userId === viewer._id) return true;
+      return user?.showOnLeaderboard !== false;
+    });
+
+    const entries = visibleScores.map(({ score, user }, index) => ({
+      rank: index + 1,
+      userId: score.userId,
+      username: user?.username ?? 'Anonymous',
+      avatarUrl: user?.avatarUrl,
+      points: score.points,
+      breakdown: score.breakdown,
+    }));
 
     return { status: 'visible', reason: null, entries };
   },

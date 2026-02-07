@@ -112,6 +112,119 @@ export const myPredictionHistory = query({
   },
 });
 
+export const getUserPredictionHistory = query({
+  args: { userId: v.id('users') },
+  handler: async (ctx, args) => {
+    const viewer = await getViewer(ctx);
+    const isOwner = viewer ? viewer._id === args.userId : false;
+
+    const predictions = await ctx.db
+      .query('predictions')
+      .withIndex('by_user', (q) => q.eq('userId', args.userId))
+      .collect();
+
+    const allDrivers = await ctx.db.query('drivers').collect();
+    const driverMap = new Map(allDrivers.map((d) => [d._id, d]));
+
+    const byRace = new Map<Id<'races'>, Array<(typeof predictions)[0]>>();
+    for (const pred of predictions) {
+      const existing = byRace.get(pred.raceId) ?? [];
+      existing.push(pred);
+      byRace.set(pred.raceId, existing);
+    }
+
+    const now = Date.now();
+
+    const weekends = await Promise.all(
+      Array.from(byRace.entries()).map(async ([raceId, weekendPredictions]) => {
+        const race = await ctx.db.get(raceId);
+        if (!race) return null;
+
+        const scores = await ctx.db
+          .query('scores')
+          .withIndex('by_user_race_session', (q) =>
+            q.eq('userId', args.userId).eq('raceId', raceId),
+          )
+          .collect();
+
+        const lockTimes: Record<SessionType, number | undefined> = {
+          quali: race.qualiLockAt,
+          sprint_quali: race.sprintQualiLockAt,
+          sprint: race.sprintLockAt,
+          race: race.predictionLockAt,
+        };
+
+        const sessions: Record<
+          SessionType,
+          {
+            picks: Array<{ driverId: Id<'drivers'>; code: string }>;
+            points: number | null;
+            submittedAt: number;
+            isHidden: boolean;
+          } | null
+        > = {
+          quali: null,
+          sprint_quali: null,
+          sprint: null,
+          race: null,
+        };
+
+        for (const pred of weekendPredictions) {
+          const sessionType = pred.sessionType;
+          const score = scores.find((s) => s.sessionType === sessionType);
+          const lockTime = lockTimes[sessionType];
+          const isLocked = lockTime != null && now >= lockTime;
+
+          if (!isOwner && !isLocked) {
+            sessions[sessionType] = {
+              picks: [],
+              points: null,
+              submittedAt: pred.submittedAt,
+              isHidden: true,
+            };
+          } else {
+            sessions[sessionType] = {
+              picks: pred.picks.map((driverId) => ({
+                driverId,
+                code: driverMap.get(driverId)?.code ?? '???',
+              })),
+              points: score?.points ?? null,
+              submittedAt: pred.submittedAt,
+              isHidden: false,
+            };
+          }
+        }
+
+        const totalPoints = Object.values(sessions).reduce(
+          (sum, s) => sum + (s?.points ?? 0),
+          0,
+        );
+
+        const latestSubmission = Math.max(
+          ...weekendPredictions.map((p) => p.submittedAt),
+        );
+
+        return {
+          raceId,
+          raceName: race.name,
+          raceRound: race.round,
+          raceStatus: race.status,
+          raceDate: race.raceStartAt,
+          hasSprint: race.hasSprint ?? false,
+          sessions,
+          totalPoints,
+          hasScores: scores.length > 0,
+          submittedAt: latestSubmission,
+        };
+      }),
+    );
+
+    return weekends
+      .filter((w): w is NonNullable<typeof w> => w !== null)
+      .sort((a, b) => b.raceDate - a.raceDate);
+  },
+});
+
 function assertFiveUnique(ids: Array<string>) {
   if (ids.length !== 5) throw new Error('Pick exactly 5 drivers');
   const set = new Set(ids);

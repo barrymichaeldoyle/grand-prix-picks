@@ -1,19 +1,27 @@
 import { SignedOut, SignInButton } from '@clerk/clerk-react';
 import { Link } from '@tanstack/react-router';
+import { useQuery } from 'convex/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Flag, Menu, Moon, Sun, X } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { api } from '../../convex/_generated/api';
 import {
   HeaderUser,
   signInButtonClasses,
 } from '../integrations/clerk/header-user.tsx';
 
-const navLinks: Array<{ to: string; label: string; exact?: boolean }> = [
+type NavLink = {
+  to: string;
+  params?: Record<string, string>;
+  label: string;
+  exact?: boolean;
+};
+
+const staticNavLinks: Array<NavLink> = [
   { to: '/', label: 'Home', exact: true },
   { to: '/races', label: 'Races' },
   { to: '/leaderboard', label: 'Leaderboard' },
-  { to: '/my-predictions', label: 'My Picks' },
 ];
 
 const FOCUSABLE_SELECTOR =
@@ -43,6 +51,18 @@ export function Header({
   // Local theme state only when parent doesn't control it (e.g. Storybook)
   const [localDark, setLocalDark] = useState(false);
   const dark = onThemeChange !== undefined ? isDark : localDark;
+
+  const me = useQuery(api.users.me);
+  const navLinks = useMemo<Array<NavLink>>(() => {
+    const myPicksLink: NavLink = me?.username
+      ? {
+          to: '/p/$username',
+          params: { username: me.username },
+          label: 'My Picks',
+        }
+      : { to: '/my-predictions', label: 'My Picks' };
+    return [...staticNavLinks, myPicksLink];
+  }, [me?.username]);
 
   useEffect(() => {
     if (onThemeChange !== undefined) return;
@@ -170,6 +190,7 @@ export function Header({
               <Link
                 key={link.to}
                 to={link.to}
+                params={link.params as Record<string, string>}
                 className="rounded-lg border-2 border-transparent px-3 py-2 text-sm font-semibold text-accent transition-colors hover:bg-accent-muted/50 hover:text-accent-hover"
                 activeProps={{
                   className:
@@ -265,6 +286,7 @@ export function Header({
                   >
                     <Link
                       to={link.to}
+                      params={link.params as Record<string, string>}
                       onClick={closeMenu}
                       className="block rounded-lg border-2 border-transparent px-3 py-2 font-semibold text-accent transition-colors hover:bg-accent-muted/50 hover:text-accent-hover"
                       activeProps={{

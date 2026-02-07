@@ -204,7 +204,7 @@ export const getH2HSeasonLeaderboard = query({
       byUser.set(key, existing);
     }
 
-    const rows = Array.from(byUser.values()).sort(
+    const allRows = Array.from(byUser.values()).sort(
       (a, b) => b.points - a.points,
     );
 
@@ -220,9 +220,9 @@ export const getH2HSeasonLeaderboard = query({
     } | null = null;
 
     if (viewer) {
-      const viewerIndex = rows.findIndex((r) => r.userId === viewer._id);
+      const viewerIndex = allRows.findIndex((r) => r.userId === viewer._id);
       if (viewerIndex !== -1) {
-        const viewerRow = rows[viewerIndex];
+        const viewerRow = allRows[viewerIndex];
         viewerEntry = {
           rank: viewerIndex + 1,
           userId: viewer._id,
@@ -236,25 +236,40 @@ export const getH2HSeasonLeaderboard = query({
       }
     }
 
+    // Filter out users who opted out of leaderboard (but always include viewer)
+    const userDocs = new Map<
+      string,
+      { username?: string; avatarUrl?: string; showOnLeaderboard?: boolean }
+    >();
+    for (const row of allRows) {
+      const user = await ctx.db.get(row.userId);
+      if (user) userDocs.set(row.userId, user);
+    }
+
+    const rows = allRows.filter((row) => {
+      if (viewer && row.userId === viewer._id) return true;
+      const user = userDocs.get(row.userId);
+      return user?.showOnLeaderboard !== false;
+    });
+
     const paginatedRows = rows.slice(offset, offset + limit);
     const hasMore = offset + limit < rows.length;
 
-    const enrichedRows = await Promise.all(
-      paginatedRows.map(async (row, index) => {
-        const user = await ctx.db.get(row.userId);
-        const isViewer = viewer ? row.userId === viewer._id : false;
-        return {
-          rank: offset + index + 1,
-          userId: row.userId,
-          username: user?.username ?? 'Anonymous',
-          points: row.points,
-          raceCount: row.raceCount,
-          correctPicks: row.correctPicks,
-          totalPicks: row.totalPicks,
-          isViewer,
-        };
-      }),
-    );
+    const enrichedRows = paginatedRows.map((row, index) => {
+      const user = userDocs.get(row.userId);
+      const isViewer = viewer ? row.userId === viewer._id : false;
+      return {
+        rank: offset + index + 1,
+        userId: row.userId,
+        username: user?.username ?? 'Anonymous',
+        avatarUrl: user?.avatarUrl,
+        points: row.points,
+        raceCount: row.raceCount,
+        correctPicks: row.correctPicks,
+        totalPicks: row.totalPicks,
+        isViewer,
+      };
+    });
 
     return {
       entries: enrichedRows,
@@ -341,6 +356,114 @@ export const myH2HPicksByRace = query({
 
     const byRace = new Map<Id<'races'>, Record<SessionType, boolean>>();
     for (const pred of predictions) {
+      let sessions = byRace.get(pred.raceId);
+      if (!sessions) {
+        sessions = {
+          quali: false,
+          sprint_quali: false,
+          sprint: false,
+          race: false,
+        };
+        byRace.set(pred.raceId, sessions);
+      }
+      sessions[pred.sessionType] = true;
+    }
+
+    return Array.from(byRace.entries()).map(([raceId, sessions]) => ({
+      raceId,
+      sessions,
+    }));
+  },
+});
+
+export const getUserH2HPredictionHistory = query({
+  args: { userId: v.id('users') },
+  handler: async (ctx, args) => {
+    const h2hScores = await ctx.db
+      .query('h2hScores')
+      .withIndex('by_user', (q) => q.eq('userId', args.userId))
+      .collect();
+
+    const byRace = new Map<Id<'races'>, Array<(typeof h2hScores)[number]>>();
+    for (const score of h2hScores) {
+      const existing = byRace.get(score.raceId) ?? [];
+      existing.push(score);
+      byRace.set(score.raceId, existing);
+    }
+
+    const weekends = await Promise.all(
+      Array.from(byRace.entries()).map(async ([raceId, scores]) => {
+        const race = await ctx.db.get(raceId);
+        if (!race) return null;
+
+        const sessions: Record<
+          SessionType,
+          { correctPicks: number; totalPicks: number; points: number } | null
+        > = {
+          quali: null,
+          sprint_quali: null,
+          sprint: null,
+          race: null,
+        };
+
+        let totalPoints = 0;
+        for (const score of scores) {
+          sessions[score.sessionType] = {
+            correctPicks: score.correctPicks,
+            totalPicks: score.totalPicks,
+            points: score.points,
+          };
+          totalPoints += score.points;
+        }
+
+        return {
+          raceId,
+          raceName: race.name,
+          raceRound: race.round,
+          raceDate: race.raceStartAt,
+          hasSprint: race.hasSprint ?? false,
+          sessions,
+          totalPoints,
+        };
+      }),
+    );
+
+    return weekends
+      .filter((w): w is NonNullable<typeof w> => w !== null)
+      .sort((a, b) => b.raceDate - a.raceDate);
+  },
+});
+
+export const getUserH2HPicksByRace = query({
+  args: { userId: v.id('users') },
+  handler: async (ctx, args) => {
+    const viewer = await getViewer(ctx);
+    const isOwner = viewer ? viewer._id === args.userId : false;
+
+    const predictions = await ctx.db
+      .query('h2hPredictions')
+      .withIndex('by_user_race_session', (q) => q.eq('userId', args.userId))
+      .collect();
+
+    const now = Date.now();
+    const byRace = new Map<Id<'races'>, Record<SessionType, boolean>>();
+
+    for (const pred of predictions) {
+      // Check lock time to determine visibility for non-owners
+      if (!isOwner) {
+        const race = await ctx.db.get(pred.raceId);
+        if (race) {
+          const lockTimes: Record<SessionType, number | undefined> = {
+            quali: race.qualiLockAt,
+            sprint_quali: race.sprintQualiLockAt,
+            sprint: race.sprintLockAt,
+            race: race.predictionLockAt,
+          };
+          const lockTime = lockTimes[pred.sessionType];
+          if (!lockTime || now < lockTime) continue;
+        }
+      }
+
       let sessions = byRace.get(pred.raceId);
       if (!sessions) {
         sessions = {
