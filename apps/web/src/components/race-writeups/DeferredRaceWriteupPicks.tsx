@@ -22,13 +22,13 @@ function copyForPhase(phase: RaceWriteupPhase, venueName: string) {
   if (phase === 'race-picks') {
     return {
       heading: 'Make your race picks',
-      body: 'Qualifying picks are locked. You can change your race Top 5 until the race locks.',
+      body: 'Qualifying is locked. Your race Top 5 and team-mate picks stay open until the race starts.',
     };
   }
 
   return {
     heading: `Make your ${venueName} picks`,
-    body: 'Choose your Top 5 for qualifying and the race. You can change each set until that session locks.',
+    body: 'Pick your Top 5 and who wins each team-mate battle. Both stay open until that session starts.',
   };
 }
 

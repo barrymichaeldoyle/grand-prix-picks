@@ -45,7 +45,7 @@ interface H2HPredictionFormProps {
   onSuccess?: () => void;
   /** Emits whether the form currently has unsaved changes. */
   onDirtyChange?: (dirty: boolean) => void;
-  analyticsSource?: 'landing';
+  analyticsSource?: 'landing' | 'writeup' | 'predictions_hub';
   /** Landing funnel attribution for manual entry versus the Top 5 handoff. */
   entryMethod?: 'manual' | 'top5_handoff';
   /** Called when the user explicitly asks to save this prediction card. */

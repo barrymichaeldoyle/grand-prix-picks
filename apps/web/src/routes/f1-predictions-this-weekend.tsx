@@ -1,10 +1,10 @@
 import { api } from '@convex-generated/api';
 import { createFileRoute, Link } from '@tanstack/react-router';
+import { Fragment } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { FunctionReturnType } from 'convex/server';
 import { ArrowDown, ArrowRight } from 'lucide-react';
 
-import { DriverBadge } from '@/components/DriverBadge';
 import { PageHeader } from '@/components/PageHeader';
 import { RaceFlag } from '@/components/RaceFlag';
 import {
@@ -361,49 +361,58 @@ function PredictionsThisWeekendPage() {
         ) : null}
 
         {/* Kept alongside the picker rather than folded into it. The picker is
-            a flat pool that hydrates on the client; this is the line-up by
-            team, and it is the only driver content a crawler sees on the page.
-            It was headed "Who you can pick" over a line telling the reader to
-            choose five, which is the picker's job now, so both said the same
-            thing twice. */}
+            a flat pool that hydrates on the client; this is the grid by team,
+            and it is the only driver content a crawler sees on the page.
+
+            Pairs, not a pool: the two names on a row are the team-mate battle
+            that row's drivers contest, so the section that tells a crawler who
+            is racing is also the one that shows a reader what the second game
+            is played on. Numbers and full names because three-letter codes
+            mean nothing to someone arriving from a search result. */}
         {teams.length > 0 ? (
           <section className="mt-10" aria-labelledby="round-line-up">
             <h2
               id="round-line-up"
               className="font-title text-xl font-semibold text-text"
             >
-              Line-up for this round
+              The grid for this round
             </h2>
-            <div className="mt-5 grid gap-x-10 gap-y-3 border-y border-border py-3 sm:grid-cols-2">
+            <ul className="mt-5 grid border-t border-border sm:grid-cols-2 sm:gap-x-10">
               {teams.map(({ team, drivers: lineup }) => (
-                <div key={team} className="py-3">
-                  <div className="mb-3 flex items-center gap-2">
+                <li
+                  key={team}
+                  className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border py-3"
+                >
+                  <span className="flex min-w-32 items-baseline gap-2">
                     <span
                       aria-hidden
-                      className="h-3 w-1 rounded-full"
+                      className="h-2 w-2 shrink-0 translate-y-px rounded-full"
                       style={{ backgroundColor: teamColor(team) }}
                     />
-                    <h3 className="text-base font-semibold text-text">
+                    <span className="text-base font-semibold text-text">
                       {displayTeamName(team)}
-                    </h3>
-                  </div>
-                  <ul className="flex flex-wrap gap-2">
+                    </span>
+                  </span>
+                  {/* Two fixed columns rather than a wrapping row: the numbers
+                      are the left edge of a timing sheet, and letting driver
+                      names start wherever the previous one ended made eleven
+                      rows of the same two facts look like eleven different
+                      shapes. */}
+                  <span className="grid flex-1 grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-base sm:grid-cols-[auto_1fr_auto_1fr]">
                     {lineup.map((driver) => (
-                      <li key={driver.code}>
-                        <DriverBadge
-                          code={driver.code}
-                          team={team}
-                          displayName={driver.displayName}
-                          number={driver.number}
-                          nationality={driver.nationality}
-                          prerenderTooltip={false}
-                        />
-                      </li>
+                      <Fragment key={driver.code}>
+                        <span className="gpp-mono self-baseline text-right text-sm text-text-muted">
+                          {driver.number ?? ''}
+                        </span>
+                        <span className="self-baseline text-text">
+                          {driver.displayName}
+                        </span>
+                      </Fragment>
                     ))}
-                  </ul>
-                </div>
+                  </span>
+                </li>
               ))}
-            </div>
+            </ul>
           </section>
         ) : null}
 
@@ -446,26 +455,10 @@ function PredictionsThisWeekendPage() {
           </p>
         </section>
 
-        <section className="mt-10" aria-labelledby="more-picks">
-          <h2
-            id="more-picks"
-            className="font-title text-xl font-semibold text-text"
-          >
-            Team-mate picks
-          </h2>
-          <p className="mt-2 max-w-3xl text-lg leading-7 text-text-muted">
-            Alongside the top 5 you pick who finishes ahead in each team, one
-            point per correct call.{' '}
-            <Link
-              to="/f1-team-mate-battles"
-              className="font-medium text-accent hover:underline"
-            >
-              See this season&rsquo;s team-mate records
-            </Link>
-            .
-          </p>
-        </section>
-
+        {/* The team-mate game used to be described here, in prose, on a page
+            that could not play it. The picker above plays it, so what is left
+            worth linking is the season's records, which belong with the other
+            related pages rather than in a section of their own. */}
         <nav className="mt-10 border-t border-border pt-6" aria-label="Related">
           <ul className="flex flex-wrap gap-x-6 gap-y-2 text-base">
             <li>
@@ -474,6 +467,14 @@ function PredictionsThisWeekendPage() {
                 className="font-medium text-accent hover:underline"
               >
                 Full {race?.season ?? ''} race calendar
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/f1-team-mate-battles"
+                className="font-medium text-accent hover:underline"
+              >
+                Team-mate battle records
               </Link>
             </li>
             <li>
