@@ -4,15 +4,22 @@ import type { FunctionReturnType } from 'convex/server';
 
 import { DriverBadge } from '@/components/DriverBadge';
 import { Flag } from '@/components/Flag';
+import {
+  DeferredRaceWriteupPicks,
+  RACE_WRITEUP_PICKS_ANCHOR,
+} from '@/components/race-writeups/DeferredRaceWriteupPicks';
 import { ExternalSource } from '@/components/race-writeups/ExternalSource';
 import { RaceFaqSection } from '@/components/race-writeups/RaceFaqSection';
+import { RaceSignalsSection } from '@/components/race-writeups/RaceSignalsSection';
 import { TyreCompoundSection } from '@/components/race-writeups/TyreCompoundSection';
 import { RaceWriteupChampionshipContext } from '@/components/race-writeups/RaceWriteupChampionshipContext';
 import { RaceWriteupActions } from '@/components/race-writeups/RaceWriteupActions';
 import { RaceWriteupClosingPanel } from '@/components/race-writeups/RaceWriteupClosingPanel';
+import { RaceWriteupNextRound } from '@/components/race-writeups/RaceWriteupNextRound';
 import { RaceWriteupPhaseLabel } from '@/components/race-writeups/RaceWriteupPhaseLabel';
 import { RaceWriteupTrackMap } from '@/components/race-writeups/RaceWriteupTrackMap';
 import { RaceWriteupWeekendSchedule } from '@/components/race-writeups/RaceWriteupWeekendSchedule';
+import { SessionConsensusSections } from '@/components/SessionConsensus';
 import { WeekendNewsSection } from '@/components/WeekendNewsSection';
 import { WeekendPracticeSection } from '@/components/WeekendPracticeSection';
 import { WriteUpNewsPhoto } from '@/components/WriteUpNewsPhoto';
@@ -28,7 +35,11 @@ import {
   isRaceWriteupLive,
   raceWriteupHeroSummary,
 } from '@/lib/raceWriteupPhase';
-import { JARAMA_WRITEUP_IMAGE } from '@/lib/madrid2026WriteUpImages';
+import {
+  FORMULA_THREE_WRITEUP_IMAGE,
+  JARAMA_WRITEUP_IMAGE,
+  PIRELLI_MEDIUM_WRITEUP_IMAGE,
+} from '@/lib/madrid2026WriteUpImages';
 import { getRaceWriteupReviewedAt } from '@/lib/raceWriteups';
 import {
   breadcrumbSchema,
@@ -77,6 +88,14 @@ type StandingsDriver = Championship['drivers'][number];
 /*
  * Durable questions only. Weekend analysis belongs in the sections above, and
  * news belongs in `raceNews`, where it retires with the weekend.
+ *
+ * Two entries were removed for being about the game rather than about this
+ * race: how scoring works, and whether picks are visible before a session
+ * locks. Both are answered on `/how-to-play` and `/results-policy`, both are
+ * linked from the sections that raise them, and repeating them here on every
+ * write-up is the cross-page duplication `docs/seo-content-policy.md` exists
+ * to stop. Six questions this page can answer beat eight where two belong to
+ * another page.
  */
 const FAQS = [
   {
@@ -110,16 +129,6 @@ const FAQS = [
     answer:
       'There is no Formula 1 history to count from. The lap is walled for long stretches and the Formula 3 test stopped 19 times in two days, so treat the chance of a safety car as higher than at a permanent circuit when you pick a race Top 5.',
   },
-  {
-    question: 'Are other players’ picks visible before the session?',
-    answer:
-      'No. Picks stay private until the relevant session locks, so nobody can copy another player’s Top 5 before making their own call.',
-  },
-  {
-    question: 'How are Spanish Grand Prix predictions scored?',
-    answer:
-      'An exact Top 5 position earns 5 points, one position away earns 3, and selecting a driver who finishes elsewhere in the actual Top 5 earns 1 point.',
-  },
 ] as const;
 
 export const Route = createFileRoute('/f1-2026-madrid-grand-prix-predictions')({
@@ -127,38 +136,73 @@ export const Route = createFileRoute('/f1-2026-madrid-grand-prix-predictions')({
   loader: async ({ context }) => {
     await setRaceDataCacheHeaders();
     const weatherNow = Date.now();
-    const [race, championship, weather, news, season, practice] =
-      await Promise.all([
-        context.queryClient.ensureQueryData(
-          routeQuery(api.races.getRaceBySlug, { slug: RACE_SLUG }),
-        ),
-        // Live. This weekend is a week after Monza, so a table written before
-        // that race is scored would be wrong by the time anyone reads it.
-        context.queryClient.ensureQueryData(
-          routeQuery(api.f1Standings.getF1Championship, {}),
-        ),
-        context.queryClient.ensureQueryData(
-          routeQuery(api.weather.getByRaceSlug, {
-            raceSlug: RACE_SLUG,
-            now: weatherNow,
-          }),
-        ),
-        context.queryClient.ensureQueryData(
-          routeQuery(api.raceNews.list, { raceSlug: RACE_SLUG }),
-        ),
-        context.queryClient.ensureQueryData(
-          routeQuery(api.races.listCurrentSeason, {}),
-        ),
-        context.queryClient.ensureQueryData(
-          routeQuery(api.practiceResults.getPracticeResultsForRaceSlug, {
-            raceSlug: RACE_SLUG,
-          }),
-        ),
-      ]);
+    const [
+      race,
+      championship,
+      weather,
+      news,
+      season,
+      practice,
+      consensus,
+      nextRace,
+    ] = await Promise.all([
+      context.queryClient.ensureQueryData(
+        routeQuery(api.races.getRaceBySlug, { slug: RACE_SLUG }),
+      ),
+      // Live. This weekend is a week after Monza, so a table written before
+      // that race is scored would be wrong by the time anyone reads it.
+      context.queryClient.ensureQueryData(
+        routeQuery(api.f1Standings.getF1Championship, {}),
+      ),
+      context.queryClient.ensureQueryData(
+        routeQuery(api.weather.getByRaceSlug, {
+          raceSlug: RACE_SLUG,
+          now: weatherNow,
+        }),
+      ),
+      context.queryClient.ensureQueryData(
+        routeQuery(api.raceNews.list, { raceSlug: RACE_SLUG }),
+      ),
+      context.queryClient.ensureQueryData(
+        routeQuery(api.races.listCurrentSeason, {}),
+      ),
+      context.queryClient.ensureQueryData(
+        routeQuery(api.practiceResults.getPracticeResultsForRaceSlug, {
+          raceSlug: RACE_SLUG,
+        }),
+      ),
+      // How the field picked each session that has locked: the one thing on
+      // this page no other publication can print. It joins this wave rather
+      // than waiting to learn a session has locked, because it is keyed on
+      // the slug alone, answers empty all week, and has to be in the SSR
+      // HTML — a client subscription would hide it from the crawler that
+      // this page exists for. The backend returns nothing before a lock, so
+      // it can never become an answer sheet.
+      context.queryClient.ensureQueryData(
+        routeQuery(api.consensus.getWeekendConsensusForRaceSlug, {
+          raceSlug: RACE_SLUG,
+        }),
+      ),
+      // Read only once this weekend is done, but keyed on nothing, so it
+      // costs this wave no round trip it was not already making.
+      context.queryClient.ensureQueryData(
+        routeQuery(api.races.getNextRace, {}),
+      ),
+    ]);
     if (!race) {
       throw notFound();
     }
-    return { race, championship, weather, weatherNow, news, season, practice };
+    return {
+      race,
+      championship,
+      weather,
+      weatherNow,
+      news,
+      season,
+      practice,
+      consensus,
+      nextRace,
+    };
   },
   head: ({ loaderData }) => {
     const race = loaderData?.race;
@@ -235,10 +279,29 @@ export const Route = createFileRoute('/f1-2026-madrid-grand-prix-predictions')({
 });
 
 function MadridGrandPrixPredictionsPage() {
-  const { race, championship, weather, weatherNow, news, season, practice } =
-    Route.useLoaderData();
+  const {
+    race,
+    championship,
+    weather,
+    weatherNow,
+    news,
+    season,
+    practice,
+    consensus,
+    nextRace,
+  } = Route.useLoaderData();
   const phase = getRaceWriteupPhase(race, weatherNow);
   const isLive = isRaceWriteupLive(phase);
+  // Madrid is a regular weekend, so the sessions that can carry a consensus
+  // are qualifying and the race, in the order they run. Each one appears the
+  // moment it locks rather than waiting for the race to be scored: a reader
+  // picking their race Top 5 on Saturday evening can see what the field did
+  // with qualifying, which is the half of the game their own entry cannot
+  // show them.
+  const consensusSessions = (['quali', 'race'] as const).flatMap((session) => {
+    const sessionConsensus = consensus[session];
+    return sessionConsensus ? [{ session, consensus: sessionConsensus }] : [];
+  });
   // Read off the standings rather than hard-coded, so a seat change during the
   // season cannot leave this section naming a driver at their old team.
   const spanishDrivers = championship.drivers.filter(
@@ -256,7 +319,15 @@ function MadridGrandPrixPredictionsPage() {
                 <p className="gpp-mono text-sm text-text-muted uppercase">
                   11–13 Sep · Madring · Round {race.round}
                 </p>
-                <span className="text-text-disabled" aria-hidden>
+                {/* Only where the eyebrow fits on one line. A phone wraps
+                    before the phase label, and a separator is punctuation
+                    between two things on the same line: dropped to the next
+                    one it becomes a dot opening a sentence, which is what the
+                    hero read as at 390px. The line break separates them. */}
+                <span
+                  className="hidden text-text-disabled sm:inline"
+                  aria-hidden
+                >
                   ·
                 </span>
                 <RaceWriteupPhaseLabel phase={phase} />
@@ -274,6 +345,9 @@ function MadridGrandPrixPredictionsPage() {
             </p>
             <RaceWriteupActions
               phase={phase}
+              primaryActionTargetId={
+                isLive ? RACE_WRITEUP_PICKS_ANCHOR : undefined
+              }
               raceSlug={RACE_SLUG}
               venueName="Madrid"
               circuitName="Madring"
@@ -292,6 +366,23 @@ function MadridGrandPrixPredictionsPage() {
 
         <NoFormGuide />
         <FormulaThreeTest />
+        {/* What changed this week, then what the cars did, then what the field
+            made of it. All three date from this weekend, and all three used to
+            sit below five sections of circuit analysis that will read the same
+            in a year: a reader on Friday met 1981 before they met today. The
+            durable material follows, which is also the order it stops
+            mattering in. */}
+        {isLive ? (
+          <>
+            <WeekendNewsSection items={news.items} />
+            <WeekendPracticeSection results={practice} raceSlug={RACE_SLUG} />
+          </>
+        ) : null}
+        {/* Not gated on the phase. It appears session by session as each one
+            locks and it is still the best thing on the page once the race is
+            done, so the gate it needs is "has anything locked", which is the
+            question the empty list already answers. */}
+        <SessionConsensusSections sessions={consensusSessions} />
         <TrackMap />
         <LaMonumental />
         <WatchTable />
@@ -302,26 +393,40 @@ function MadridGrandPrixPredictionsPage() {
         {isLive ? <TrackReadiness /> : null}
         <SpanishDrivers drivers={spanishDrivers} />
         {isLive ? (
-          <>
-            <WeekendNewsSection items={news.items} />
-            <WeekendPracticeSection results={practice} raceSlug={RACE_SLUG} />
-            <RaceWriteupChampionshipContext
-              championship={championship}
-              races={season.races}
-              thisRound={race.round}
-              venueName="Madrid"
-            />
-          </>
+          <RaceWriteupChampionshipContext
+            championship={championship}
+            races={season.races}
+            thisRound={race.round}
+            venueName="Madrid"
+          />
         ) : null}
 
         <RaceFaqSection faqs={FAQS} />
 
-        <RaceWriteupClosingPanel
-          phase={phase}
-          raceId={race._id}
-          raceSlug={RACE_SLUG}
-          venueName="Madrid"
-        />
+        {/* The picks finish on this page while there are picks to make. The
+            closing panel's button leaves for the race page, which is the right
+            answer for a weekend that is over and the wrong one for the round a
+            reader arrived here to play. */}
+        {isLive ? (
+          <DeferredRaceWriteupPicks
+            phase={phase}
+            raceId={race._id}
+            round={race.round}
+            season={race.season}
+            raceSlug={RACE_SLUG}
+            venueName="Madrid"
+          />
+        ) : (
+          <>
+            <RaceWriteupClosingPanel
+              phase={phase}
+              raceId={race._id}
+              raceSlug={RACE_SLUG}
+              venueName="Madrid"
+            />
+            <RaceWriteupNextRound nextRace={nextRace} />
+          </>
+        )}
 
         <footer className="mt-10 pb-4 text-sm leading-6 text-text-muted">
           <p>
@@ -456,25 +561,32 @@ function FormulaThreeTest() {
           finishing Top 5 who was not running there.
         </p>
       </div>
-      <dl className="self-start rounded-sm bg-surface-elevated px-4">
-        {[
-          ['Test', '24–25 August 2026'],
-          ['Runners', '30 drivers, 10 teams'],
-          ['Red flags', '19 over two days'],
-          ['Fastest lap', 'Ugochukwu, 1:49.034'],
-          ['Carries over', 'Where it bites'],
-        ].map(([label, value]) => (
-          <div
-            key={label}
-            className="border-b border-border py-4 last:border-0"
-          >
-            <dt className="text-xs font-semibold tracking-label text-text-muted uppercase">
-              {label}
-            </dt>
-            <dd className="mt-1 text-sm text-text">{value}</dd>
-          </div>
-        ))}
-      </dl>
+      {/* The card is five rows against three paragraphs, so the column ends
+          short of the copy. The photo takes the rest of it, and it is the one
+          picture on this page whose subject is the thing the section is about:
+          the car that has actually run here is a Formula 3 car. */}
+      <div className="self-start">
+        <dl className="rounded-sm bg-surface-elevated px-4">
+          {[
+            ['Test', '24–25 August 2026'],
+            ['Runners', '30 drivers, 10 teams'],
+            ['Red flags', '19 over two days'],
+            ['Fastest lap', 'Ugochukwu, 1:49.034'],
+            ['Carries over', 'Where it bites'],
+          ].map(([label, value]) => (
+            <div
+              key={label}
+              className="border-b border-border py-4 last:border-0"
+            >
+              <dt className="text-xs font-semibold tracking-label text-text-muted uppercase">
+                {label}
+              </dt>
+              <dd className="mt-1 text-sm text-text">{value}</dd>
+            </div>
+          ))}
+        </dl>
+        <WriteUpNewsPhoto {...FORMULA_THREE_WRITEUP_IMAGE} />
+      </div>
     </section>
   );
 }
@@ -649,53 +761,48 @@ function LaMonumental() {
   );
 }
 
+/**
+ * The same section every other write-up carries, drawn by the same component.
+ *
+ * This was a hand-rolled four-up card grid saying what `RaceSignalsSection`
+ * says, which meant Madrid was the one write-up whose signals read as a
+ * different component and the one with no circuit figures above them. The
+ * numbers were on the page already, scattered through three asides; the strip
+ * is where a reader who skims goes looking for them.
+ */
 function WatchTable() {
-  const rows = [
-    [
-      'Friday running',
-      'The first time the whole grid is here',
-      'Even Ferrari’s filming day was 100 km a driver on demonstration tyres.',
-    ],
-    [
-      'Ride height changes',
-      'Cars sitting higher in FP3 than FP1',
-      'A team that raised the car has chosen safety through the banking over lap time.',
-    ],
-    [
-      'The tight sector',
-      'Traction and braking around the exhibition halls',
-      'The street-style section rewards a settled rear, and it is where a lap is lost.',
-    ],
-    [
-      'Long-run pace',
-      'Lap after lap at the same pace',
-      'A new surface makes tyre behaviour over a stint harder to guess.',
-    ],
-  ] as const;
-
   return (
-    <section className="py-8 sm:py-16" aria-labelledby="what-to-watch">
-      <h2
-        id="what-to-watch"
-        className="font-title text-2xl font-medium text-text sm:text-3xl"
-      >
-        What to watch in practice
-      </h2>
-
-      <dl className="mt-7 grid grid-cols-1 gap-px overflow-hidden rounded-sm bg-border sm:grid-cols-2 lg:grid-cols-4">
-        {rows.map(([title, what, why]) => (
-          <div key={title} className="bg-surface p-5">
-            <dt className="font-title text-sm font-medium text-text">
-              {title}
-            </dt>
-            <dd className="mt-2 text-sm text-text-muted">{what}</dd>
-            <dd className="gpp-reading-copy mt-2 text-sm text-text-muted">
-              {why}
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </section>
+    <RaceSignalsSection
+      heading="What to watch in practice"
+      stats={[
+        ['5.416', 'km circuit'],
+        ['22', 'corners'],
+        ['57', 'race laps'],
+        ['24%', 'banking at Turn 12'],
+      ]}
+      signals={[
+        [
+          'Friday running',
+          'The first time the whole grid is here',
+          'Even Ferrari’s filming day was 100 km a driver on demonstration tyres.',
+        ],
+        [
+          'Ride height changes',
+          'Cars sitting higher in FP3 than FP1',
+          'A team that raised the car has chosen safety through the banking over lap time.',
+        ],
+        [
+          'The tight sector',
+          'Traction and braking around the exhibition halls',
+          'The street-style section rewards a settled rear, and it is where a lap is lost.',
+        ],
+        [
+          'Long-run pace',
+          'Lap after lap at the same pace',
+          'A new surface makes tyre behaviour over a stint harder to guess.',
+        ],
+      ]}
+    />
   );
 }
 
@@ -705,6 +812,7 @@ function TyreChoice() {
       heading="Madrid gets the medium tyres"
       venue="Madrid"
       hardest="C2"
+      aside={<WriteUpNewsPhoto {...PIRELLI_MEDIUM_WRITEUP_IMAGE} />}
     >
       <p className="gpp-reading-copy mt-7 text-text-muted">
         Pirelli&rsquo;s simulations put the loads near Silverstone and Spa, so

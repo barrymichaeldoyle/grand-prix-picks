@@ -127,6 +127,7 @@ export function TyreCompoundSection({
   heading,
   venue,
   hardest,
+  aside,
   children,
 }: {
   heading: string;
@@ -134,11 +135,25 @@ export function TyreCompoundSection({
   venue: string;
   /** The hardest of the three compounds nominated for this race. */
   hardest: TyreCompound;
+  /**
+   * A photograph for the margin, on a page that has one.
+   *
+   * Optional, and the shell keeps its single reading column without it, so a
+   * write-up that passes nothing renders exactly what it rendered before.
+   */
+  aside?: ReactNode;
   /** The analysis below the scale. */
   children: ReactNode;
 }) {
   return (
-    <section className="py-8 sm:py-16" aria-labelledby="tyre-choice">
+    <section
+      className={
+        aside
+          ? 'grid gap-7 py-8 sm:py-16 lg:grid-cols-[minmax(0,1fr)_18rem]'
+          : 'py-8 sm:py-16'
+      }
+      aria-labelledby="tyre-choice"
+    >
       <div className="max-w-3xl">
         <h2
           id="tyre-choice"
@@ -149,6 +164,7 @@ export function TyreCompoundSection({
         <TyreCompoundScale venue={venue} hardest={hardest} />
         {children}
       </div>
+      {aside ? <div className="self-start">{aside}</div> : null}
     </section>
   );
 }
