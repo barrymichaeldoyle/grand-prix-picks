@@ -177,6 +177,43 @@ export function isForecastStale(forecast: {
   return forecast.lastRefreshError !== undefined;
 }
 
+/**
+ * Carries already-run hours across a refresh.
+ *
+ * MET Norway's locationforecast only returns hours that are still ahead, so a
+ * response fetched on Sunday morning has nothing to say about Friday practice.
+ * Storing that response as the whole truth deleted the weather for every
+ * session that had already happened, and the write-up rendered a dash where
+ * Friday's conditions used to be: by race day the schedule looked broken for
+ * four of its five rows.
+ *
+ * The incoming response still wins wherever it has an opinion — it is the
+ * newer forecast for those hours. It simply no longer erases the hours it has
+ * stopped covering.
+ *
+ * `eventDates` bounds the result exactly as it bounds a fresh parse, so a
+ * retained hour cannot outlive the weekend it belongs to and the document
+ * stays the same size it always was.
+ */
+export function mergeRetainedHours(
+  previous: readonly WeatherHour[] | undefined,
+  incoming: readonly WeatherHour[],
+  eventDates: ReadonlySet<string>,
+): WeatherHour[] {
+  const byTime = new Map<number, WeatherHour>();
+  for (const hour of previous ?? []) {
+    if (eventDates.has(hour.localDate)) {
+      byTime.set(hour.at, hour);
+    }
+  }
+  for (const hour of incoming) {
+    if (eventDates.has(hour.localDate)) {
+      byTime.set(hour.at, hour);
+    }
+  }
+  return [...byTime.values()].sort((a, b) => a.at - b.at);
+}
+
 export function summarizeWeatherDays(hours: WeatherHour[]): WeatherDay[] {
   const byDate = new Map<string, WeatherHour[]>();
   for (const hour of hours) {

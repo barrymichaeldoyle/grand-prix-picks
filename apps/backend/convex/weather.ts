@@ -14,7 +14,9 @@ import {
   getEventDates,
   isForecastStale,
   isWeatherEligible,
+  mergeRetainedHours,
   parseMetNoForecast,
+  summarizeWeatherDays,
   shouldRefreshWeather,
   weatherDayValidator,
   weatherHourValidator,
@@ -243,8 +245,21 @@ export const saveForecast = internalMutation({
       .query('weatherForecasts')
       .withIndex('by_raceId', (q) => q.eq('raceId', args.raceId))
       .unique();
+    // A refresh adds to the weekend's weather, it does not redefine it. The
+    // provider drops hours once they are in the past, so replacing the stored
+    // array wholesale threw away every session that had already run. See
+    // `mergeRetainedHours`.
+    const hours = mergeRetainedHours(
+      previous?.hours,
+      args.hours,
+      new Set(args.eventDates),
+    );
     const value = {
       ...args,
+      hours,
+      // Re-derived rather than taken from the response, so a day whose hours
+      // are now entirely retained still has a summary to go with them.
+      days: summarizeWeatherDays(hours),
       provider: 'met_no' as const,
       createdAt: previous?.createdAt ?? args.fetchedAt,
       updatedAt: args.checkedAt,

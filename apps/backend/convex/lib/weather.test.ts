@@ -4,6 +4,7 @@ import {
   getEventDates,
   isForecastStale,
   isWeatherEligible,
+  mergeRetainedHours,
   parseMetNoForecast,
   shouldRefreshWeather,
   summarizeWeatherDays,
@@ -219,3 +220,70 @@ function hour(
     windSpeedMps: 4,
   };
 }
+
+describe('retaining hours a refresh no longer covers', () => {
+  function hour(
+    at: number,
+    localDate: string,
+    temperatureC: number,
+  ): WeatherHour {
+    return {
+      at,
+      localDate,
+      localHour: new Date(at).getUTCHours(),
+      forecastPeriodHours: 1,
+      temperatureC,
+      conditionCode: 'clearsky_day',
+      precipitationAmountMm: 0,
+      windSpeedMps: 2,
+    };
+  }
+
+  const friday = Date.UTC(2026, 8, 4, 12);
+  const saturday = Date.UTC(2026, 8, 5, 14);
+  const sunday = Date.UTC(2026, 8, 6, 13);
+  const eventDates = new Set(['2026-09-04', '2026-09-05', '2026-09-06']);
+
+  test('keeps a past session that the provider has stopped returning', () => {
+    // Sunday's response has nothing to say about Friday practice, which is the
+    // whole bug: the old code stored it as the entire truth and the write-up
+    // rendered a dash where Friday's weather had been.
+    const stored = [
+      hour(friday, '2026-09-04', 24),
+      hour(saturday, '2026-09-05', 27),
+    ];
+    const incoming = [hour(sunday, '2026-09-06', 32)];
+
+    const merged = mergeRetainedHours(stored, incoming, eventDates);
+
+    expect(merged.map((entry) => entry.at)).toEqual([friday, saturday, sunday]);
+    expect(merged.map((entry) => entry.temperatureC)).toEqual([24, 27, 32]);
+  });
+
+  test('prefers the incoming forecast for an hour both cover', () => {
+    const stored = [hour(sunday, '2026-09-06', 28)];
+    const incoming = [hour(sunday, '2026-09-06', 32)];
+
+    expect(mergeRetainedHours(stored, incoming, eventDates)).toEqual([
+      hour(sunday, '2026-09-06', 32),
+    ]);
+  });
+
+  test('drops a retained hour outside the weekend it belongs to', () => {
+    const stale = Date.UTC(2026, 7, 30, 12);
+    const stored = [hour(stale, '2026-08-30', 20)];
+    const incoming = [hour(sunday, '2026-09-06', 32)];
+
+    expect(mergeRetainedHours(stored, incoming, eventDates)).toEqual([
+      hour(sunday, '2026-09-06', 32),
+    ]);
+  });
+
+  test('is a plain copy when there is nothing stored yet', () => {
+    const incoming = [hour(friday, '2026-09-04', 24)];
+
+    expect(mergeRetainedHours(undefined, incoming, eventDates)).toEqual(
+      incoming,
+    );
+  });
+});
