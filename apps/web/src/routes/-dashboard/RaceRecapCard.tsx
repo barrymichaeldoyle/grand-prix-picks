@@ -9,11 +9,23 @@ import { RaceFlag } from '@/components/RaceFlag';
 import { RankDelta } from '@/components/RankDelta';
 import { weekendCardShell } from '@/components/WeekendCardSkeleton';
 import { getCountryCodeForRace } from '@/lib/raceCountries';
-import { SESSION_LABELS } from '@/lib/sessions';
 
-export type RaceRecap = NonNullable<
+type RaceRecap = NonNullable<
   FunctionReturnType<typeof api.home.getRaceRecap>
 >;
+
+/**
+ * The states this card reports on: a race that has been run, and either has a
+ * result or does not.
+ *
+ * Not `live`. While a session is on track the feed below is showing the same
+ * race as a live board, and two live reports on one page disagreed with each
+ * other: this card's numbers are the *weekend* (qualifying included, already
+ * published), the feed's are the session on track. Same player, two totals,
+ * a few hundred pixels apart. The race is the thing happening, so the feed's
+ * board is the one that stays; see `DashboardPage`.
+ */
+export type SettledRaceRecap = Exclude<RaceRecap, { status: 'live' }>;
 
 /** The card's routes out, styled as the rail cards' bottom links are. */
 const RECAP_LINK_CLASS =
@@ -37,19 +49,12 @@ export function RaceRecapCard({
   recap,
   leading = true,
 }: {
-  recap: RaceRecap;
+  recap: SettledRaceRecap;
   /** Whether this is the first card under the header; see `weekendCardShell`. */
   leading?: boolean;
 }) {
   const countryCode = getCountryCodeForRace({ slug: recap.race.slug });
   const viewer = recap.viewer;
-  /*
-   * One binding, not a boolean beside a nullable field. A boolean would leave
-   * every read of `recap.live` needing its own guard, and TypeScript narrows
-   * the property expression rather than the object, so those guards do not
-   * travel. Non-null here means "a session is running", everywhere below.
-   */
-  const live = recap.status === 'live' ? recap.live : null;
 
   return (
     <section
@@ -70,17 +75,7 @@ export function RaceRecapCard({
           )}
           <div className="min-w-0">
             <p className="gpp-label flex items-center gap-2 text-text-muted">
-              {live ? (
-                <span
-                  className="h-2 w-2 shrink-0 rounded-full bg-accent motion-safe:animate-pulse"
-                  aria-hidden
-                />
-              ) : null}
-              {`Round ${recap.race.round} · ${
-                live
-                  ? `${SESSION_LABELS[live.sessionType]} in progress`
-                  : 'Result'
-              }`}
+              {`Round ${recap.race.round} · Result`}
             </p>
             {/* `h2`, not `h1`. The picks card below still holds the page's
                 `h1`: this card is a report on the round that has finished,
@@ -123,16 +118,6 @@ export function RaceRecapCard({
           </p>
         )}
 
-        {/* Said once, under the numbers it qualifies, in the same words the
-            race page's live board uses. Everything above this line moves while
-            a session is running, and a player reading a position needs to know
-            that before they read it as a result. */}
-        {live ? (
-          <p className="mt-3 text-xs text-text-muted">
-            The running order is live and can change, including after the flag.
-          </p>
-        ) : null}
-
         {/* One row is the viewer alone, which the block above already covers.
             The table starts earning its space at two. */}
         {recap.friends.length > 1 ? (
@@ -170,14 +155,9 @@ export function RaceRecapCard({
             search={{ from: 'home' }}
             className={RECAP_LINK_CLASS}
           >
-            {/* "Full breakdown" is a promise of scores. While a session is
-                running the race page has the full live board instead, and
-                nothing at all is broken down until the publish lands. */}
-            {live
-              ? 'Live scoring'
-              : recap.status === 'pending'
-                ? 'View race'
-                : 'Full breakdown'}
+            {/* "Full breakdown" is a promise of scores, and nothing is broken
+                down until the publish lands. */}
+            {recap.status === 'pending' ? 'View race' : 'Full breakdown'}
             <ArrowRight className="h-3 w-3" aria-hidden />
           </Link>
           {recap.status === 'scored' ? (

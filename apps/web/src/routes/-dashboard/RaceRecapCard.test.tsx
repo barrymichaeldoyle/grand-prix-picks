@@ -4,7 +4,7 @@ import type { Root } from 'react-dom/client';
 import { createRoot } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { RaceRecap } from './RaceRecapCard';
+import type { SettledRaceRecap } from './RaceRecapCard';
 import { RaceRecapCard } from './RaceRecapCard';
 
 (
@@ -17,7 +17,7 @@ vi.mock('@tanstack/react-router', () => ({
 
 const RACE_ID = 'race_1' as Id<'races'>;
 
-function recap(overrides: Partial<RaceRecap> = {}): RaceRecap {
+function recap(overrides: Partial<SettledRaceRecap> = {}): SettledRaceRecap {
   return {
     race: {
       id: RACE_ID,
@@ -43,7 +43,7 @@ function recap(overrides: Partial<RaceRecap> = {}): RaceRecap {
     friends: [],
     friendCount: 0,
     ...overrides,
-  } as RaceRecap;
+  } as SettledRaceRecap;
 }
 
 let container: HTMLDivElement | null = null;
@@ -79,26 +79,8 @@ describe('RaceRecapCard', () => {
     expect(view.textContent).toContain('of 3');
   });
 
-  it('marks a running session as in progress and says the order can change', () => {
-    const view = render(
-      <RaceRecapCard
-        recap={recap({
-          status: 'live',
-          live: { sessionType: 'race', updatedAt: 2_000 },
-        })}
-      />,
-    );
-
-    expect(view.textContent).toContain('Race in progress');
-    expect(view.textContent).toContain(
-      'The running order is live and can change',
-    );
-    // Still shows the provisional standing: that is the point of the state.
-    expect(view.textContent).toContain('P2');
-    // A live weekend has no settled leaderboard to send anyone to.
-    expect(view.textContent).not.toContain('Weekend leaderboard');
-    expect(view.textContent).toContain('Live scoring');
-  });
+  /* Nothing here for a session on track: the card is not rendered then, and
+     the type says so. The dashboard's feed carries the live board instead. */
 
   it('does not caveat a published result', () => {
     const view = render(<RaceRecapCard recap={recap()} />);

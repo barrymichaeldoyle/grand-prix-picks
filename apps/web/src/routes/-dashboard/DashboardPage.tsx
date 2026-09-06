@@ -186,9 +186,22 @@ export function DashboardPage({
     currentWeekend?.race._id,
   );
 
+  /*
+   * The recap card, unless a session is on track. The feed below is then
+   * reporting the same race as a live board, and the two were saying different
+   * things about the same player: this card's live numbers were the weekend
+   * total (qualifying included) and the feed's are the session being run. The
+   * race is what is happening, so the feed's board is the one that stays and
+   * this card comes back when the result publishes.
+   */
+  const recapCard =
+    promotedRecap && promotedRecap.status !== 'live' ? (
+      <RaceRecapCard recap={promotedRecap} />
+    ) : null;
+
   const picksCard = (
     <DashboardWeekendPicks
-      leading={promotedRecap === null}
+      leading={recapCard === null}
       weekend={currentWeekend}
       weather={weather}
       weatherNow={weatherNow}
@@ -280,7 +293,7 @@ export function DashboardPage({
         </>
       }
     >
-      {promotedRecap ? <RaceRecapCard recap={promotedRecap} /> : null}
+      {recapCard}
 
       {pickerFollowsFeed ? null : picksCard}
 

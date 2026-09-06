@@ -1,7 +1,7 @@
 import type { Id } from '@convex-generated/dataModel';
 import type { Meta, StoryObj } from '@storybook/react';
 
-import type { RaceRecap } from './RaceRecapCard';
+import type { SettledRaceRecap } from './RaceRecapCard';
 import { RaceRecapCard } from './RaceRecapCard';
 
 const RACE = {
@@ -12,7 +12,7 @@ const RACE = {
   raceStartAt: Date.now() - 3 * 60 * 60 * 1000,
 };
 
-function recap(overrides: Partial<RaceRecap> = {}): RaceRecap {
+function recap(overrides: Partial<SettledRaceRecap> = {}): SettledRaceRecap {
   return {
     race: RACE,
     windowEndsAt: RACE.raceStartAt + 8 * 60 * 60 * 1000,
@@ -32,10 +32,10 @@ function recap(overrides: Partial<RaceRecap> = {}): RaceRecap {
     friends: [],
     friendCount: 0,
     ...overrides,
-  } as RaceRecap;
+  } as SettledRaceRecap;
 }
 
-const FRIENDS: RaceRecap['friends'] = [
+const FRIENDS: SettledRaceRecap['friends'] = [
   {
     userId: 'u2' as Id<'users'>,
     username: 'kimirocket',
@@ -82,33 +82,6 @@ export const WithFollowedPlayers: Story = {
 /** A player who follows nobody yet still gets their own result first. */
 export const ViewerOnly: Story = {
   args: { recap: recap() },
-};
-
-/** Mid-race: provisional, and it has to read that way at a glance. */
-export const RaceInProgress: Story = {
-  args: {
-    recap: recap({
-      status: 'live',
-      live: { sessionType: 'race', updatedAt: Date.now() },
-      // Provisional standings, so the rows differ from the scored stories.
-      friends: [
-        { ...FRIENDS[0], rank: 9, points: 24 },
-        { ...FRIENDS[1], rank: 21, points: 18 },
-        { ...FRIENDS[2], rank: 55, points: 9 },
-      ],
-      friendCount: 2,
-      viewer: {
-        points: 18,
-        top5Points: 15,
-        h2hPoints: 3,
-        rank: 21,
-        fieldSize: 128,
-        // No season position while a session is running.
-        seasonRank: null,
-        seasonRankDelta: null,
-      },
-    }),
-  },
 };
 
 /** The race has run, nothing is reporting on it, and nothing is scored. */
