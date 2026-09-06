@@ -10,6 +10,7 @@ import {
   WriteUpNewsPhoto,
   type WriteUpNewsPhotoProps,
 } from '@/components/WriteUpNewsPhoto';
+import { formatUtcDate, utcDateAttribute } from '@/lib/date';
 import { TEAM_COLORS } from '@/lib/teamColors';
 
 type NewsDriver = {
@@ -27,6 +28,12 @@ type NewsItem = {
   affectsSessions: string[];
   sourceName: string;
   sourceUrl: string;
+  /**
+   * When the source published the story, which is not when we published the
+   * card. Optional: items published before the field existed do not have one,
+   * and a source with no date is left blank rather than guessed at.
+   */
+  sourcePublishedAt?: number;
   drivers?: NewsDriver[];
   startingGrid?: StartingGridEntry[];
   // The component's own props, not a copy of them: these are forwarded whole
@@ -175,6 +182,19 @@ export function WeekendNewsSection({ items }: { items: NewsItem[] }) {
                   {item.sourceName}
                   <ExternalLink className="size-3 shrink-0" aria-hidden />
                 </a>
+                {/* When the story broke, not when we published the card. This
+                    page is read weeks after the weekend, and "Antonelli takes a
+                    penalty" means something different on Wednesday than it does
+                    an hour before the race. `<time>` rather than a bare string
+                    so the date a reader sees is the one a crawler parses. */}
+                {item.sourcePublishedAt ? (
+                  <time
+                    dateTime={utcDateAttribute(item.sourcePublishedAt)}
+                    className="ml-1.5 text-sm whitespace-nowrap text-text-muted"
+                  >
+                    · {formatUtcDate(item.sourcePublishedAt)}
+                  </time>
+                ) : null}
               </p>
             </article>
           );

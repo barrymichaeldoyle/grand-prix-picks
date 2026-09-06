@@ -69,9 +69,13 @@ npx convex run --prod raceNews:publish '{
   "driverCodes": ["ANT"],
   "sourceName": "Formula 1",
   "sourceUrl": "https://www.formula1.com/en/latest/article/...",
+  "sourcePublishedAt": 1788428400000,
   "dryRun": true
 }'
 ```
+
+The dry run echoes `sourcePublished` back as a date. Read it: a timestamp that
+is well-formed and wrong is the one mistake nothing else catches.
 
 **3. Publish.** The same call without `dryRun`.
 
@@ -113,6 +117,16 @@ npx convex run --prod raceNews:publish '{
   penalty" is half a story.
 - **`sourceUrl`** — the primary source. Prefer formula1.com or the team over
   aggregators. Rejected unless it is a full `http(s)` URL.
+- **`sourcePublishedAt`** — when the **source** published the story, in
+  milliseconds. Set it on every item you can. The write-up page shows it beside
+  the source name, and that page is read weeks later by somebody who wants to
+  know when a penalty was handed down: `publishedAt` can only tell them when
+  this command ran, and a batch of five items lands two seconds apart. Take the
+  date from the article's own date line rather than from when you found it.
+  Publishing refuses a seconds-epoch value and a date more than a day ahead.
+  Omit it when the source carries no date: blank is honest, a guess is a made-up
+  date on a public page. It does **not** move the feed card, which keeps showing
+  when it arrived.
 
 ## Publishing the starting grid
 

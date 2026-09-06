@@ -103,6 +103,28 @@ export function formatCalendarDate(
   );
 }
 
+/**
+ * `5 Sep 2026`, in UTC, for a date on a public page.
+ *
+ * Deliberately not viewer-local like `formatDate`: this renders during SSR into
+ * HTML that a crawler reads and a cache serves to everyone, so a timezone-
+ * dependent string would either mismatch on hydration or hand one visitor's
+ * date to the next. The day a story was published is not a local fact anyway.
+ */
+export function formatUtcDate(timestamp: DateLike): string {
+  return new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(toDateInput(timestamp));
+}
+
+/** `2026-09-05`, for the `datetime` attribute beside `formatUtcDate`. */
+export function utcDateAttribute(timestamp: DateLike): string {
+  return toDateInput(timestamp).toISOString().slice(0, 10);
+}
+
 export function formatInTimeZone(
   timestamp: DateLike,
   timeZone: string,

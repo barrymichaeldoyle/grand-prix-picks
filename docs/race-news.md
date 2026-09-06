@@ -45,6 +45,7 @@ weekend card flag the item on the Race tab and leave Qualifying alone, which is
 | `affectsSessions`         | Required, non-empty. The editorial gate and the UI hook         |
 | `driverCodes`             | Optional. Puts the driver badge and team colour on the card     |
 | `sourceName`, `sourceUrl` | Attribution, same standard as the write-up pages                |
+| `sourcePublishedAt`       | Optional. When the source published it, shown on the write-up   |
 | `startingGrid`            | Optional. The confirmed grid, on the item that announces it     |
 | `active`                  | Retraction without deletion, so a mistake leaves a trail        |
 
@@ -71,6 +72,7 @@ npx convex run --prod raceNews:publish '{
   "affectsSessions": ["race"],
   "sourceName": "Formula 1",
   "sourceUrl": "https://www.formula1.com/en/latest/article/...",
+  "sourcePublishedAt": 1788428400000,
   "dryRun": true
 }'
 
@@ -139,6 +141,46 @@ The two surfaces differ in one respect only. The write-up shows every place,
 because it is a public page, the grid is what the reader searched for, and a
 crawler does not press buttons. The feed closes on the top ten, because a card
 twenty-two rows tall pushes the sessions either side of it off the screen.
+
+## Two dates, two jobs
+
+`publishedAt` is when we published. `sourcePublishedAt` is when the source did,
+and it is the one a reader wants.
+
+They are usually days apart, and within a batch `publishedAt` is worse than
+approximate: five items published in one run land two seconds apart, in whatever
+order the agent happened to call them. That is fine for what it does, which is
+ordering, and useless as a date.
+
+**The write-up page shows `sourcePublishedAt` and nothing else.** It is read
+long after the weekend by somebody who arrived from a search, and "Antonelli
+takes a penalty" means a different thing on Wednesday than it does an hour
+before the race. It renders as a `<time datetime="...">` beside the source, in
+UTC: the page is server-rendered into HTML a crawler reads and a cache hands to
+everybody, so a viewer-local date would either mismatch on hydration or serve
+one visitor's timezone to the next.
+
+**The feed shows arrival time and keeps doing so.** Its stamp answers "what is
+new since I last looked", which is when the card appeared, not when the fact
+became true. Backdating a Thursday story found on Saturday would file it under
+cards the reader has already scrolled past. This is the same reasoning that
+freezes `createdAt` on an edit.
+
+**Ordering stays on `publishedAt` everywhere**, including the write-up page.
+Sorting one surface by a field that most older items do not have would shuffle a
+weekend into an order that is neither chronology nor arrival.
+
+Set it from the source's own date line. Milliseconds, not seconds — publishing
+refuses a seconds-epoch value and hands back the corrected number, because
+untouched it dates a 2026 penalty to 1970 and renders as an ordinary date. It
+also refuses a date more than a day in the future, and allows anything inside
+that, since a source stamps its own timezone. The dry run echoes the date back
+as `sourcePublished: "2026-09-05"` rather than the epoch, because a wrong but
+well-formed timestamp is the one mistake validation cannot catch and nobody
+proof-reads `1788680139597`.
+
+Omit it when the source carries no date. Blank is honest; a guess is a date on a
+public page that we made up.
 
 ## Feed behaviour
 

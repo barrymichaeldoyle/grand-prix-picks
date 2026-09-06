@@ -6,11 +6,14 @@ import {
   validatePublishInput,
 } from './raceNews';
 
+const NOW = Date.parse('2026-09-06T12:00:00Z');
+
 const base = {
   raceName: 'Italian Grand Prix',
   hasSprint: false,
   affectsSessions: ['race'],
   sourceUrl: 'https://www.formula1.com/en/latest/article/example',
+  now: NOW,
 };
 
 describe('sessionsForWeekend', () => {
@@ -92,6 +95,54 @@ describe('validatePublishInput', () => {
   it('accepts http as well as https', () => {
     expect(
       validatePublishInput({ ...base, sourceUrl: 'http://example.com/a' }),
+    ).toBeNull();
+  });
+
+  it('accepts an item with no source date', () => {
+    // Not every source carries one, and a blank date is better than a guess.
+    expect(validatePublishInput(base)).toBeNull();
+  });
+
+  it('accepts a source date in the past', () => {
+    expect(
+      validatePublishInput({
+        ...base,
+        sourcePublishedAt: Date.parse('2026-09-05T09:30:00Z'),
+      }),
+    ).toBeNull();
+  });
+
+  it('refuses a source date given in seconds', () => {
+    // The mistake to expect: article metadata is usually in seconds, and a
+    // validator that only checks the type would date a 2026 penalty to 1970.
+    const seconds = Math.floor(Date.parse('2026-09-05T09:30:00Z') / 1000);
+    const problem = validatePublishInput({
+      ...base,
+      sourcePublishedAt: seconds,
+    });
+    expect(problem).toMatch(/seconds, not milliseconds/);
+    // The message carries the corrected value, so the caller does not do the
+    // arithmetic itself.
+    expect(problem).toContain(String(seconds * 1000));
+  });
+
+  it('refuses a source date in the future', () => {
+    expect(
+      validatePublishInput({
+        ...base,
+        sourcePublishedAt: NOW + 3 * 24 * 60 * 60 * 1000,
+      }),
+    ).toMatch(/in the future/);
+  });
+
+  it('allows a source date slightly ahead of us', () => {
+    // A source stamps its own timezone, and occasionally runs ahead of ours.
+    // A few hours is a timezone, not a typo.
+    expect(
+      validatePublishInput({
+        ...base,
+        sourcePublishedAt: NOW + 6 * 60 * 60 * 1000,
+      }),
     ).toBeNull();
   });
 

@@ -921,6 +921,26 @@ export default defineSchema({
     feedVisibleAt: v.optional(v.number()),
     /** The scheduled release job, so an edit can move it and a retraction can cancel it. */
     feedReleaseScheduledId: v.optional(v.string()),
+    /**
+     * When the *source* published the story (ms epoch), as opposed to when we
+     * found it.
+     *
+     * `publishedAt` is when an agent ran, which is a fact about us. A reader
+     * arriving at a write-up page days later wants to know when the penalty was
+     * handed down, and a batch of five items published two seconds apart cannot
+     * tell them: the write-up page is a record of a weekend, and a record needs
+     * the dates the events actually carry.
+     *
+     * Deliberately not used for feed ordering or the feed's visible stamp. The
+     * feed answers "what is new to me since I last looked", which is arrival
+     * time; backdating a Thursday story found on Saturday would file it under
+     * cards the reader has already scrolled past.
+     *
+     * Optional because it is not always knowable. Items published before this
+     * field existed do not have one, and a source that carries no date is
+     * better left blank than guessed at.
+     */
+    sourcePublishedAt: v.optional(v.number()),
     publishedAt: v.number(),
     updatedAt: v.number(),
   })

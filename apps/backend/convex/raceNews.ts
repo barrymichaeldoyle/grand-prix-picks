@@ -44,6 +44,14 @@ const sessionTypesValidator = v.array(sessionTypeValidator);
  */
 const MAX_NEWS_PER_RACE = 50;
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Below this, a millisecond timestamp would be dated before 1973, so anything
+ * under it is a seconds-epoch value that was not converted.
+ */
+const SECONDS_EPOCH_CEILING = 100_000_000_000;
+
 const raceNewsListResultValidator = v.object({
   race: v.union(
     v.null(),
@@ -59,6 +67,7 @@ const raceNewsListResultValidator = v.object({
       sourceUrl: v.string(),
       active: v.boolean(),
       publishedAt: v.number(),
+      sourcePublishedAt: v.optional(v.number()),
       drivers: v.array(
         v.object({
           code: v.string(),
@@ -121,6 +130,8 @@ export function validatePublishInput(input: {
   hasSprint: boolean;
   affectsSessions: string[];
   sourceUrl: string;
+  sourcePublishedAt?: number;
+  now: number;
 }): string | null {
   if (input.affectsSessions.length === 0) {
     return (
@@ -145,7 +156,32 @@ export function validatePublishInput(input: {
     return 'sourceUrl must be a full http(s) URL.';
   }
 
+  const sourcePublishedAt = input.sourcePublishedAt;
+  if (sourcePublishedAt !== undefined) {
+    // Seconds where milliseconds were meant is the mistake to expect: most
+    // article metadata is in seconds, and the two are indistinguishable to a
+    // validator that only checks the type. Left alone it dates a 2026 penalty
+    // to 1970, which renders as a perfectly ordinary date on the card.
+    if (sourcePublishedAt < SECONDS_EPOCH_CEILING) {
+      return (
+        'sourcePublishedAt looks like seconds, not milliseconds. ' +
+        `Multiply by 1000: ${sourcePublishedAt * 1000}.`
+      );
+    }
+    // A day of slack, because a source's timestamp is in its own timezone and
+    // occasionally runs ahead of ours. Beyond that it is a typo, and a card
+    // dated tomorrow undermines every date on the page.
+    if (sourcePublishedAt > input.now + DAY_MS) {
+      return 'sourcePublishedAt is in the future. Use when the source published the story.';
+    }
+  }
+
   return null;
+}
+
+/** `2026-09-05`, for reporting a stored timestamp back to whoever ran the command. */
+function isoDay(at: number | undefined): string | undefined {
+  return at === undefined ? undefined : new Date(at).toISOString().slice(0, 10);
 }
 
 async function raceBySlug(ctx: QueryCtx | MutationCtx, slug: string) {
@@ -242,6 +278,7 @@ async function listRaceNews(
     sourceUrl: row.sourceUrl,
     active: row.active,
     publishedAt: row.publishedAt,
+    sourcePublishedAt: row.sourcePublishedAt,
     drivers: (row.driverCodes ?? []).flatMap((code) => {
       const driver = roster.get(code);
       return driver ? [driver] : [];
@@ -422,6 +459,16 @@ export const publish = internalMutation({
      * weekend the reader is picking. Omit for news about the current weekend.
      */
     feedVisibleAt: v.optional(v.number()),
+    /**
+     * When the source published the story (ms epoch), which the write-up page
+     * shows beside the source name.
+     *
+     * Worth setting on every item: the write-up page is read long after the
+     * weekend by someone who wants to know when a penalty was handed down, and
+     * `publishedAt` can only tell them when we ran. Omit it rather than guess
+     * when the source carries no date.
+     */
+    sourcePublishedAt: v.optional(v.number()),
     dryRun: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
@@ -438,6 +485,8 @@ export const publish = internalMutation({
       hasSprint: Boolean(race.hasSprint),
       affectsSessions: args.affectsSessions,
       sourceUrl: args.sourceUrl,
+      sourcePublishedAt: args.sourcePublishedAt,
+      now: Date.now(),
     });
     if (problem) {
       throw new Error(problem);
@@ -472,6 +521,10 @@ export const publish = internalMutation({
         dryRun: true,
         action,
         feedVisibleAt: heldBack ? feedVisibleAt : undefined,
+        // Echoed as a date rather than the epoch that was passed in. A wrong
+        // but well-formed timestamp is the one mistake validation cannot catch,
+        // and nobody proof-reads 1788680139597.
+        sourcePublished: isoDay(args.sourcePublishedAt),
         race: { slug: race.slug, name: race.name, round: race.round },
         key: args.key,
         headline: args.headline,
@@ -503,6 +556,11 @@ export const publish = internalMutation({
       ...(grid !== undefined ? { startingGrid: grid.stored } : {}),
       ...(args.feedVisibleAt !== undefined
         ? { feedVisibleAt: args.feedVisibleAt }
+        : {}),
+      // Spread like the photo and the grid: a correction to the copy should not
+      // have to restate the source's date to keep it.
+      ...(args.sourcePublishedAt !== undefined
+        ? { sourcePublishedAt: args.sourcePublishedAt }
         : {}),
       active: true,
       updatedAt: now,
@@ -536,6 +594,9 @@ export const publish = internalMutation({
       driverCodes,
       gridPositions: grid?.resolved.length,
       feedVisibleAt: heldBack ? feedVisibleAt : undefined,
+      sourcePublished: isoDay(
+        args.sourcePublishedAt ?? existing?.sourcePublishedAt,
+      ),
     };
   },
 });
