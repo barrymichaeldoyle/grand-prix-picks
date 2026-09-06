@@ -18,6 +18,7 @@ import { useConstructorOrder } from '@/hooks/useConstructorOrder';
 import { FALLBACK_TEAM_COLOR, TEAM_COLORS } from '@/lib/teamColors';
 import { EmptySlot, PickSlot, ResultSlot } from './PickSlot';
 import type { FeedEvent, SessionHeader } from './types';
+import { useReorderFlip } from '../feed/useReorderFlip';
 import { FeedItem } from './FeedItem';
 import { H2HPicksDialog } from './H2HPicksDialog';
 import { ReactionsModal } from './ReactionsModal';
@@ -55,6 +56,11 @@ function BandLabel({ children }: { children: ReactNode }) {
    and repeating it costs a row of height in a header that has to stay short
    enough to sit on screen while you scroll the players under it. */
 function ResultRow({ top5 }: { top5: SessionHeader['top5'] }) {
+  /* Inert for a published result, which never reorders; the point of it is a
+     running order, where a driver moving from P4 to P2 should be seen crossing
+     the two cells rather than appearing in one. */
+  const slotsRef = useReorderFlip<HTMLDivElement>();
+
   return (
     <div className="space-y-1">
       <div className={SLOT_GRID}>
@@ -67,15 +73,16 @@ function ResultRow({ top5 }: { top5: SessionHeader['top5'] }) {
           </span>
         ))}
       </div>
-      <div className={SLOT_GRID}>
+      <div className={SLOT_GRID} ref={slotsRef}>
         {top5.map((driver, i) => (
-          <ResultSlot
-            key={driver.code}
-            code={driver.code}
-            team={driver.team}
-            displayName={driver.displayName}
-            position={i + 1}
-          />
+          <div key={driver.code} data-flip-key={driver.code}>
+            <ResultSlot
+              code={driver.code}
+              team={driver.team}
+              displayName={driver.displayName}
+              position={i + 1}
+            />
+          </div>
         ))}
       </div>
     </div>
@@ -142,6 +149,7 @@ function SessionLeaderboardRow({
   return (
     <>
       <div
+        data-flip-key={event._id}
         className={`space-y-1.5 border border-t-0 border-border px-2.5 py-2 ${
           isLast ? 'rounded-b-sm' : ''
         } ${isViewer ? 'bg-accent/8 ring-1 ring-accent/40 ring-inset' : 'bg-surface'}`}
@@ -290,6 +298,11 @@ export function SessionGroup({
       : 'skip',
   ) as LiveBoard | null | undefined;
 
+  /* The board re-ranks on every snapshot, and the rows are the same players
+     each time: a re-sort should look like the places changing hands, which is
+     the only thing that did change. */
+  const liveRowsRef = useReorderFlip<HTMLDivElement>();
+
   const sessionWithTime = {
     ...session,
     // Feed events arrive newest-first, so the group should inherit its newest
@@ -319,15 +332,17 @@ export function SessionGroup({
             grouped
             live
           />
-          {live.events.map((event, i) => (
-            <SessionLeaderboardRow
-              key={event._id}
-              event={event}
-              live={live.playerFor(event)}
-              isViewer={!!viewerId && event.userId === viewerId}
-              isLast={i === live.events.length - 1}
-            />
-          ))}
+          <div ref={liveRowsRef}>
+            {live.events.map((event, i) => (
+              <SessionLeaderboardRow
+                key={event._id}
+                event={event}
+                live={live.playerFor(event)}
+                isViewer={!!viewerId && event.userId === viewerId}
+                isLast={i === live.events.length - 1}
+              />
+            ))}
+          </div>
           {/* The same sentence the race page's live board carries, for the
               same reason: every number above this line moves, and a position
               read as a result is the one misreading to rule out. */}
