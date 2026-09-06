@@ -17,9 +17,12 @@ import {
   DeferredRaceWriteupPicks,
   RACE_WRITEUP_PICKS_ANCHOR,
 } from '@/components/race-writeups/DeferredRaceWriteupPicks';
+import { RaceWriteupNextRound } from '@/components/race-writeups/RaceWriteupNextRound';
+import { RaceWriteupOfficialResult } from '@/components/race-writeups/RaceWriteupOfficialResult';
 import { RaceWriteupPhaseLabel } from '@/components/race-writeups/RaceWriteupPhaseLabel';
 import { RaceWriteupTrackMap } from '@/components/race-writeups/RaceWriteupTrackMap';
 import { RaceWriteupWeekendSchedule } from '@/components/race-writeups/RaceWriteupWeekendSchedule';
+import { SessionConsensusSections } from '@/components/SessionConsensus';
 import { WeekendNewsSection } from '@/components/WeekendNewsSection';
 import { WeekendPracticeSection } from '@/components/WeekendPracticeSection';
 import { WriteUpNewsPhoto } from '@/components/WriteUpNewsPhoto';
@@ -191,30 +194,41 @@ const F1_STANDINGS_SOURCE = 'https://www.formula1.com/en/results/2026/drivers';
  * fact published as news simply stops being shown. What stays here are
  * questions whose answers outlive the race: when it runs, how scoring works,
  * and what a grid penalty does to a classification.
+ *
+ * `finished` changes exactly one of them: the one that states a date. The
+ * scoring rules and the privacy of a pick read the same before and after a
+ * race, so branching the whole list would be three copies of identical prose
+ * carrying one verb. An archive that still says the race "runs" this weekend is
+ * the unresolved language the lifecycle doc asks a Monday pass to remove.
  */
-const FAQS = [
-  {
-    question: 'When is the 2026 Italian Grand Prix?',
-    answer:
-      'The Italian Grand Prix runs from 4 to 6 September 2026 at Monza. Qualifying is on Saturday and the 53-lap Grand Prix is on Sunday.',
-  },
-  {
-    question:
-      'If a driver qualifies P4 and a grid penalty drops him to P14, what does my qualifying pick score?',
-    answer:
-      'The P4. Qualifying picks use the official qualifying classification. The grid penalty is applied afterwards, so a driver classified P4 counts as P4 for your qualifying picks even when they start P14 on Sunday.',
-  },
-  {
-    question: 'Are other players’ picks visible before the session?',
-    answer:
-      'No. Picks stay private until the relevant session locks, so nobody can copy another player’s Top 5 before making their own call.',
-  },
-  {
-    question: 'How are Italian Grand Prix predictions scored?',
-    answer:
-      'An exact Top 5 position earns 5 points, one position away earns 3, and selecting a driver who finishes elsewhere in the actual Top 5 earns 1 point.',
-  },
-] as const;
+function faqs(finished: boolean) {
+  return [
+    {
+      question: finished
+        ? 'When was the 2026 Italian Grand Prix?'
+        : 'When is the 2026 Italian Grand Prix?',
+      answer: finished
+        ? 'The Italian Grand Prix ran from 4 to 6 September 2026 at Monza, over 53 laps.'
+        : 'The Italian Grand Prix runs from 4 to 6 September 2026 at Monza. Qualifying is on Saturday and the 53-lap Grand Prix is on Sunday.',
+    },
+    {
+      question:
+        'If a driver qualifies P4 and a grid penalty drops him to P14, what does my qualifying pick score?',
+      answer:
+        'The P4. Qualifying picks use the official qualifying classification. The grid penalty is applied afterwards, so a driver classified P4 counts as P4 for your qualifying picks even when they start P14 on Sunday.',
+    },
+    {
+      question: 'Are other players’ picks visible before the session?',
+      answer:
+        'No. Picks stay private until the relevant session locks, so nobody can copy another player’s Top 5 before making their own call.',
+    },
+    {
+      question: 'How are Italian Grand Prix predictions scored?',
+      answer:
+        'An exact Top 5 position earns 5 points, one position away earns 3, and selecting a driver who finishes elsewhere in the actual Top 5 earns 1 point.',
+    },
+  ];
+}
 
 export const Route = createFileRoute('/f1-2026-italian-grand-prix-predictions')(
   {
@@ -222,7 +236,16 @@ export const Route = createFileRoute('/f1-2026-italian-grand-prix-predictions')(
     loader: async ({ context }) => {
       await setRaceDataCacheHeaders();
       const weatherNow = Date.now();
-      const [race, weather, news, championship, practice] = await Promise.all([
+      const [
+        race,
+        weather,
+        news,
+        championship,
+        practice,
+        top5,
+        consensus,
+        nextRace,
+      ] = await Promise.all([
         context.queryClient.ensureQueryData(
           routeQuery(api.races.getRaceBySlug, { slug: RACE_SLUG }),
         ),
@@ -247,11 +270,44 @@ export const Route = createFileRoute('/f1-2026-italian-grand-prix-predictions')(
             raceSlug: RACE_SLUG,
           }),
         ),
+        // The archive half of the page, and the reason it joins this wave
+        // rather than waiting to learn the race is finished: both queries are
+        // keyed on the slug alone, both answer empty while the weekend is
+        // still ahead, and a second wave would cost every preview reader a
+        // round trip to be told nothing. What they must not be is a client
+        // subscription — this is the content a crawler arrives for, so it has
+        // to be in the SSR HTML.
+        context.queryClient.ensureQueryData(
+          routeQuery(api.results.getEnrichedTop5BySessionForRaceSlug, {
+            raceSlug: RACE_SLUG,
+          }),
+        ),
+        context.queryClient.ensureQueryData(
+          routeQuery(api.consensus.getWeekendConsensusForRaceSlug, {
+            raceSlug: RACE_SLUG,
+          }),
+        ),
+        // Only read on a finished page, but fetched on every one, because it
+        // is keyed on nothing and so costs this wave no round trip it was not
+        // already making.
+        context.queryClient.ensureQueryData(
+          routeQuery(api.races.getNextRace, {}),
+        ),
       ]);
       if (!race) {
         throw notFound();
       }
-      return { race, weather, weatherNow, news, championship, practice };
+      return {
+        race,
+        weather,
+        weatherNow,
+        news,
+        championship,
+        practice,
+        top5,
+        consensus,
+        nextRace,
+      };
     },
     head: ({ loaderData }) => {
       const race = loaderData?.race;
@@ -310,7 +366,10 @@ export const Route = createFileRoute('/f1-2026-italian-grand-prix-predictions')(
                 {
                   '@type': 'FAQPage',
                   '@id': `${siteConfig.url}${PATH}#faq`,
-                  mainEntity: FAQS.map((faq) => ({
+                  // Same list the page renders. Structured data that still
+                  // answers "when is" for a race that has run describes a
+                  // different page than the one served.
+                  mainEntity: faqs(race?.status === 'finished').map((faq) => ({
                     '@type': 'Question',
                     name: faq.question,
                     acceptedAnswer: { '@type': 'Answer', text: faq.answer },
@@ -330,8 +389,17 @@ export const Route = createFileRoute('/f1-2026-italian-grand-prix-predictions')(
 );
 
 function ItalianGrandPrixPredictionsPage() {
-  const { race, weather, weatherNow, news, championship, practice } =
-    Route.useLoaderData();
+  const {
+    race,
+    weather,
+    weatherNow,
+    news,
+    championship,
+    practice,
+    top5,
+    consensus,
+    nextRace,
+  } = Route.useLoaderData();
   // One roster lookup for the sections that name drivers, so a badge and the
   // standings beside it can never disagree about a seat.
   const driversByCode = new Map(
@@ -339,6 +407,26 @@ function ItalianGrandPrixPredictionsPage() {
   );
   const phase = getRaceWriteupPhase(race, weatherNow);
   const isLive = isRaceWriteupLive(phase);
+  // Monza is a regular weekend, so the archive is qualifying and the race, in
+  // the order they ran. Both queries answer empty until something is
+  // published, which is what keeps this list empty on a preview page rather
+  // than needing its own gate.
+  const archiveSessions = (['quali', 'race'] as const).map((session) => ({
+    session,
+    classification: top5[session] ?? [],
+    consensus: consensus[session] ?? null,
+  }));
+  const consensusSessions = archiveSessions.flatMap((entry) =>
+    entry.consensus
+      ? [
+          {
+            session: entry.session,
+            consensus: entry.consensus,
+            classification: entry.classification,
+          },
+        ]
+      : [],
+  );
 
   return (
     <div className="min-h-full bg-page">
@@ -365,6 +453,7 @@ function ItalianGrandPrixPredictionsPage() {
                 phase,
                 'The Italian Grand Prix',
                 'Straight-line speed, braking into the chicanes, and long-run pace decide a Monza Top 5.',
+                'The Italian Grand Prix is complete.',
               )}
             </p>
             <RaceWriteupActions
@@ -388,6 +477,20 @@ function ItalianGrandPrixPredictionsPage() {
           />
         </div>
 
+        {/* The result leads a finished page. A reader arriving after Sunday
+            came for the classification, and everything below this point is
+            either the geography that was always here or the reasoning that
+            preceded a race that has now been run. */}
+        {phase === 'finished' ? (
+          <>
+            <RaceWriteupOfficialResult
+              sessions={archiveSessions}
+              venueName="Monza"
+            />
+            <SessionConsensusSections sessions={consensusSessions} />
+            <RaceWriteupNextRound nextRace={nextRace} />
+          </>
+        ) : null}
         {/* Directly under the hero, whose schedule card now carries the
             forecast: the hazard is a threshold that forecast crossed, and
             leaving it below the track map and the compound strip had a reader
@@ -423,7 +526,7 @@ function ItalianGrandPrixPredictionsPage() {
           </>
         ) : null}
 
-        <RaceFaqSection faqs={FAQS} />
+        <RaceFaqSection faqs={faqs(phase === 'finished')} />
 
         {isLive ? (
           <DeferredRaceWriteupPicks
@@ -848,7 +951,9 @@ function HeatHazard({ showPickRead }: { showPickRead: boolean }) {
             id="heat-hazard"
             className="font-title text-2xl font-medium text-text sm:text-3xl"
           >
-            The FIA has declared a heat hazard
+            {showPickRead
+              ? 'The FIA has declared a heat hazard'
+              : 'The FIA declared a heat hazard'}
           </h2>
           <p className="gpp-reading-copy mt-4 text-text-muted">
             The official forecast put the heat index above 31°C for the race,

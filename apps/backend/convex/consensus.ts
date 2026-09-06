@@ -1,7 +1,9 @@
 import type { SessionType } from '@grandprixpicks/shared/sessions';
+import { getSessionsForWeekend } from '@grandprixpicks/shared/sessions';
 import { v } from 'convex/values';
 
 import type { Doc, Id } from './_generated/dataModel';
+import type { QueryCtx } from './_generated/server';
 import { query } from './_generated/server';
 import { loadStintsForSeason, teamForRound } from './lib/lineups';
 
@@ -75,82 +77,132 @@ export const getSessionConsensus = query({
     if (!race) {
       return null;
     }
-    const lockAt = lockAtFor(race, args.sessionType);
-    if (lockAt == null || Date.now() < lockAt) {
-      return null;
-    }
-
-    const predictions = await ctx.db
-      .query('predictions')
-      .withIndex('by_race_session', (q) =>
-        q.eq('raceId', args.raceId).eq('sessionType', args.sessionType),
-      )
-      .take(MAX_PREDICTIONS);
-
-    const entrants = predictions.length;
-    if (entrants < MIN_ENTRANTS) {
-      return null;
-    }
-
-    // driverId -> how many entrants placed them in each slot
-    const slotsByDriver = new Map<string, number[]>();
-    for (const prediction of predictions) {
-      prediction.picks.forEach((driverId, index) => {
-        const key = driverId as string;
-        const slots = slotsByDriver.get(key) ?? [0, 0, 0, 0, 0];
-        // A malformed row with more than five picks cannot widen the array.
-        if (index < 5) {
-          slots[index] += 1;
-          slotsByDriver.set(key, slots);
-        }
-      });
-    }
-
-    // Round-scoped, so a driver who has since changed team still renders in
-    // the colours they raced this round in. See `lib/lineups.ts`.
-    const stints = await loadStintsForSeason(ctx, race.season);
-
-    const rows = await Promise.all(
-      Array.from(slotsByDriver.entries()).map(async ([key, slots]) => {
-        const driverId = key as Id<'drivers'>;
-        const driver = await ctx.db.get(driverId);
-        const picks = slots.reduce((total, count) => total + count, 0);
-        const weight = slots.reduce(
-          (total, count, index) => total + count * slotWeight(index + 1),
-          0,
-        );
-        return {
-          driverId,
-          code: driver?.code ?? '???',
-          displayName: driver?.displayName ?? 'Unknown',
-          team:
-            teamForRound(stints, driverId, race.round) ?? driver?.team ?? null,
-          slots,
-          picks,
-          // Rounded for display; the ordering below uses the raw weight.
-          pickRate: Math.round((picks / entrants) * 1000) / 10,
-          weight,
-        };
-      }),
-    );
-
-    // Ties broken by reach, then by code, so the order is stable across reads
-    // rather than following whatever the index happened to return.
-    rows.sort(
-      (a, b) =>
-        b.weight - a.weight ||
-        b.picks - a.picks ||
-        a.code.localeCompare(b.code),
-    );
-
-    return {
-      entrants,
-      lockAt,
-      sampled: entrants === MAX_PREDICTIONS,
-      drivers: rows.map(({ weight: _weight, ...row }, index) => ({
-        ...row,
-        consensusPosition: index + 1,
-      })),
-    };
+    return await sessionConsensus(ctx, race, args.sessionType);
   },
 });
+
+/**
+ * Every locked session of a weekend, keyed by slug.
+ *
+ * The race page asks for one session at a time because it is already holding
+ * the race document and needs each session separately anyway. An editorial
+ * write-up is not: it knows a slug and nothing else, so asking per session
+ * would cost it a wave to resolve the race before it could even name the
+ * sessions. Answering the whole weekend from the slug keeps those pages at one
+ * round trip, which is what lets the archive render in SSR HTML.
+ *
+ * Sessions that have not locked are absent rather than null, so a caller can
+ * render what it gets without filtering.
+ */
+export const getWeekendConsensusForRaceSlug = query({
+  args: { raceSlug: v.string() },
+  handler: async (ctx, args) => {
+    const race = await ctx.db
+      .query('races')
+      .withIndex('by_slug', (q) => q.eq('slug', args.raceSlug))
+      .unique();
+    if (!race) {
+      return {};
+    }
+    const sessions = getSessionsForWeekend(race.hasSprint ?? false);
+    const entries = await Promise.all(
+      sessions.map(
+        async (sessionType) =>
+          [
+            sessionType,
+            await sessionConsensus(ctx, race, sessionType),
+          ] as const,
+      ),
+    );
+    return Object.fromEntries(
+      entries.filter(([, consensus]) => consensus != null),
+    ) as Partial<
+      Record<
+        SessionType,
+        NonNullable<Awaited<ReturnType<typeof sessionConsensus>>>
+      >
+    >;
+  },
+});
+
+async function sessionConsensus(
+  ctx: QueryCtx,
+  race: Doc<'races'>,
+  sessionType: SessionType,
+) {
+  const lockAt = lockAtFor(race, sessionType);
+  if (lockAt == null || Date.now() < lockAt) {
+    return null;
+  }
+
+  const predictions = await ctx.db
+    .query('predictions')
+    .withIndex('by_race_session', (q) =>
+      q.eq('raceId', race._id).eq('sessionType', sessionType),
+    )
+    .take(MAX_PREDICTIONS);
+
+  const entrants = predictions.length;
+  if (entrants < MIN_ENTRANTS) {
+    return null;
+  }
+
+  // driverId -> how many entrants placed them in each slot
+  const slotsByDriver = new Map<string, number[]>();
+  for (const prediction of predictions) {
+    prediction.picks.forEach((driverId, index) => {
+      const key = driverId as string;
+      const slots = slotsByDriver.get(key) ?? [0, 0, 0, 0, 0];
+      // A malformed row with more than five picks cannot widen the array.
+      if (index < 5) {
+        slots[index] += 1;
+        slotsByDriver.set(key, slots);
+      }
+    });
+  }
+
+  // Round-scoped, so a driver who has since changed team still renders in
+  // the colours they raced this round in. See `lib/lineups.ts`.
+  const stints = await loadStintsForSeason(ctx, race.season);
+
+  const rows = await Promise.all(
+    Array.from(slotsByDriver.entries()).map(async ([key, slots]) => {
+      const driverId = key as Id<'drivers'>;
+      const driver = await ctx.db.get(driverId);
+      const picks = slots.reduce((total, count) => total + count, 0);
+      const weight = slots.reduce(
+        (total, count, index) => total + count * slotWeight(index + 1),
+        0,
+      );
+      return {
+        driverId,
+        code: driver?.code ?? '???',
+        displayName: driver?.displayName ?? 'Unknown',
+        team:
+          teamForRound(stints, driverId, race.round) ?? driver?.team ?? null,
+        slots,
+        picks,
+        // Rounded for display; the ordering below uses the raw weight.
+        pickRate: Math.round((picks / entrants) * 1000) / 10,
+        weight,
+      };
+    }),
+  );
+
+  // Ties broken by reach, then by code, so the order is stable across reads
+  // rather than following whatever the index happened to return.
+  rows.sort(
+    (a, b) =>
+      b.weight - a.weight || b.picks - a.picks || a.code.localeCompare(b.code),
+  );
+
+  return {
+    entrants,
+    lockAt,
+    sampled: entrants === MAX_PREDICTIONS,
+    drivers: rows.map(({ weight: _weight, ...row }, index) => ({
+      ...row,
+      consensusPosition: index + 1,
+    })),
+  };
+}

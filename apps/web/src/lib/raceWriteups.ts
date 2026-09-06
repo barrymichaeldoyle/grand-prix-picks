@@ -60,11 +60,11 @@ export type RaceWriteup = {
 const RACE_WRITEUPS = {
   'italy-2026': {
     to: '/f1-2026-italian-grand-prix-predictions',
-    reviewedAt: '2026-09-04',
-    label: 'Monza predictions',
+    reviewedAt: '2026-09-06',
+    label: 'Monza results',
     summary:
-      'What matters at Monza, where the overtakes happen, the tyre choice, and the driver news that moves the grid.',
-    cta: 'Read the Monza predictions',
+      'How Monza finished, how the field picked it, and the circuit facts that decided the result.',
+    cta: 'Read the Monza results',
   },
   'bahrain-2026': {
     to: '/f1-2026-bahrain-grand-prix-predictions',

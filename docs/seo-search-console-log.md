@@ -148,15 +148,16 @@ canonical, and redirect exclusions alone.
 
 Add one row per deployed change. Use the deploy date, not the coding date.
 
-| Deploy date | Pages                                             | Hypothesis                                                                                                             | Exact change                                                                                                                                                                  | Review date                       | Outcome |
-| ----------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | ------- |
-| TBD         | `/f1-standings`                                   | A direct query-first title earns clicks and moves standings queries upward                                             | Changed title from “2026 F1 Championship Standings \| Grand Prix Picks” to “2026 F1 Standings: Drivers & Constructors”; added a contextual link to the points guide           | +7 days and +28 days after deploy | Pending |
-| TBD         | `/circuits` and selected circuit pages            | Strong crawlable internal links cause Google to crawl the discovered URLs                                              | Added a contextual circuit-index link from `/races`; existing race-to-circuit links, footer link, all-round SSR links and sitemap filtering remain in place                   | +7 days and +28 days after deploy | Pending |
-| TBD         | `/` and prediction guides                         | A coherent F1-predictions topic cluster improves discovery and sends informational visitors into the playable flow     | Added homepage links to standings, points and Top 5 strategy; points and Top 5 guides now link back to the picker; How to Play CTA now opens the picker                       | +7 days and +28 days after deploy | Pending |
-| TBD         | `/guides/f1-points-system-explained`              | A direct first-sentence answer better satisfies points-system intent                                                   | Opened with the complete 25–1 scoring sequence and recorded `dateModified` as 2026-08-24                                                                                      | +7 days and +28 days after deploy | Pending |
-| TBD         | `/circuits/monza` and `/races/italy-2026`         | A current, useful Monza guide captures growing Italian Grand Prix research demand and leads readers toward predictions | Updated the shared guide with official circuit dimensions, the 2024 resurfacing and kerb changes, clearer overtaking guidance, and prediction factors beyond engine power     | +7 days and +28 days after deploy | Pending |
-| TBD         | `/` and `/f1-2026-italian-grand-prix-predictions` | A homepage link during race week improves discovery of the current editorial prediction guide                          | Added the registered next-race write-up callout after the public picker; it renders only when the current race has a write-up and automatically follows the write-up registry | +7 days and +28 days after deploy | Pending |
-| TBD         | `/circuits/madring` and `/races/spain-2026`       | A substantive guide to an unfamiliar new circuit captures Madrid F1 research demand before the inaugural race          | Replaced the provisional Madring copy with confirmed dimensions, circuit sections, likely overtaking zones and first-race prediction signals while preserving unknowns        | +7 days and +28 days after deploy | Pending |
+| Deploy date | Pages                                             | Hypothesis                                                                                                                          | Exact change                                                                                                                                                                  | Review date                       | Outcome                                                                                |
+| ----------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | -------------------------------------------------------------------------------------- |
+| 2026-08-24  | `/f1-standings`                                   | A direct query-first title earns clicks and moves standings queries upward                                                          | Changed title from “2026 F1 Championship Standings \| Grand Prix Picks” to “2026 F1 Standings: Drivers & Constructors”; added a contextual link to the points guide           | +7 days and +28 days after deploy | No click effect (0 clicks, position 61.4 over the 28 days to 2026-09-06)               |
+| 2026-08-24  | `/circuits` and selected circuit pages            | Strong crawlable internal links cause Google to crawl the discovered URLs                                                           | Added a contextual circuit-index link from `/races`; existing race-to-circuit links, footer link, all-round SSR links and sitemap filtering remain in place                   | +7 days and +28 days after deploy | Crawled and indexed: 14 circuit pages now draw impressions. No clicks, positions 62–84 |
+| 2026-08-24  | `/` and prediction guides                         | A coherent F1-predictions topic cluster improves discovery and sends informational visitors into the playable flow                  | Added homepage links to standings, points and Top 5 strategy; points and Top 5 guides now link back to the picker; How to Play CTA now opens the picker                       | +7 days and +28 days after deploy | No click effect; the cluster ranks but does not place                                  |
+| 2026-08-24  | `/guides/f1-points-system-explained`              | A direct first-sentence answer better satisfies points-system intent                                                                | Opened with the complete 25–1 scoring sequence and recorded `dateModified` as 2026-08-24                                                                                      | +7 days and +28 days after deploy | No click effect (250 impressions, 0 clicks, position 57.6)                             |
+| 2026-08-24  | `/circuits/monza` and `/races/italy-2026`         | A current, useful Monza guide captures growing Italian Grand Prix research demand and leads readers toward predictions              | Updated the shared guide with official circuit dimensions, the 2024 resurfacing and kerb changes, clearer overtaking guidance, and prediction factors beyond engine power     | +7 days and +28 days after deploy | No click effect through the Monza weekend itself                                       |
+| 2026-09-04  | `/` and `/f1-2026-italian-grand-prix-predictions` | A homepage link during race week improves discovery of the current editorial prediction guide                                       | Added the registered next-race write-up callout after the public picker; it renders only when the current race has a write-up and automatically follows the write-up registry | +7 days and +28 days after deploy | Write-up drew 5 impressions in its own race week, position 38.4                        |
+| 2026-09-03  | `/circuits/madring` and `/races/spain-2026`       | A substantive guide to an unfamiliar new circuit captures Madrid F1 research demand before the inaugural race                       | Replaced the provisional Madring copy with confirmed dimensions, circuit sections, likely overtaking zones and first-race prediction signals while preserving unknowns        | +7 days and +28 days after deploy | Too early; 2 impressions so far                                                        |
+| 2026-09-06  | `/f1-2026-italian-grand-prix-predictions`         | An archive that shows the result and how players called it holds a fact no other site has, and gives the page a reason to be linked | Finished write-up now renders the official top five per session and the aggregated player consensus beside it, both server-rendered, and links forward to the next round      | +7 days and +28 days after deploy | Pending                                                                                |
 
 ### Implementation note — 2026-08-24
 
@@ -186,9 +187,47 @@ reduce daily noise.
 - Decide: keep, iterate, revert, or wait. At this traffic level, default to
   waiting for the 28-day read unless there is a technical regression.
 
+### Checkpoint 2026-09-06
+
+The 2026-08-31 leading-indicator review was missed. This one covers the 28 days
+to 2026-09-06, read from the Search Console tables in the PostHog warehouse
+(`googlesearchconsole.search_analytics_by_query_page`).
+
+| Metric       | 28 days to 2026-09-06 |
+| ------------ | --------------------- |
+| Impressions  | 1,270                 |
+| Clicks       | 0                     |
+| Avg position | ~60                   |
+
+Weekly impressions over the period: 23, 37, 149, 65, 201, 395, 608. Average
+position across those same weeks: 23.3, 23.5, 57.2, 49.2, 60.9, 60.5, 60.1.
+
+Read: visibility grew 26x while clicks stayed at zero, because the pages that
+grew entered on page five and stayed there. Position has been flat within a
+point for six weeks. The impressions are almost entirely head terms owned by
+established publications: `f1 driver standings` (107 impressions, position
+63.8), `f1 standings` (103, 62.6), `f1 points system` (47, 55.4). The one term
+ranking anywhere useful is `gp prediction` at position 18.1, on 10 impressions.
+
+Site traffic over the same window: 109 unique visitors, 347 sessions. By
+channel, Direct 57, Email 24, Organic Search 22, Referral 13, Organic Social 8.
+Referring domains: google.com 11, t.co 5, bing.com 5, duckduckgo 3, reddit 3.
+Existing players arriving from our own notification emails account for most of
+it, so measured acquisition from search is close to zero.
+
+Decision: stop treating page count as the lever. Five race write-ups shipped
+since the last review and position did not move a point, which makes content
+velocity a tested hypothesis rather than a suspicion. The constraint is
+authority and distribution, and the asset that supports both is aggregated
+player consensus, which no other site can publish. That is now on the finished
+Monza write-up beside the official result.
+
+Do not write a sixth guide or a page that duplicates a template. See
+`seo-content-policy.md`.
+
 ### Next checkpoint
 
-First leading-indicator review: **2026-08-31**. Compare complete days where
-possible; Search Console commonly lags, so move the check by a day if the latest
-data is incomplete. The more meaningful evaluation is **2026-09-21**, roughly
-28 days after this baseline.
+**2026-09-21**, roughly 28 days after the 2026-08-24 baseline, is the
+meaningful evaluation of the rows above. Compare complete days where possible;
+Search Console commonly lags, so move the check by a day if the latest data is
+incomplete.

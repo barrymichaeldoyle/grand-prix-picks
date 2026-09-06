@@ -96,10 +96,19 @@ export function raceWriteupPrimaryAction(
   }
 }
 
+/**
+ * `finishedSummary` is for a page that carries its own archive.
+ *
+ * The default sends a finished reader to the race page for the result, which
+ * is the right answer for a write-up that does not show one. A page that
+ * renders the classification a screen further down should not open by pointing
+ * somewhere else for it.
+ */
 export function raceWriteupHeroSummary(
   phase: RaceWriteupPhase,
   raceName: string,
   liveSummary: string,
+  finishedSummary?: string,
 ): string {
   switch (phase) {
     case 'preview':
@@ -109,7 +118,10 @@ export function raceWriteupHeroSummary(
     case 'picks-locked':
       return `${raceName} picks are locked. Results will appear on the race page after they are published.`;
     case 'finished':
-      return `${raceName} is complete. Official results and scores are on the race page.`;
+      return (
+        finishedSummary ??
+        `${raceName} is complete. Official results and scores are on the race page.`
+      );
     case 'cancelled':
       return `${raceName} was called off.`;
   }
