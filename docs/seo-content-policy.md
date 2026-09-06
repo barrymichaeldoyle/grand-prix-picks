@@ -1,0 +1,109 @@
+# SEO content policy
+
+Read this before adding a page, a page template, or a sitemap entry.
+
+Google AdSense has turned `grandprixpicks.com` down three times for **"low
+value content"** — 2026-08-02, 2026-08-13 and 2026-09-06. The console gives no
+dates, no per-URL detail and no reviewer notes beyond four boilerplate policy
+links, so the only way to know where the site stands is to measure prod
+yourself. The rules below are what those measurements said, and they are
+binding on SEO work until a review passes.
+
+## What the measurements found
+
+Taken 2026-09-06 against all 82 sitemap URLs (fetch each, strip
+`<script>`/`<style>`/`<head>`, strip tags, then drop the 135 words of shared
+chrome — 20 header + 115 footer — because raw word counts flatter every page by
+that much).
+
+**The site grew in the direction it was rejected for.** 51 URLs in August, 82 in
+September, and 59 of those 82 (72%) were one of four templates, up from 65% at
+the previous rejection. Each round of "fix the thin content" had added pages.
+
+**Length was not the problem.** Nothing was under 189 content words. The four
+`/guides` explainers ran 750-1160.
+
+**Sibling duplication was not the problem either.** Within a template, pages
+shared 17-35% of their body text with each other — normal, and not the
+scaled-content-abuse signal it can look like. Repeated driver-name sequences in
+results tables make naive shingle comparisons look far worse than reality;
+always subtract the chrome before comparing.
+
+**Cross-template duplication was the problem.** About **70% of every circuit
+page's body text was reproduced verbatim on the corresponding race page**
+(73% Albert Park / Australia, 72% Lusail / Qatar, 71% Red Bull Ring / Austria,
+19 of 23 in the 67-74% band). The circuit page was a strict _subset_ of a page
+that also carried the schedule, the classification and the picks — 23 URLs, 28%
+of the sitemap, asking to be indexed for content already published somewhere
+stronger.
+
+## Rules
+
+1. **A new page must carry something no other page on this site carries.** Not
+   a new arrangement of facts that already exist here. Before adding one, run
+   the duplication check below against the pages it will sit beside.
+
+2. **When two pages overlap, the weaker one canonicalises to the stronger and
+   leaves the sitemap.** It stays reachable and linked for players; it just
+   stops competing. Two implementations of exactly this, and the shape to copy:
+   `raceWriteupSeo.ts` (race page → write-up) and `circuitPageSeo.ts`
+   (circuit page → race). Never build a canonical chain: point at the page that
+   is itself indexed.
+
+3. **Do not add a fifth template.** Bulk-generated per-entity pages are what
+   the site already has too many of, and Google treats machine-scaled
+   templating as an abuse signal in its own right.
+
+4. **Do not write another `/guides` explainer.** They fail on authority, not
+   content — see `project_seo_guides_rank_not_content` in memory. A fifth
+   becomes a fifth zero-impression page and cannibalises the one guide already
+   pulling 18% of site impressions.
+
+5. **Prefer subtraction.** Removing 23 near-duplicate URLs did more for the
+   template ratio than any amount of new prose, and it costs no editorial
+   review.
+
+6. **Prefer first-party data to explanation.** Explaining Formula 1 puts the
+   site in competition with publications that have covered the sport for
+   decades, and it loses: sitewide average position is 57, which is page 6.
+   What we hold and nobody else publishes is **how our players picked** — the
+   finishing order a few hundred people expected, which is a different fact
+   from the order that happened. `consensus.ts` and `SessionConsensus.tsx` are
+   the first surface built on that principle; it is the direction for the rest.
+
+7. **Server-render anything a reviewer or a crawler needs to see.** A `<Link>`
+   or a paragraph behind a client `useQuery` is absent from the SSR HTML. This
+   has bitten the site twice: it orphaned all 11 practice pages, and it left
+   every unopened round's server HTML ending in the placeholder "Check back
+   soon" instead of a real date.
+
+8. **Never expose picks before a session locks.** `getSessionConsensus` returns
+   null until the deadline. Publishing the crowd's order early would turn
+   picking into copying and flatten the leaderboard it feeds. This is a product
+   rule, not an SEO one, and it outranks any indexation argument.
+
+## How to measure
+
+```
+curl -s https://grandprixpicks.com/sitemap.xml | grep -o '<loc>[^<]*</loc>' | sed 's/<[^>]*>//g'
+```
+
+Fetch each URL, strip scripts/styles/head, strip tags, drop the shared chrome
+(compute it as the common word prefix and suffix across all pages — do not
+hardcode 135, it moves when the header or footer changes), then report:
+
+- content words per page, ascending;
+- for each templated group, the share of 5-word shingles each page shares with
+  a **sibling** in the group;
+- for each page, the single other page on the site it overlaps most with. This
+  last one is what found the circuit problem, and the sibling-only comparison
+  missed it entirely.
+
+## Before requesting another review
+
+- Deploy first. The 2026-08-13 rejection graded the pre-fix site because the
+  review was requested before the content deploy landed.
+- Wait for Search Console to show the changes indexed. Repeat requests with no
+  substantive change slow subsequent ones.
+- The 22 circuit guides and the evergreen guides were written by Claude and are
+  **not fact-checked**. That is a standing risk on an editorial review.

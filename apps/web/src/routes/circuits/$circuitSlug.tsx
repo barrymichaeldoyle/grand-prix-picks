@@ -6,6 +6,7 @@ import { ArrowRight } from 'lucide-react';
 
 import { InAppBackLink } from '@/components/InAppBackLink';
 import { getCircuitGuideBySlug } from '@/lib/circuitGuides';
+import { circuitPageCanonicalOptions } from '@/lib/circuitPageSeo';
 import { hasCircuitGuide } from '@/lib/circuitGuideSlugs';
 import {
   type CircuitSeoFacts,
@@ -111,6 +112,9 @@ export const Route = createFileRoute('/circuits/$circuitSlug')({
           ? circuitDescription(facts, place)
           : `A guide to ${circuit.name} in ${circuit.locality}, ${circuit.country}: what the lap asks of a car, how much the order really moves on Sunday, and how to read it before you pick.`,
         path,
+        // The venue prose here is also on the race page, which carries the
+        // schedule and the classification alongside it. See circuitPageSeo.ts.
+        ...circuitPageCanonicalOptions(loaderData?.racesHere ?? []),
       }),
       scripts: [
         {

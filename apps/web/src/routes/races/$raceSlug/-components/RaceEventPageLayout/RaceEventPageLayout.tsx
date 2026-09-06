@@ -53,6 +53,12 @@ type RaceEventPageLayoutProps = {
   raceReportContent?: ReactNode;
   /** Hand-off to the next weekend, once this one is done. */
   nextRaceCtaContent?: ReactNode;
+  /**
+   * How everyone picked each session that has locked. Sits below the viewer's
+   * own entry, because it is the answer to the question that entry raises, and
+   * above the circuit briefing, which is the same on every weekend here.
+   */
+  consensusContent?: ReactNode;
   practiceResultsContent?: ReactNode;
   initialTop5Content: ReactNode;
   top5HeaderAside?: ReactNode;
@@ -90,6 +96,7 @@ export function RaceEventPageLayout({
   writeupContent,
   raceReportContent,
   nextRaceCtaContent,
+  consensusContent,
   practiceResultsContent,
   initialTop5Content,
   top5HeaderAside,
@@ -325,6 +332,8 @@ export function RaceEventPageLayout({
         )}
 
         {nextRaceCtaContent}
+
+        {consensusContent}
 
         {!leadWithCircuitGuide && circuitGuideContent}
 

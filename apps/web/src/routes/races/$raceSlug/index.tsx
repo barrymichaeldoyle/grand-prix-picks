@@ -37,6 +37,24 @@ import {
 import { RaceEventPage } from './-components/RaceEventPage/RaceEventPage';
 import { useRaceWeekendData } from './-hooks/useRaceWeekendData';
 
+/**
+ * Swallow a loader query the page can render without.
+ *
+ * A rejected loader promise is a fatal 500 on Cloudflare — only dev recovers
+ * from an SSR throw — so every query on this loader's critical path is a way
+ * for the most important page on the site to go down. The race, the roster and
+ * the results have to be there, and legitimately take the page with them if
+ * they fail. The consensus tables and the "predictions open" date do not: both
+ * are supplementary, both have a client subscription behind them that fills
+ * them in, and a transient `fetch failed` on one should cost a section rather
+ * than the page.
+ *
+ * Leaving the cache unprimed is the point — the client then fetches normally.
+ */
+function nonEssential(): null {
+  return null;
+}
+
 export const Route = createFileRoute('/races/$raceSlug/')({
   validateSearch: (
     search: Record<string, unknown>,
@@ -146,7 +164,18 @@ export const Route = createFileRoute('/races/$raceSlug/')({
       // Worth the care: this loader ran three sequential waves, and prod served
       // this page with a 1.7-2.7s TTFB against 0.14s for a route that fetches
       // nothing. The queries are not slow; the trips are.
-      const [drivers, availableSessions, resultEntries] = await Promise.all([
+      // Consensus joins this wave rather than adding one: it depends only on
+      // the race, and it is content a crawler must see in the SSR HTML, so it
+      // cannot be a client subscription. `getSessionConsensus` answers null
+      // for any session that has not locked, so the unopened weekends that
+      // make up most of the calendar pay one cheap query per session.
+      const [
+        drivers,
+        availableSessions,
+        resultEntries,
+        consensusEntries,
+        predictionOpenAt,
+      ] = await Promise.all([
         context.queryClient.ensureQueryData(
           routeQuery(api.drivers.listDrivers, {
             round: race.round,
@@ -174,7 +203,35 @@ export const Route = createFileRoute('/races/$raceSlug/')({
               ] as const,
           ),
         ),
+        Promise.all(
+          getSessionsForWeekend(race.hasSprint ?? false).map(
+            async (sessionType) =>
+              [
+                sessionType,
+                await context.queryClient
+                  .ensureQueryData(
+                    routeQuery(api.consensus.getSessionConsensus, {
+                      raceId: race._id,
+                      sessionType,
+                    }),
+                  )
+                  .catch(nonEssential),
+              ] as const,
+          ),
+        ),
+        // Client-only until now, which is why the SSR HTML of every unopened
+        // round fell back to "Check back soon" — the one line on the page for
+        // a visitor who cannot play yet, and filler rather than a fact. From
+        // the loader it renders the real date instead.
+        context.queryClient
+          .ensureQueryData(
+            routeQuery(api.races.getPredictionOpenAt, { raceId: race._id }),
+          )
+          .catch(nonEssential),
       ]);
+      const consensusBySession = Object.fromEntries(
+        consensusEntries.filter(([, consensus]) => consensus != null),
+      );
       const initialResults = {
         availableSessions,
         resultsBySession: Object.fromEntries(
@@ -185,7 +242,15 @@ export const Route = createFileRoute('/races/$raceSlug/')({
         'share' in deps
           ? parseShareCard({ ...deps, session: deps.shareSession })
           : null;
-      return { race, nextRace, drivers, initialResults, shareCard };
+      return {
+        race,
+        nextRace,
+        drivers,
+        initialResults,
+        consensusBySession,
+        predictionOpenAt,
+        shareCard,
+      };
     }),
   head: ({ loaderData, params }) => {
     const race = loaderData?.race;
@@ -404,6 +469,8 @@ function RaceDetailPage() {
     nextRace: initialNextRace,
     drivers,
     initialResults,
+    consensusBySession,
+    predictionOpenAt: initialPredictionOpenAt,
   } = Route.useLoaderData();
   // `race` and `nextRace` are the only loader reads on this page with no live
   // subscription behind them, so they get their own observers: that is what
@@ -455,6 +522,7 @@ function RaceDetailPage() {
     isAuthLoaded,
     isSignedIn: !!isSignedIn,
     initialResults,
+    initialPredictionOpenAt,
   });
 
   function getSessionLockAt(session: SessionType): number {
@@ -601,6 +669,7 @@ function RaceDetailPage() {
         viewer={{ isAuthLoaded, isSignedIn: !!isSignedIn }}
         drivers={drivers}
         initialResults={initialResults}
+        consensusBySession={consensusBySession}
         isPredictionsLoading={
           (isPredictable && isSignedIn && weekendPredictions === undefined) ||
           isViewerPredictionDataLoading

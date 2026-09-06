@@ -37,6 +37,10 @@ export function CardActions({ data, cardState, variant }: CardActionsProps) {
           <Lock className="h-5 w-5 text-text-muted" />
           <h2 className="text-xl font-semibold text-text">Not Yet Open</h2>
         </div>
+        {/* No fallback line when the date is unknown: "Check back soon" is
+            filler, and this is the only copy a visitor who cannot play yet
+            gets. The date is loader-seeded on the race page so it is present
+            in the server HTML too. */}
         <div className="text-sm text-text-muted">
           <p>
             Predictions for this race will open after the previous race is
@@ -50,9 +54,6 @@ export function CardActions({ data, cardState, variant }: CardActionsProps) {
                 {formatTime(data.predictionOpenAt)}
               </strong>
             </p>
-          )}
-          {data.predictionOpenAt == null && (
-            <p className="mt-2">Check back soon!</p>
           )}
         </div>
       </>

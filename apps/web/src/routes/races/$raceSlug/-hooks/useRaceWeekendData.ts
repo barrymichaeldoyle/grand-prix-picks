@@ -35,6 +35,12 @@ type UseRaceWeekendDataArgs = {
   isAuthLoaded: boolean;
   isSignedIn: boolean;
   initialResults?: RaceWeekendInitialResults;
+  /**
+   * Loader-seeded value for `races.getPredictionOpenAt`, so an unopened round
+   * server-renders the date predictions open instead of the placeholder the
+   * client query's `undefined` produces.
+   */
+  initialPredictionOpenAt?: number | null;
 };
 
 /**
@@ -47,14 +53,16 @@ export function useRaceWeekendData({
   isAuthLoaded,
   isSignedIn,
   initialResults,
+  initialPredictionOpenAt,
 }: UseRaceWeekendDataArgs) {
   const now = useNow();
   const weekendSessions = getSessionsForWeekend(!!race?.hasSprint);
 
-  const predictionOpenAt = useQuery(
+  const livePredictionOpenAt = useQuery(
     api.races.getPredictionOpenAt,
     race ? { raceId: race._id } : 'skip',
   );
+  const predictionOpenAt = livePredictionOpenAt ?? initialPredictionOpenAt;
   const weekendPredictions = useQuery(
     api.predictions.myWeekendPredictions,
     race ? { raceId: race._id } : 'skip',

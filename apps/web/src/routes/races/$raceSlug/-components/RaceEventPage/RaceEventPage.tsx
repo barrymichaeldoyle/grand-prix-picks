@@ -24,6 +24,8 @@ import { ShareOnXButton } from '@/components/ShareOnXButton';
 import { StartPicksCta } from '@/components/StartPicksCta';
 import { RaceWriteupCallout } from '@/components/race-writeups/RaceWriteupCallout';
 import { RaceScoreCard } from '@/components/RaceScoreCard/RaceScoreCard';
+import type { SessionConsensusData } from '../SessionConsensus';
+import { SessionConsensusSections } from '../SessionConsensus';
 import type { WeekendCardData } from '@/components/RaceScoreCard/types';
 import type { ShareCard } from '@/lib/og/shareCard';
 import { encodeShareCardSearch } from '@/lib/og/shareCard';
@@ -95,6 +97,12 @@ type RaceEventPageProps = {
   drivers?: Doc<'drivers'>[];
   /** Loader-seeded published results, used to SSR the finishing-order table. */
   initialResults?: RaceWeekendInitialResults;
+  /**
+   * How everyone picked each locked session. Loader-seeded and server-rendered
+   * rather than subscribed, because a crawler is one of the readers this is
+   * for. Absent for a session that has not locked. See `SessionConsensus`.
+   */
+  consensusBySession?: Partial<Record<SessionType, SessionConsensusData>>;
   isPredictionsLoading: boolean;
   isViewerPredictionDataLoading: boolean;
   weekendStatus: WeekendStatus;
@@ -130,6 +138,7 @@ export function RaceEventPage({
   viewer,
   drivers = [],
   initialResults,
+  consensusBySession = {},
   isPredictionsLoading,
   isViewerPredictionDataLoading,
   weekendStatus,
@@ -584,6 +593,19 @@ export function RaceEventPage({
               </div>
             )}
           </>
+        }
+        consensusContent={
+          <SessionConsensusSections
+            sessions={Object.entries(consensusBySession).map(
+              ([session, consensus]) => ({
+                session: session as SessionType,
+                consensus,
+                classification:
+                  initialResults?.resultsBySession?.[session as SessionType]
+                    ?.enrichedClassification,
+              }),
+            )}
+          />
         }
         circuitGuideContent={
           <CircuitGuide raceSlug={race.slug} raceName={race.name} />

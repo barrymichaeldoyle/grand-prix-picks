@@ -10,6 +10,7 @@
 
 import type * as announcements from "../announcements.js";
 import type * as billing from "../billing.js";
+import type * as consensus from "../consensus.js";
 import type * as creatorPolls from "../creatorPolls.js";
 import type * as crons from "../crons.js";
 import type * as drivers from "../drivers.js";
@@ -91,6 +92,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   announcements: typeof announcements;
   billing: typeof billing;
+  consensus: typeof consensus;
   creatorPolls: typeof creatorPolls;
   crons: typeof crons;
   drivers: typeof drivers;

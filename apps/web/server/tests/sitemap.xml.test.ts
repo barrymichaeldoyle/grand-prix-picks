@@ -15,6 +15,7 @@ vi.mock('@convex-generated/api', () => ({
   api: {
     races: {
       listRaces: 'races.listRaces',
+      listCurrentSeason: 'races.listCurrentSeason',
     },
     practiceResults: {
       listRaceSlugsWithPracticeResults:
@@ -63,6 +64,9 @@ function mockConvex({ slugsWithPractice }: { slugsWithPractice: string[] }) {
   queryMock.mockImplementation((reference: string) => {
     if (reference === 'races.listRaces') {
       return Promise.resolve(RACES);
+    }
+    if (reference === 'races.listCurrentSeason') {
+      return Promise.resolve({ season: 2026, races: RACES });
     }
     if (reference === 'practiceResults.listRaceSlugsWithPracticeResults') {
       return Promise.resolve(slugsWithPractice);
@@ -117,6 +121,28 @@ describe('sitemap.xml route', () => {
     expect(xml).toContain(
       '<loc>https://grandprixpicks.com/f1-predictions-this-weekend</loc>',
     );
+  });
+
+  it('drops a circuit page whose race this season canonicalises over it', async () => {
+    mockConvex({ slugsWithPractice: [] });
+
+    const { xml } = await renderSitemap();
+
+    // Miami, Monza and Lusail host the seeded rounds, so their circuit pages
+    // are `noindex` and point at the race — advertising them here would ask
+    // Google to index pages that name somewhere else as canonical. See
+    // `circuitPageSeo.ts`.
+    for (const slug of ['miami', 'monza', 'lusail']) {
+      expect(xml).not.toContain(
+        `<loc>${siteConfig.url}/circuits/${slug}</loc>`,
+      );
+    }
+    // A circuit with no round this season is nobody's duplicate and keeps its
+    // place, so the rule stays a consolidation rather than a blanket removal.
+    expect(xml).toContain(`<loc>${siteConfig.url}/circuits/monaco</loc>`);
+    expect(xml).toContain(`<loc>${siteConfig.url}/circuits/spa</loc>`);
+    // The index the surviving pages are reached from is always listed.
+    expect(xml).toContain(`<loc>${siteConfig.url}/circuits</loc>`);
   });
 
   it('includes the content pages that carry the site editorially', async () => {
