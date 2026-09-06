@@ -301,17 +301,13 @@ function TopPlayersToFollow() {
                       : null
                   }
                 >
-                  <Avatar
-                    imageUrl={p.avatarUrl}
-                    name={p.displayName ?? p.username ?? '?'}
-                    size="sm"
-                  />
+                  <Avatar imageUrl={p.avatarUrl} name={p.username} size="sm" />
                   <View className="flex-1">
                     <Text
                       className="text-foreground text-sm font-semibold"
                       numberOfLines={1}
                     >
-                      {p.displayName ?? p.username}
+                      {p.username}
                     </Text>
                     <Text className="text-muted mt-px text-[11px]">
                       Rank #{p.rank} · {p.points.toLocaleString()} pts
