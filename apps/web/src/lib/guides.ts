@@ -329,12 +329,6 @@ const GUIDE_BODIES: Record<string, GuideBody> = {
     ],
     liveLinks: [
       {
-        to: '/',
-        label: 'Make your F1 predictions',
-        detail:
-          'Try the Top 5 picker and see how prediction scoring differs from championship points.',
-      },
-      {
         to: '/f1-standings',
         label: 'F1 championship standings',
         detail:
@@ -399,11 +393,6 @@ const GUIDE_BODIES: Record<string, GuideBody> = {
       },
     ],
     liveLinks: [
-      {
-        to: '/',
-        label: 'Make your F1 predictions',
-        detail: 'Put the routine into practice in the next open session.',
-      },
       {
         to: '/races',
         label: 'Race calendar',

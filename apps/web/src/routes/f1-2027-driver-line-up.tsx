@@ -15,6 +15,7 @@ import {
 import { setStaticContentCacheHeaders } from '@/lib/publicPageCacheHeaders';
 import { breadcrumbSchema, pageMeta, siteConfig } from '@/lib/site';
 import { FALLBACK_TEAM_COLOR, TEAM_COLORS } from '@/lib/teamColors';
+import { PicksCallToAction } from '@/components/PicksCallToAction/PicksCallToAction';
 
 /**
  * Who is driving what in 2027, while the answer is still being decided.
@@ -456,6 +457,8 @@ function F1LineUp2027Page() {
             </li>
           </ul>
         </aside>
+
+        <PicksCallToAction className="mt-10" placement="f1_line_up_2027" />
       </div>
     </div>
   );

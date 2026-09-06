@@ -88,6 +88,7 @@ export const analyticsEventNames = [
   'prediction_saved',
   'prediction_signin_prompted',
   'public_header_cta_clicked',
+  'public_page_cta_clicked',
   'purchase_completed',
   'push_permission_result',
   'push_pre_prompt_dismissed',

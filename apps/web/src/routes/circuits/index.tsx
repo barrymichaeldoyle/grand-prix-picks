@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { setStaticContentCacheHeaders } from '@/lib/publicPageCacheHeaders';
 import { getCircuitGuideBySlug } from '@/lib/circuitGuides';
 import { breadcrumbSchema, pageMeta, siteConfig } from '@/lib/site';
+import { PicksCallToAction } from '@/components/PicksCallToAction/PicksCallToAction';
 
 export const Route = createFileRoute('/circuits/')({
   component: CircuitsIndexPage,
@@ -127,6 +128,8 @@ function CircuitsIndexPage() {
             </li>
           </ul>
         </nav>
+
+        <PicksCallToAction className="mt-10" placement="circuits_index" />
       </div>
     </div>
   );

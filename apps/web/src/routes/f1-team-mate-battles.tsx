@@ -5,7 +5,6 @@ import { useEffect } from 'react';
 import { setRaceDataCacheHeaders } from '@/lib/publicPageCacheHeaders';
 import { useQuery } from '@tanstack/react-query';
 import type { FunctionReturnType } from 'convex/server';
-import { Swords } from 'lucide-react';
 
 import { DriverBadge } from '@/components/DriverBadge';
 import { PageHeader } from '@/components/PageHeader';
@@ -20,6 +19,7 @@ import {
   siteConfig,
 } from '@/lib/site';
 import { FALLBACK_TEAM_COLOR, TEAM_COLORS } from '@/lib/teamColors';
+import { PicksCallToAction } from '@/components/PicksCallToAction/PicksCallToAction';
 
 /**
  * Falls back only until the loader answers. `getTeammateBattles` derives the
@@ -567,22 +567,7 @@ function TeammateBattlesPage() {
           </dl>
         </section>
 
-        <section className="mt-8 rounded-sm border border-accent/25 bg-accent-muted/20 p-6 text-center sm:p-8">
-          <Swords className="mx-auto mb-3 h-7 w-7 text-accent" aria-hidden />
-          <h2 className="font-title text-xl font-semibold text-text">
-            Think you can call the next one?
-          </h2>
-          <p className="mx-auto mt-2 max-w-xl text-base leading-6 text-text-muted">
-            Pick a winner from every team-mate pairing before the next session
-            locks and see how your record compares.
-          </p>
-          <Link
-            to="/races"
-            className="mt-5 inline-flex items-center rounded-sm bg-accent px-4 py-2 text-base font-semibold text-text-on-accent transition-colors hover:bg-accent-hover"
-          >
-            Make your picks
-          </Link>
-        </section>
+        <PicksCallToAction className="mt-8" placement="team_mate_battles" />
       </div>
     </div>
   );

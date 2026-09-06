@@ -6,6 +6,7 @@ import { ArrowRight } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { listGuideMeta } from '@/lib/guideMeta';
 import { breadcrumbSchema, pageMeta, siteConfig } from '@/lib/site';
+import { PicksCallToAction } from '@/components/PicksCallToAction/PicksCallToAction';
 
 export const Route = createFileRoute('/guides/')({
   loader: setStaticContentCacheHeaders,
@@ -123,6 +124,8 @@ function GuidesIndexPage() {
             covers Top 5 scoring, Head-to-Head picks and session deadlines.
           </p>
         </section>
+
+        <PicksCallToAction className="mt-10" placement="guides_index" />
       </div>
     </div>
   );

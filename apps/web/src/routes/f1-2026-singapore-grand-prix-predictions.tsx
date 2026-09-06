@@ -253,6 +253,7 @@ function SingaporeGrandPrixPredictionsPage() {
 
         <RaceWriteupClosingPanel
           phase={phase}
+          raceId={race._id}
           raceSlug={RACE_SLUG}
           venueName="Singapore"
         />

@@ -30,6 +30,7 @@ import {
   teamHistoryNote,
   tieGroups,
 } from '@/lib/standings';
+import { PicksCallToAction } from '@/components/PicksCallToAction/PicksCallToAction';
 
 const SEASON = 2026;
 const PATH = '/f1-standings';
@@ -535,6 +536,8 @@ function F1StandingsPage() {
             </FaqItem>
           ))}
         </section>
+
+        <PicksCallToAction className="my-10" placement="f1_standings" />
 
         <div className="flex flex-wrap gap-x-6 gap-y-2 border-t border-border pt-6 text-sm">
           <Link

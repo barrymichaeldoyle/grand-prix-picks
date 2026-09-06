@@ -4,7 +4,6 @@ import { setStaticContentCacheHeaders } from '@/lib/publicPageCacheHeaders';
 import {
   ArrowRight,
   Check,
-  Flag,
   LockKeyhole,
   ShieldCheck,
   Trophy,
@@ -13,6 +12,7 @@ import {
 import { Button } from '@/components/Button/Button';
 import { PageHeader } from '@/components/PageHeader';
 import { breadcrumbSchema, pageMeta, siteConfig } from '@/lib/site';
+import { PicksCallToAction } from '@/components/PicksCallToAction/PicksCallToAction';
 
 export const Route = createFileRoute('/how-to-play')({
   loader: setStaticContentCacheHeaders,
@@ -561,19 +561,7 @@ function HowToPlayPage() {
             </dl>
           </section>
 
-          <section className="rounded-xl border border-accent/25 bg-accent-muted/20 p-6 text-center sm:p-8">
-            <Flag className="mx-auto mb-3 h-7 w-7 text-accent" aria-hidden />
-            <h2 className="font-title text-2xl font-semibold text-text">
-              Make your picks
-            </h2>
-            <p className="gpp-reading-copy mx-auto mt-2 max-w-xl text-text-muted">
-              Choose the current race weekend, rank your Top 5, and save before
-              the next session starts.
-            </p>
-            <Button asChild size="md" rightIcon={ArrowRight} className="mt-5">
-              <Link to="/races">View race weekends</Link>
-            </Button>
-          </section>
+          <PicksCallToAction placement="how_to_play" />
         </div>
       </div>
     </div>

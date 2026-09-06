@@ -12,6 +12,7 @@ import {
   pageMeta,
   siteConfig,
 } from '@/lib/site';
+import { PicksCallToAction } from '@/components/PicksCallToAction/PicksCallToAction';
 
 export const Route = createFileRoute('/guides/$guideSlug')({
   loader: async ({ params }) => {
@@ -294,6 +295,8 @@ function GuidePage() {
             ))}
           </ul>
         </aside>
+
+        <PicksCallToAction className="mt-12" placement="guide" />
       </div>
     </div>
   );

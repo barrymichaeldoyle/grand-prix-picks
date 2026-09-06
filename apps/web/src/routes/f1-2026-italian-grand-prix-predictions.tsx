@@ -437,6 +437,7 @@ function ItalianGrandPrixPredictionsPage() {
         ) : (
           <RaceWriteupClosingPanel
             phase={phase}
+            raceId={race._id}
             raceSlug={RACE_SLUG}
             venueName="Monza"
           />

@@ -1,19 +1,52 @@
-import { RaceWriteupActions } from './RaceWriteupActions';
-import { RaceWriteupNextLinks } from './RaceWriteupNextLinks';
+import { api } from '@convex-generated/api';
+import type { Id } from '@convex-generated/dataModel';
+
+import { useViewerSession } from '@/integrations/clerk/useViewerSession';
+import { useQuery } from '@/integrations/convex/query';
 import type { RaceWriteupPhase } from '@/lib/raceWriteupPhase';
 
-function closingCopy(phase: RaceWriteupPhase, venueName: string) {
+import { RaceWriteupActions } from './RaceWriteupActions';
+import { RaceWriteupNextLinks } from './RaceWriteupNextLinks';
+
+/**
+ * Whether the reader still has something to do here.
+ *
+ * Only the phases that still take a pick vary by viewer: once picks are locked
+ * or the race is scored, the panel says the same thing to everyone, because the
+ * fact it is reporting is about the weekend rather than about the reader.
+ */
+function closingCopy(
+  phase: RaceWriteupPhase,
+  venueName: string,
+  viewer: { isSignedIn: boolean; hasPicks: boolean },
+) {
   switch (phase) {
     case 'preview':
     case 'evidence':
+      if (viewer.hasPicks) {
+        return {
+          heading: `Your ${venueName} picks are in`,
+          body: 'You can change them until each session locks.',
+        };
+      }
       return {
         heading: `Make your ${venueName} picks`,
-        body: 'Choose five drivers for qualifying and five for the race. You can change them until each session locks.',
+        body: viewer.isSignedIn
+          ? 'Choose five drivers for qualifying and five for the race. You can change them until each session locks.'
+          : 'Choose five drivers for qualifying and five for the race. Saving them needs a free account.',
       };
     case 'race-picks':
+      if (viewer.hasPicks) {
+        return {
+          heading: 'Your race picks are in',
+          body: 'Qualifying is locked. You can change your race Top 5 until the race locks.',
+        };
+      }
       return {
         heading: 'Make your race picks',
-        body: 'Qualifying picks are locked. You can change your race Top 5 until the race locks.',
+        body: viewer.isSignedIn
+          ? 'Qualifying picks are locked. You can change your race Top 5 until the race locks.'
+          : 'Qualifying picks are locked. The race Top 5 is still open, and saving it needs a free account.',
       };
     case 'picks-locked':
       return {
@@ -33,16 +66,42 @@ function closingCopy(phase: RaceWriteupPhase, venueName: string) {
   }
 }
 
+/**
+ * The panel that ends a race write-up.
+ *
+ * It knows the weekend's phase and, since the write-ups are what search sends
+ * people to, now also who is reading. A signed-in player who had already picked
+ * this round was being told to go and make picks, which reads as a site that
+ * does not know them; `raceId` is what lets it say otherwise.
+ *
+ * The prediction lookup is viewer-scoped and therefore client-only: it returns
+ * null for an anonymous reader rather than throwing, so the write-up routes
+ * stay Clerk-free and the panel server-renders its signed-out wording. When the
+ * query resolves for a signed-in reader the panel settles on the state that
+ * mentions their picks. Nothing below depends on it — the primary action goes
+ * to the same race page either way — so the correction is a wording change, not
+ * a layout shift.
+ */
 export function RaceWriteupClosingPanel({
   phase,
+  raceId,
   raceSlug,
   venueName,
 }: {
   phase: RaceWriteupPhase;
+  raceId?: Id<'races'>;
   raceSlug: string;
   venueName: string;
 }) {
-  const copy = closingCopy(phase, venueName);
+  const { isSignedIn } = useViewerSession();
+  const weekendPredictions = useQuery(
+    api.predictions.myWeekendPredictions,
+    isSignedIn && raceId ? { raceId } : 'skip',
+  );
+  const hasPicks = Object.values(weekendPredictions?.predictions ?? {}).some(
+    (picks) => picks != null,
+  );
+  const copy = closingCopy(phase, venueName, { isSignedIn, hasPicks });
 
   return (
     <section className="rounded-sm bg-surface px-5 py-7 sm:flex sm:items-center sm:justify-between sm:gap-8 sm:px-7">
@@ -61,6 +120,7 @@ export function RaceWriteupClosingPanel({
       </div>
       <RaceWriteupActions
         compact
+        hasPicks={hasPicks}
         phase={phase}
         raceSlug={raceSlug}
         venueName={venueName}

@@ -13,6 +13,7 @@ import { displayTeamName } from '@/lib/display';
 import { routeQuery } from '@/lib/routeQuery';
 import { pageMeta, siteConfig } from '@/lib/site';
 import { FALLBACK_TEAM_COLOR, TEAM_COLORS } from '@/lib/teamColors';
+import { PicksCallToAction } from '@/components/PicksCallToAction/PicksCallToAction';
 
 export const Route = createFileRoute('/f1-qualifying-standings')({
   component: F1QualifyingStandingsPage,
@@ -543,6 +544,11 @@ function F1QualifyingStandingsPage() {
             description={`No ${season} qualifying results yet. This table starts after the first qualifying session of the season.`}
           />
         )}
+
+        <PicksCallToAction
+          className="mt-10"
+          placement="f1_qualifying_standings"
+        />
 
         <div className="mt-10 flex flex-wrap gap-x-6 gap-y-2 border-t border-border pt-6 text-sm">
           <Link

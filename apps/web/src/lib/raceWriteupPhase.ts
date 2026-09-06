@@ -76,13 +76,17 @@ export function raceWriteupPrimaryAction(
   phase: RaceWriteupPhase,
   venueName: string,
   compact = false,
+  hasPicks = false,
 ): string {
   switch (phase) {
     case 'preview':
     case 'evidence':
+      if (hasPicks) {
+        return compact ? 'Review your picks' : `Review your ${venueName} picks`;
+      }
       return compact ? 'Make your picks' : `Make your ${venueName} picks`;
     case 'race-picks':
-      return 'Make your race picks';
+      return hasPicks ? 'Review your race picks' : 'Make your race picks';
     case 'picks-locked':
       return 'See your picks';
     case 'finished':

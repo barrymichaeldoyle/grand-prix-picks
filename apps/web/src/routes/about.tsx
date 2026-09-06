@@ -1,9 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 
 import { setStaticContentCacheHeaders } from '@/lib/publicPageCacheHeaders';
-import { ArrowRight } from 'lucide-react';
 
-import { Button } from '@/components/Button/Button';
 import { PageHeader } from '@/components/PageHeader';
 import {
   breadcrumbSchema,
@@ -11,6 +9,7 @@ import {
   pageMeta,
   siteConfig,
 } from '@/lib/site';
+import { PicksCallToAction } from '@/components/PicksCallToAction/PicksCallToAction';
 
 export const Route = createFileRoute('/about')({
   loader: setStaticContentCacheHeaders,
@@ -178,23 +177,7 @@ function AboutPage() {
           </p>
         </section>
 
-        <section className="mt-12 border-t border-border pt-8">
-          <h2 className="font-title text-xl font-semibold text-text">
-            Start playing
-          </h2>
-          <p className="gpp-reading-copy mt-2 text-text-muted">
-            You can build a prediction before you create an account. Sign in
-            only when you want to save it.
-          </p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <Button asChild size="sm" rightIcon={ArrowRight}>
-              <Link to="/races">View race weekends</Link>
-            </Button>
-            <Button asChild size="sm" variant="secondary">
-              <Link to="/how-to-play">Read the rules</Link>
-            </Button>
-          </div>
-        </section>
+        <PicksCallToAction className="mt-12" placement="about" />
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import { setStaticContentCacheHeaders } from '@/lib/publicPageCacheHeaders';
 import { CalendarClock, ChevronRight, Flag } from 'lucide-react';
 
 import { breadcrumbSchema, pageMeta, siteConfig } from '@/lib/site';
+import { PicksCallToAction } from '@/components/PicksCallToAction/PicksCallToAction';
 
 /**
  * The 2027 calendar, before there is a 2027 calendar.
@@ -307,6 +308,8 @@ function F1Calendar2027Page() {
             </li>
           </ul>
         </aside>
+
+        <PicksCallToAction className="mt-10" placement="f1_calendar_2027" />
       </div>
     </div>
   );
