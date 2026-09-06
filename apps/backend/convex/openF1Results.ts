@@ -290,6 +290,9 @@ const RATE_LIMIT_RETRIES = 4;
 const RATE_LIMIT_BACKOFF_MS = 2_000;
 const TOKEN_EXPIRY_SKEW_MS = 30_000;
 
+/** Spa 2026 race — stable fixture with a full grid and no FP1 reserve numbers. */
+export const DEFAULT_SMOKE_SESSION_KEY = 11334;
+
 let tokenCache: { accessToken: string; expiresAt: number } | null = null;
 
 export class OpenF1AuthenticationError extends Error {
@@ -397,6 +400,13 @@ const LIVE_SESSION_RESTRICTION = /live .*session in progress/i;
 
 export function isLiveSessionRestriction(error: unknown): boolean {
   return LIVE_SESSION_RESTRICTION.test(errorMessage(error));
+}
+
+/** OpenF1 returns 404 with this body before a session_result exists. */
+const OPENF1_NO_RESULTS = /no results found/i;
+
+export function isOpenF1NoResults(error: unknown): boolean {
+  return OPENF1_NO_RESULTS.test(errorMessage(error));
 }
 
 /**
@@ -714,7 +724,7 @@ export const getDuePolls = internalQuery({
 export const getDriverNumberMap = internalQuery({
   args: {},
   handler: async (ctx) => {
-    const drivers = await ctx.db.query('drivers').take(40);
+    const drivers = await ctx.db.query('drivers').take(60);
     return drivers.flatMap((driver) =>
       driver.number === undefined
         ? []
@@ -1052,7 +1062,7 @@ export const adminPreviewLiveResults = action({
 export const getDriverDisplayMap = internalQuery({
   args: {},
   handler: async (ctx) => {
-    const drivers = await ctx.db.query('drivers').take(40);
+    const drivers = await ctx.db.query('drivers').take(60);
     return drivers.flatMap((driver) =>
       driver.number === undefined
         ? []
@@ -1075,10 +1085,16 @@ export const getDriverDisplayMap = internalQuery({
  * validation, and the deployed driver-number mapping without writing data.
  */
 export const smokeTest = internalAction({
-  args: { sessionKey: v.number() },
+  args: { sessionKey: v.optional(v.number()) },
   handler: async (ctx, args) => {
+    const sessionKey = args.sessionKey ?? DEFAULT_SMOKE_SESSION_KEY;
+    if (!Number.isInteger(sessionKey) || sessionKey <= 0) {
+      throw new Error(
+        'OpenF1 smoke test requires a positive integer sessionKey',
+      );
+    }
     try {
-      return await runSmokeTest(ctx, args.sessionKey);
+      return await runSmokeTest(ctx, sessionKey);
     } catch (error) {
       // A live-session block is not a failed smoke test, and failing the
       // deploy on it means the app cannot ship on a race weekend -- the one
@@ -1102,6 +1118,13 @@ export const smokeTest = internalAction({
             'Paid access is unavailable; anonymous result polling remains enabled.',
         );
         return { ok: true, skipped: 'authentication_unavailable' as const };
+      }
+      if (isOpenF1NoResults(error)) {
+        console.warn(
+          `OpenF1 smoke test skipped: ${errorMessage(error)}. ` +
+            'session_result is not published yet; retry after the session.',
+        );
+        return { ok: true, skipped: 'results_not_available' as const };
       }
       throw error;
     }

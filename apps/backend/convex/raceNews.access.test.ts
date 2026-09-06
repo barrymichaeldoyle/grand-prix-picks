@@ -101,6 +101,15 @@ describe('race news access boundary', () => {
     ).rejects.toThrow(/raceSlug/);
   });
 
+  it('returns an empty list when raceSlug is omitted', async () => {
+    const t = convexTest(schema, modules);
+
+    await expect(t.query(api.raceNews.list, {})).resolves.toEqual({
+      race: null,
+      items: [],
+    });
+  });
+
   it('rejects the removed includeRetracted argument on the public query', async () => {
     const t = convexTest(schema, modules);
 

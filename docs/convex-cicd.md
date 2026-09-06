@@ -15,10 +15,13 @@ build (the same way our Vercel projects deploy Convex during their build).
 2. `main` push:
    - `CI` runs again.
    - Cloudflare Pages builds **production** via `scripts/cloudflare-build.sh`,
-     which activates the Convex functions → runs the OpenF1 smoke test → runs
-     prod migrations → builds the web app against that backend → confirms the
+     which activates the Convex functions → runs prod migrations → runs the
+     OpenF1 smoke test → builds the web app against that backend → confirms the
      same Convex revision, then publishes. If a deployment check fails, the
      web build is not published.
+
+Prod migrations run before the OpenF1 smoke test so driver-number mappings
+seeded in the same deploy are present when the check executes.
 
 Immediately after the backend deploy, the build runs a read-only OpenF1 smoke
 test inside the production Convex environment. It verifies outbound access,

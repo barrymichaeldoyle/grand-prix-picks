@@ -260,9 +260,12 @@ async function listRaceNews(
 
 /** Active news for public feeds and write-up pages. */
 export const list = query({
-  args: { raceSlug: v.string() },
+  args: { raceSlug: v.optional(v.string()) },
   returns: raceNewsListResultValidator,
   handler: async (ctx, args) => {
+    if (!args.raceSlug) {
+      return { race: null, items: [] };
+    }
     return await listRaceNews(ctx, await raceBySlug(ctx, args.raceSlug), false);
   },
 });

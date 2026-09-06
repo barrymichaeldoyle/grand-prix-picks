@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildSessionDiscoveryUrl,
+  DEFAULT_SMOKE_SESSION_KEY,
   getFallbackWindow,
   isLiveSessionRestriction,
+  isOpenF1NoResults,
   parseOpenF1Results,
   parseOpenF1Sessions,
 } from './openF1Results';
@@ -212,5 +214,28 @@ describe('OpenF1 live-session restriction', () => {
     ]) {
       expect(isLiveSessionRestriction(new Error(message)), message).toBe(false);
     }
+  });
+});
+
+describe('OpenF1 no-results response', () => {
+  const noResultsBody =
+    'OpenF1 request failed with HTTP 404: {"detail":"No results found."}';
+
+  it('recognises the pre-classification 404', () => {
+    expect(isOpenF1NoResults(new Error(noResultsBody))).toBe(true);
+  });
+
+  it('does not swallow unrelated 404s', () => {
+    expect(
+      isOpenF1NoResults(
+        new Error('OpenF1 request failed with HTTP 404: {"detail":"Not found"}'),
+      ),
+    ).toBe(false);
+  });
+});
+
+describe('OpenF1 smoke session default', () => {
+  it('points at the Spa 2026 race fixture', () => {
+    expect(DEFAULT_SMOKE_SESSION_KEY).toBe(11334);
   });
 });

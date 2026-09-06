@@ -260,6 +260,49 @@ const F1_DRIVERS_2026 = [
     team: 'Cadillac',
     nationality: 'MX',
   },
+
+  // FP1 reserves and stand-ins. OpenF1 reports their session numbers, which
+  // differ from the race entry they cover. Kept out of `driverTeamStints` so
+  // they never enter the pick pool; they exist so session_result mapping and
+  // the deploy smoke test can resolve every car OpenF1 returns.
+  //
+  // Verified against OpenF1 Monza 2026 FP1 (`session_key=11354`, 2026-09-04).
+  {
+    code: 'ARO',
+    givenName: 'Paul',
+    familyName: 'Aron',
+    displayName: 'Paul Aron',
+    number: 61,
+    team: 'Alpine',
+    nationality: 'EE',
+  },
+  {
+    code: 'HER',
+    givenName: 'Colton',
+    familyName: 'Herta',
+    displayName: 'Colton Herta',
+    number: 25,
+    team: 'Cadillac',
+    nationality: 'US',
+  },
+  {
+    code: 'IWA',
+    givenName: 'Ayumu',
+    familyName: 'Iwasa',
+    displayName: 'Ayumu Iwasa',
+    number: 36,
+    team: 'Red Bull Racing',
+    nationality: 'JP',
+  },
+  {
+    code: 'BRO',
+    givenName: 'Luke',
+    familyName: 'Browning',
+    displayName: 'Luke Browning',
+    number: 46,
+    team: 'Williams',
+    nationality: 'GB',
+  },
 ];
 
 export const seedDrivers = internalMutation({
