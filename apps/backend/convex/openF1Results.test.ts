@@ -228,7 +228,9 @@ describe('OpenF1 no-results response', () => {
   it('does not swallow unrelated 404s', () => {
     expect(
       isOpenF1NoResults(
-        new Error('OpenF1 request failed with HTTP 404: {"detail":"Not found"}'),
+        new Error(
+          'OpenF1 request failed with HTTP 404: {"detail":"Not found"}',
+        ),
       ),
     ).toBe(false);
   });
