@@ -409,7 +409,7 @@ function RiskAndRecovery() {
         <p className="gpp-reading-copy mt-4 text-text-muted">
           Baku qualifying can produce a strange order because the walls punish
           small mistakes. In 2025, qualifying set a record for red flags, but
-          the race then settled into DRS trains and a one-stop strategy.
+          the race then settled into a queue and a one-stop strategy.
         </p>
         <p className="gpp-reading-copy mt-3 text-text-muted">
           Do not move every front-runner straight back into your Top 5 after a

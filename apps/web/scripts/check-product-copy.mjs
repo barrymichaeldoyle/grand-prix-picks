@@ -64,6 +64,33 @@ const rules = [
   },
 ];
 
+/**
+ * Terminology that describes a car or a rule that no longer exists.
+ *
+ * Separate from the rules above because it is a different kind of check. Those
+ * are style, and style on long-form editorial prose is a judgement call, which
+ * is why the race write-ups sit in `ignoredPathPatterns`. This is a fact, and a
+ * fact is wrong on an editorial page in exactly the way it is wrong anywhere
+ * else — so these run on every file, ignored path or not.
+ *
+ * The 2026 aids are straight mode and Overtake. See the note at the top of
+ * `lib/circuitGuides.ts` for why both older terms are dead.
+ *
+ * A genuine historical reference (a sentence about how a 2025 race unfolded)
+ * still trips this, and should: the reader is ranking drivers for 2026, and a
+ * term for a part the current cars do not have costs them more than the
+ * precision gains. Describe what happened instead. Where the term really is
+ * the only accurate word, `copy-audit-ignore` is the escape hatch.
+ */
+const terminologyRules = [
+  {
+    id: 'retired-terminology',
+    pattern: /\bDRS\b|\bdrag reduction\b|\bmanual override mode\b/i,
+    message:
+      'The 2026 cars have no DRS. Name the aid (straight mode, Overtake) or describe the effect.',
+  },
+];
+
 async function collectFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
   const files = [];
@@ -85,7 +112,13 @@ const warnings = [];
 for (const target of targets) {
   const files = await collectFiles(target);
   for (const file of files) {
-    if (ignoredPathPatterns.some((pattern) => pattern.test(file))) continue;
+    // Style rules are skipped on the editorial and legal pages; the factual
+    // terminology check is not.
+    const activeRules = ignoredPathPatterns.some((pattern) =>
+      pattern.test(file),
+    )
+      ? terminologyRules
+      : [...rules, ...terminologyRules];
 
     const sourceText = await readFile(file, 'utf8');
     const lines = sourceText.split('\n');
@@ -113,7 +146,7 @@ for (const target of targets) {
         [...ignoredAttributeNames].some((token) => trimmed.startsWith(token));
       if (ignored) return;
 
-      for (const rule of rules) {
+      for (const rule of activeRules) {
         if (rule.pattern.test(copyCandidate)) {
           warnings.push({
             file,
