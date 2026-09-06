@@ -69,7 +69,11 @@ describe('race write-up next links', () => {
   it('adds the race page beside the leaderboard only where nothing else links to it', () => {
     expect(
       render('picks_section').map((link) => link.getAttribute('href')),
-    ).toEqual(['/races/italy-2026', '/leaderboard']);
+    ).toEqual([
+      '/races/italy-2026',
+      '/leaderboard',
+      '/f1-predictions-this-weekend',
+    ]);
 
     act(() => root?.unmount());
     container?.remove();
@@ -78,7 +82,13 @@ describe('race write-up next links', () => {
     // put the same destination twice in one panel.
     expect(
       render('closing_panel').map((link) => link.getAttribute('href')),
-    ).toEqual(['/leaderboard']);
+    ).toEqual(['/leaderboard', '/f1-predictions-this-weekend']);
+  });
+
+  it('does not send the hub a link to itself', () => {
+    expect(
+      render('hub_picks_section').map((link) => link.getAttribute('href')),
+    ).not.toContain('/f1-predictions-this-weekend');
   });
 
   // The hub embeds the same picker, so its section owes the reader the same

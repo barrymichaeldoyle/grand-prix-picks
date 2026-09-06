@@ -48,7 +48,17 @@ export function RaceWriteupNextLinks({
   raceSlug: string;
   venueName: string;
 }) {
-  function track(destination: 'leaderboard' | 'race_page') {
+  /*
+   * The hub links out to every write-up and none of them linked back, so the
+   * one page built to own the "f1 picks" searches was reachable from the
+   * pieces search actually lands people on only through the site footer.
+   *
+   * Not on the hub's own picks section, where it would be a link to the page
+   * the reader is standing on.
+   */
+  const showHub = placement !== 'hub_picks_section';
+
+  function track(destination: 'leaderboard' | 'race_page' | 'weekend_hub') {
     captureAnalyticsEvent('race_writeup_next_link_clicked', {
       destination,
       placement,
@@ -80,6 +90,19 @@ export function RaceWriteupNextLinks({
         The leaderboard
       </Link>{' '}
       shows the current standings.
+      {showHub ? (
+        <>
+          {' '}
+          <Link
+            to="/f1-predictions-this-weekend"
+            className={LINK_CLASS}
+            onClick={() => track('weekend_hub')}
+          >
+            Predictions this weekend
+          </Link>{' '}
+          covers every session that is still open.
+        </>
+      ) : null}
     </p>
   );
 }
