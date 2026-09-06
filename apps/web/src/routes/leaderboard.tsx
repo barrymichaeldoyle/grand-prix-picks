@@ -17,6 +17,7 @@ import { useEffect, useState } from 'react';
 import { RaceFlag } from '@/components/RaceFlag';
 import { TabSwitch } from '@/components/TabSwitch';
 import { getCountryCodeForRace } from '@/lib/raceCountries';
+import { SESSION_LABELS } from '@/lib/sessions';
 import { isRaceSelectableForLeaderboard } from '@/lib/raceSessions';
 import {
   breadcrumbSchema,
@@ -28,6 +29,12 @@ import {
 import { withLoaderSpan } from '@/lib/loaderSpan';
 import { PAGE_SIZE, playerCountFormatter } from './-leaderboard/constants';
 import { SCOPE_OPTIONS, TIME_SCOPE_OPTIONS } from './-leaderboard/options';
+import {
+  defaultSessionScope,
+  isSessionScope,
+  sessionScopeOptions,
+  type SessionScope,
+} from './-leaderboard/sessionScope';
 import { SeasonContent } from './-leaderboard/SeasonContent';
 import type { LeaderboardEntry, Scope, TimeScope } from './-leaderboard/types';
 import { useStickyValue } from '@/hooks/useStickyValue';
@@ -38,7 +45,12 @@ export const Route = createFileRoute('/leaderboard')({
   component: LeaderboardPage,
   validateSearch: (
     search: Record<string, unknown>,
-  ): { time?: TimeScope; scope?: Scope; raceId?: string } => {
+  ): {
+    time?: TimeScope;
+    scope?: Scope;
+    raceId?: string;
+    session?: SessionScope;
+  } => {
     const time =
       search.time === 'weekend' || search.time === 'season'
         ? search.time
@@ -49,7 +61,8 @@ export const Route = createFileRoute('/leaderboard')({
         : undefined;
     const raceId =
       typeof search.raceId === 'string' ? search.raceId : undefined;
-    return { time, scope, raceId };
+    const session = isSessionScope(search.session) ? search.session : undefined;
+    return { time, scope, raceId, session };
   },
   loaderDeps: ({ search }) => search,
   // Two waves, and both earn their place: the second needs `selectedRace` from
@@ -165,6 +178,23 @@ function LeaderboardPage() {
     allRaces.find((r) => r._id === search.raceId) ?? defaultRace;
   const selectedRaceId = selectedRace?._id as Id<'races'> | undefined;
 
+  // Which sessions this weekend scored, and which of them the viewer played.
+  // Weekend tab only: the season board has no session to scope to.
+  const { data: sessionBreakdown } = useQuery(
+    convexQuery(
+      api.leaderboards.getRaceSessionBreakdown,
+      timeScope === 'weekend' && selectedRaceId
+        ? { raceId: selectedRaceId }
+        : 'skip',
+    ),
+  );
+  // An explicit `?session=` always wins, so a shared link keeps its board. The
+  // default is only consulted while the URL is silent, and it resolves to
+  // `all` until the breakdown lands, which is what the board showed before.
+  const sessionScope: SessionScope =
+    search.session ?? defaultSessionScope(sessionBreakdown);
+  const scopedSessionType = sessionScope === 'all' ? undefined : sessionScope;
+
   // Season combined (global) – with SSR + pagination
   const [seasonEntries, setSeasonEntries] = useState<LeaderboardEntry[]>(
     initialSeason.entries as LeaderboardEntry[],
@@ -194,7 +224,7 @@ function LeaderboardPage() {
     convexQuery(
       api.leaderboards.getCombinedRaceLeaderboard,
       timeScope === 'weekend' && scope === 'global' && selectedRaceId
-        ? { raceId: selectedRaceId }
+        ? { raceId: selectedRaceId, sessionType: scopedSessionType }
         : 'skip',
     ),
   );
@@ -202,7 +232,11 @@ function LeaderboardPage() {
     convexQuery(
       api.leaderboards.getCombinedRaceLeaderboard,
       timeScope === 'weekend' && scope === 'following' && selectedRaceId
-        ? { raceId: selectedRaceId, friendsOnly: true }
+        ? {
+            raceId: selectedRaceId,
+            friendsOnly: true,
+            sessionType: scopedSessionType,
+          }
         : 'skip',
     ),
   );
@@ -250,7 +284,9 @@ function LeaderboardPage() {
   const activeWeekendData =
     scope === 'global'
       ? (stickyWeekendGlobal ??
-        (selectedRaceId === selectedRace?._id ? initialWeekend : null))
+        (selectedRaceId === selectedRace?._id && sessionScope === 'all'
+          ? initialWeekend
+          : null))
       : stickyWeekendFollowing;
   const activeSeasonData =
     scope === 'global' ? seasonCombinedData : stickySeasonCombinedFollowing;
@@ -278,7 +314,7 @@ function LeaderboardPage() {
       ? (activeWeekendData?.entries.length ?? 0)
       : (activeSeasonData?.totalCount ?? 0);
 
-  const activeViewKey = `${timeScope}:${scope}`;
+  const activeViewKey = `${timeScope}:${scope}:${sessionScope}`;
   // The card is a rank badge, so it only exists once there is a rank. Someone
   // who has not scored this weekend got "Not ranked this weekend" next to a
   // dash, which reads as a status report on a player who has done nothing
@@ -317,6 +353,7 @@ function LeaderboardPage() {
         ) : null}
         <span>
           {selectedRace.season} {selectedRace.name}
+          {scopedSessionType ? ` · ${SESSION_LABELS[scopedSessionType]}` : ''}
           {playerCountSuffix}
         </span>
       </span>
@@ -473,6 +510,27 @@ function LeaderboardPage() {
               <ChevronDown className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-text-muted" />
             </div>
           )}
+
+          {/* Session filter (weekend tab only, and only once the weekend has
+              more than one scored session — with a single session the combined
+              board and that session's board are the same list, and a switch
+              between two identical boards is noise). */}
+          {timeScope === 'weekend' &&
+            (sessionBreakdown?.sessions.length ?? 0) > 1 && (
+              <TabSwitch
+                value={sessionScope}
+                onChange={(v) =>
+                  navigate({
+                    search: (prev) => ({ ...prev, session: v }),
+                    replace: true,
+                  })
+                }
+                options={sessionScopeOptions(sessionBreakdown!.sessions)}
+                className="flex gap-1 overflow-x-auto rounded-lg bg-surface-muted/40 p-1"
+                buttonClassName="flex-1 whitespace-nowrap"
+                ariaLabel="Leaderboard session"
+              />
+            )}
         </div>
 
         {/* Content */}
@@ -481,6 +539,7 @@ function LeaderboardPage() {
             key={activeViewKey}
             defaultRace={selectedRace}
             scope={scope}
+            sessionScope={sessionScope}
             isSignedIn={isSignedIn}
             activeData={activeWeekendData}
           />

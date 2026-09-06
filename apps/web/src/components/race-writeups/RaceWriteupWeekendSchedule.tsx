@@ -160,7 +160,13 @@ export function RaceWriteupWeekendSchedule({
           return (
             <div
               key={label}
-              className={`grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-3 gap-y-1 border-b border-border/60 px-4 py-2 last:border-b-0 sm:py-2.5 ${
+              // Centred, not baseline-aligned. The forecast cell is a flex box
+              // whose first item is a 16px icon, so its baseline came from the
+              // icon rather than the temperature beside it and the whole cell
+              // sat low against the session name and start time. With one line
+              // of similar text in each cell, centring aligns all three and
+              // does not depend on what the third one happens to contain.
+              className={`grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-1 border-b border-border/60 px-4 py-2 last:border-b-0 sm:py-2.5 ${
                 forecast
                   ? 'sm:grid-cols-[minmax(0,1fr)_auto_auto]'
                   : 'sm:grid-cols-[6.5rem_1fr]'

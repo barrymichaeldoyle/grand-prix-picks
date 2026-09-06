@@ -423,22 +423,32 @@ function PredictionsThisWeekendPage() {
           >
             How picks score
           </h2>
-          <dl className="mt-5 grid gap-4 sm:grid-cols-3">
+          {/* The same three cards the landing page uses, for the same three
+              facts: the sector colour is a thick strip closing each card, not
+              a hairline floating above its heading. `border-b-0` plus a filled
+              strip rather than `border-b-8`, because CSS miters adjacent
+              borders and the colour has to stay square-ended. */}
+          <dl className="mt-5 grid gap-4 md:grid-cols-3">
             {SCORING_BANDS.map((band) => (
-              <div key={band.label}>
-                <span
-                  aria-hidden
-                  className={`block h-0.5 w-8 ${band.ruleClass}`}
-                />
-                <dt className="mt-3 text-base font-semibold text-text">
-                  <span className={`gpp-mono ${band.textClass}`}>
-                    {band.points}
-                  </span>{' '}
-                  {band.unit} · {band.label}
-                </dt>
-                <dd className="mt-1 text-base leading-6 text-text-muted">
-                  {band.detail}
-                </dd>
+              <div
+                key={band.label}
+                className="flex flex-col border border-b-0 border-border bg-surface md:min-h-48"
+              >
+                <div className="flex flex-1 flex-col p-5">
+                  <dt className={`flex items-end gap-2 ${band.textClass}`}>
+                    <span className="gpp-mono text-4xl leading-none font-semibold">
+                      {band.points}
+                    </span>
+                    <span className="gpp-label pb-0.5">{band.unit}</span>
+                  </dt>
+                  <dd>
+                    <p className="mt-5 font-semibold text-text">{band.label}</p>
+                    <p className="gpp-reading-copy mt-2 text-text-muted">
+                      {band.detail}
+                    </p>
+                  </dd>
+                </div>
+                <div aria-hidden className={`h-2 shrink-0 ${band.ruleClass}`} />
               </div>
             ))}
           </dl>

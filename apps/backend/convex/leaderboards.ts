@@ -12,7 +12,18 @@ import {
   streamRankedLeaderboardRows,
 } from './lib/leaderboard';
 import { ANONYMOUS_NAME } from '@grandprixpicks/shared/displayName';
+import {
+  getSessionsForWeekend,
+  type SessionType,
+} from '@grandprixpicks/shared/sessions';
 import { toPublicEntry, toUserIdentity } from './lib/userIdentity';
+
+const sessionTypeValidator = v.union(
+  v.literal('quali'),
+  v.literal('sprint_quali'),
+  v.literal('sprint'),
+  v.literal('race'),
+);
 
 type CombinedRow = {
   userId: Id<'users'>;
@@ -502,8 +513,25 @@ export const getFriendsCombinedLeaderboard = query({
   },
 });
 
+/**
+ * One race weekend's board, optionally narrowed to a single session.
+ *
+ * Without `sessionType` this sums every session of the weekend, which is the
+ * right answer for someone who played all of them and the wrong one for
+ * someone who found the game on Sunday morning: they are ranked on one
+ * session's points against people who banked four, and finish near the bottom
+ * of a board they were never in. Narrowing to a session ranks them against the
+ * picks they actually made.
+ *
+ * `by_race_session` is keyed `(raceId, sessionType)`, so the narrow read is a
+ * smaller scan than the whole-weekend one rather than a filter over it.
+ */
 export const getCombinedRaceLeaderboard = query({
-  args: { raceId: v.id('races'), friendsOnly: v.optional(v.boolean()) },
+  args: {
+    raceId: v.id('races'),
+    friendsOnly: v.optional(v.boolean()),
+    sessionType: v.optional(sessionTypeValidator),
+  },
   handler: async (ctx, args) => {
     const viewer = await getViewer(ctx);
 
@@ -536,9 +564,15 @@ export const getCombinedRaceLeaderboard = query({
 
     const userMap = new Map<string, RaceEntry>();
 
+    const sessionType = args.sessionType;
+
     for await (const score of ctx.db
       .query('scores')
-      .withIndex('by_race_session', (q) => q.eq('raceId', args.raceId))) {
+      .withIndex('by_race_session', (q) =>
+        sessionType
+          ? q.eq('raceId', args.raceId).eq('sessionType', sessionType)
+          : q.eq('raceId', args.raceId),
+      )) {
       const existing = userMap.get(score.userId);
       if (existing) {
         existing.top5Points += score.points;
@@ -554,7 +588,11 @@ export const getCombinedRaceLeaderboard = query({
 
     for await (const score of ctx.db
       .query('h2hScores')
-      .withIndex('by_race_session', (q) => q.eq('raceId', args.raceId))) {
+      .withIndex('by_race_session', (q) =>
+        sessionType
+          ? q.eq('raceId', args.raceId).eq('sessionType', sessionType)
+          : q.eq('raceId', args.raceId),
+      )) {
       const existing = userMap.get(score.userId);
       if (existing) {
         existing.h2hPoints += score.points;
@@ -1167,3 +1205,74 @@ export async function getRaceLeaderboardForViewer(
 
   return { status: 'visible' as const, reason: null, entries };
 }
+
+/**
+ * Which sessions of a weekend have been scored, and which of them the viewer
+ * actually played.
+ *
+ * Drives the weekend board's session filter. The filter needs to offer only
+ * sessions that have scores — an empty "Sprint" tab on a non-sprint weekend is
+ * worse than no tab — and the page needs to know where to open: someone who
+ * picked one session of four should land on that session's board rather than
+ * on a combined one they are structurally last in.
+ *
+ * Counts are of distinct players per session, so the tab can say how many
+ * people a rank is out of.
+ */
+export const getRaceSessionBreakdown = query({
+  args: { raceId: v.id('races') },
+  handler: async (ctx, args) => {
+    const viewer = await getViewer(ctx);
+
+    type SessionRow = {
+      players: Set<string>;
+      viewerScored: boolean;
+    };
+    const bySession = new Map<SessionType, SessionRow>();
+
+    function record(sessionType: SessionType, userId: Id<'users'>) {
+      let row = bySession.get(sessionType);
+      if (!row) {
+        row = { players: new Set(), viewerScored: false };
+        bySession.set(sessionType, row);
+      }
+      row.players.add(userId);
+      if (viewer && userId === viewer._id) {
+        row.viewerScored = true;
+      }
+    }
+
+    for await (const score of ctx.db
+      .query('scores')
+      .withIndex('by_race_session', (q) => q.eq('raceId', args.raceId))) {
+      record(score.sessionType, score.userId);
+    }
+    // A player can have team-mate points in a session without a Top 5 there,
+    // so both tables feed the same roll-up. Otherwise a duels-only entry would
+    // be missing from the count of the very board it appears on.
+    for await (const score of ctx.db
+      .query('h2hScores')
+      .withIndex('by_race_session', (q) => q.eq('raceId', args.raceId))) {
+      record(score.sessionType, score.userId);
+    }
+
+    const race = await ctx.db.get('races', args.raceId);
+    const order = getSessionsForWeekend(race?.hasSprint ?? false);
+
+    const sessions = order
+      .filter((sessionType) => bySession.has(sessionType))
+      .map((sessionType) => {
+        const row = bySession.get(sessionType)!;
+        return {
+          sessionType,
+          playerCount: row.players.size,
+          viewerScored: row.viewerScored,
+        };
+      });
+
+    return {
+      sessions,
+      viewerSessionCount: sessions.filter((s) => s.viewerScored).length,
+    };
+  },
+});

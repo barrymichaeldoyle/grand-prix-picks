@@ -3,6 +3,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 
 import { ErrorBoundary } from '@/components/error/ErrorBoundary';
 import { InlineLoader } from '@/components/InlineLoader';
+import { useViewerSession } from '@/integrations/clerk/useViewerSession';
 import { PICKS_ANCHOR, useRegisterPicksAnchor } from '@/lib/picksAnchor';
 import type { RaceWriteupPhase } from '@/lib/raceWriteupPhase';
 
@@ -73,6 +74,21 @@ export function DeferredRaceWriteupPicks({
   const [shouldLoad, setShouldLoad] = useState(false);
   useRegisterPicksAnchor();
   const copy = copyForPhase(phase, venueName);
+  // SSR-resolved, so this matches on the server and does not reflow the
+  // section once Clerk boots.
+  const { isSignedIn } = useViewerSession();
+  /*
+   * The hub's job for a signed-out visitor is one decision: make five picks
+   * and sign in to keep them. These are two links out of that decision, placed
+   * between the heading and the picker, and on this page they are the only
+   * thing between a stranger and the form. So the hub shows them once there is
+   * no conversion left to lose.
+   *
+   * The write-ups keep them either way. They are editorial pages that search
+   * sends people to and were terminal without this line, and it is where the
+   * HTML a crawler reads links to the round the piece is about.
+   */
+  const showNextLinks = surface === 'writeup' || isSignedIn;
 
   useEffect(() => {
     if (shouldLoad) {
@@ -119,13 +135,15 @@ export function DeferredRaceWriteupPicks({
           {copy.heading}
         </h2>
         <p className="gpp-reading-copy mt-2 text-text-muted">{copy.body}</p>
-        <RaceWriteupNextLinks
-          placement={
-            surface === 'writeup' ? 'picks_section' : 'hub_picks_section'
-          }
-          raceSlug={raceSlug}
-          venueName={venueName}
-        />
+        {showNextLinks ? (
+          <RaceWriteupNextLinks
+            placement={
+              surface === 'writeup' ? 'picks_section' : 'hub_picks_section'
+            }
+            raceSlug={raceSlug}
+            venueName={venueName}
+          />
+        ) : null}
       </div>
 
       <div className="mt-7">

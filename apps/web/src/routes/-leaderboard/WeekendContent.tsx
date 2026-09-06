@@ -8,16 +8,21 @@ import { LeaderboardBoard } from './board';
 import { FollowingGuard } from './FollowingContent';
 import { LeaderboardContentLoader } from './rows';
 import type { RaceLeaderboardResult, Scope } from './types';
+import type { SessionScope } from './sessionScope';
+import { SESSION_LABELS } from '@/lib/sessions';
 import { NoticeCard } from '@/components/NoticeCard';
 
 export function WeekendContent({
   defaultRace,
   scope,
+  sessionScope = 'all',
   isSignedIn,
   activeData,
 }: {
   defaultRace: WeekendRace | null;
   scope: Scope;
+  /** Which slice of the weekend is ranked, so an empty board can name it. */
+  sessionScope?: SessionScope;
   isSignedIn: boolean | undefined;
   activeData: RaceLeaderboardResult | null;
 }) {
@@ -60,13 +65,20 @@ export function WeekendContent({
   const entries = activeData.entries;
 
   if (entries.length === 0) {
+    // Named, because "this weekend" is wrong when the board is one session of
+    // it: a player looking at an empty Sprint board should not be told nobody
+    // predicted the weekend they can see results for.
+    const emptyLabel =
+      sessionScope === 'all'
+        ? 'this weekend'
+        : SESSION_LABELS[sessionScope].toLowerCase();
     return (
       <NoticeCard
         icon={Trophy}
         title="No scores yet"
         description={
           defaultRace.status === 'finished'
-            ? 'No predictions were submitted for this weekend.'
+            ? `No predictions were submitted for ${emptyLabel}.`
             : 'Scores will appear once race results are published.'
         }
       />
