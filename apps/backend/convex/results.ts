@@ -10,7 +10,7 @@ import { v } from 'convex/values';
 
 import { internal } from './_generated/api';
 import type { Doc, Id } from './_generated/dataModel';
-import type { MutationCtx } from './_generated/server';
+import type { MutationCtx, QueryCtx } from './_generated/server';
 import { internalMutation, mutation, query } from './_generated/server';
 import {
   getOrCreateViewer,
@@ -18,7 +18,8 @@ import {
   requireAdmin,
   requireViewer,
 } from './lib/auth';
-import { coversRound } from './lib/lineups';
+import type { Stint } from './lib/lineups';
+import { coversRound, loadStintsForSeason, teamForRound } from './lib/lineups';
 import { nextRecheckAt } from './lib/recheckSchedule';
 import { scoreTopFive } from './lib/scoring';
 import { toUserIdentity } from './lib/userIdentity';
@@ -560,6 +561,16 @@ export const getResultForRace = query({
       return null;
     }
 
+    // Round-scoped team colour. `drivers.team` is the driver's team *now*, so
+    // reading it here paints a past result in the colours of a seat the driver
+    // has since moved to, which is the one thing CLAUDE.md says never to do
+    // with that field. Harmless until the first mid-season swap of a season,
+    // and silently wrong on every earlier weekend after it.
+    const race = await ctx.db.get(args.raceId);
+    const stints = race
+      ? await loadStintsForSeason(ctx, race.season)
+      : new Map<string, Stint[]>();
+
     // Enrich classification with driver details. `status` is set only for
     // drivers who are not ranked finishers, so the UI can show DNF/DNS/DSQ
     // instead of implying they finished at their tail position.
@@ -579,7 +590,10 @@ export const getResultForRace = query({
             code: driver?.code ?? '???',
             displayName: driver?.displayName ?? 'Unknown',
             number: driver?.number ?? null,
-            team: driver?.team ?? null,
+            team:
+              (race ? teamForRound(stints, driverId, race.round) : null) ??
+              driver?.team ??
+              null,
             nationality: driver?.nationality ?? null,
             status: statusByDriver.get(driverId) ?? null,
           };
@@ -629,10 +643,27 @@ export const getAllResultsForRace = query({
 export const getEnrichedTop5BySession = query({
   args: { raceId: v.id('races') },
   handler: async (ctx, args) => {
+    const race = await ctx.db.get(args.raceId);
+    if (!race) {
+      return {};
+    }
+    return await enrichedTop5BySession(ctx, race);
+  },
+});
+
+async function enrichedTop5BySession(ctx: QueryCtx, race: Doc<'races'>) {
+  {
     const results = await ctx.db
       .query('results')
-      .withIndex('by_race_session', (q) => q.eq('raceId', args.raceId))
+      .withIndex('by_race_session', (q) => q.eq('raceId', race._id))
       .take(8);
+
+    // Round-scoped, like the consensus table this renders beside. `drivers.team`
+    // is the driver's team *now*, so reading it here painted a past result in
+    // the colours of a seat the driver had since moved to: the one thing
+    // CLAUDE.md says never to do with it. Harmless until the first mid-season
+    // swap, and then silently wrong on every archived weekend before it.
+    const stints = await loadStintsForSeason(ctx, race.season);
 
     const bySession: Partial<
       Record<
@@ -660,7 +691,10 @@ export const getEnrichedTop5BySession = query({
             code: driver?.code ?? '???',
             displayName: driver?.displayName ?? 'Unknown',
             number: driver?.number ?? null,
-            team: driver?.team ?? null,
+            team:
+              teamForRound(stints, driverId, race.round) ??
+              driver?.team ??
+              null,
             nationality: driver?.nationality ?? null,
           };
         }),
@@ -669,6 +703,32 @@ export const getEnrichedTop5BySession = query({
     }
 
     return bySession;
+  }
+}
+
+/**
+ * The same top fives, resolved from a slug instead of an id.
+ *
+ * Editorial write-up routes know their race by slug and nothing else. Asking
+ * for the id first and the results second would put their archive behind a
+ * second round trip, and the archive is the half of a finished write-up that a
+ * crawler is there to read, so it has to arrive in the first wave.
+ *
+ * Empty for an unknown slug and for a weekend with nothing published, which is
+ * the same answer the id-keyed query gives and lets a preview page call it
+ * unconditionally.
+ */
+export const getEnrichedTop5BySessionForRaceSlug = query({
+  args: { raceSlug: v.string() },
+  handler: async (ctx, args) => {
+    const race = await ctx.db
+      .query('races')
+      .withIndex('by_slug', (q) => q.eq('slug', args.raceSlug))
+      .unique();
+    if (!race) {
+      return {};
+    }
+    return await enrichedTop5BySession(ctx, race);
   },
 });
 
