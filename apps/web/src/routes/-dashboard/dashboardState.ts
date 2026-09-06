@@ -274,3 +274,31 @@ export function firstSessionLockAt(
   }
   return earliest;
 }
+
+/**
+ * Whether the picks card belongs below the feed rather than above it.
+ *
+ * True exactly while the page is leading with a *different* weekend to the one
+ * the picker is about: a Grand Prix has just run or is still running, and the
+ * calendar has already moved on to a round whose first session is days away.
+ * Everything on the page about the race in hand — the recap card, and the
+ * feed's live board for the session on track — then reads as one block,
+ * instead of being split down the middle by a picker for a weekend that has
+ * not started.
+ *
+ * When the recap and the picker are the same race the order is untouched: the
+ * picks card is then this weekend's own saved picks, which is exactly what
+ * someone reading about the session wants next.
+ *
+ * Takes the already-promoted recap, so the results-first window governs both
+ * this and the recap card rather than there being a second clock to disagree
+ * with the first.
+ */
+export function picksFollowFeed(
+  promotedRecap: { race: { id: string } } | null,
+  currentWeekendRaceId: string | undefined,
+): boolean {
+  return (
+    promotedRecap !== null && promotedRecap.race.id !== currentWeekendRaceId
+  );
+}

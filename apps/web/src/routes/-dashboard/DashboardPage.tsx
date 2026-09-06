@@ -27,6 +27,7 @@ import type { DashboardSsrData } from './ssr';
 import {
   firstSessionLockAt,
   liveOrSsr,
+  picksFollowFeed,
   weekendPicksReady,
   weekendReflectsViewer,
 } from './dashboardState';
@@ -180,6 +181,24 @@ export function DashboardPage({
       latestResultReady,
   );
 
+  const pickerFollowsFeed = picksFollowFeed(
+    promotedRecap,
+    currentWeekend?.race._id,
+  );
+
+  const picksCard = (
+    <DashboardWeekendPicks
+      leading={promotedRecap === null}
+      weekend={currentWeekend}
+      weather={weather}
+      weatherNow={weatherNow}
+      initialDrivers={initialDrivers}
+      initialMatchups={initialMatchups}
+      initialPredictions={initialDashboard?.predictions ?? null}
+      initialH2H={initialDashboard?.h2h ?? null}
+    />
+  );
+
   const practiceCard = currentWeekend ? (
     <DashboardPracticeCard
       key={currentWeekend.race._id}
@@ -263,16 +282,7 @@ export function DashboardPage({
     >
       {promotedRecap ? <RaceRecapCard recap={promotedRecap} /> : null}
 
-      <DashboardWeekendPicks
-        leading={promotedRecap === null}
-        weekend={currentWeekend}
-        weather={weather}
-        weatherNow={weatherNow}
-        initialDrivers={initialDrivers}
-        initialMatchups={initialMatchups}
-        initialPredictions={initialDashboard?.predictions ?? null}
-        initialH2H={initialDashboard?.h2h ?? null}
-      />
+      {pickerFollowsFeed ? null : picksCard}
 
       {/* Under the picks: practice informs the pick above it but scores
           nothing, so it must not lead. Keyed by race so the disclosure state
@@ -288,9 +298,15 @@ export function DashboardPage({
         initialPage={initialDashboard?.feedPreview}
         /* The picks card above is spinning on exactly the loads where this
            section has no seed either, so let it do the waiting for both. One
-           spinner on the page, not two. */
-        showLoader={weekendPicksReady(currentWeekend)}
+           spinner on the page, not two. Unless the picks card has moved below
+           this one, in which case there is nothing above to wait on its
+           behalf. */
+        showLoader={pickerFollowsFeed || weekendPicksReady(currentWeekend)}
       />
+
+      {/* Demoted below the feed for the length of the results-first window;
+          see `pickerFollowsFeed`. */}
+      {pickerFollowsFeed ? picksCard : null}
 
       {/* After the lock, below the feed rather than above it. See
           `practiceLeadsFeed`. */}

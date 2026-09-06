@@ -7,6 +7,7 @@ import {
   getSessionClockState,
   liveOrSsr,
   nextSessionTabIndex,
+  picksFollowFeed,
   weekendReflectsViewer,
 } from './dashboardState';
 
@@ -292,5 +293,33 @@ describe('firstSessionLockAt', () => {
     // place above the feed rather than being demoted by a missing schedule.
     expect(firstSessionLockAt([session({ lockAt: null })])).toBeNull();
     expect(firstSessionLockAt([])).toBeNull();
+  });
+});
+
+describe('picksFollowFeed', () => {
+  const monza = { race: { id: 'monza' } };
+
+  it('demotes the picker when the page leads with a different weekend', () => {
+    // Monza is running or has just run; the calendar has already moved to
+    // Madrid, whose first session is days away.
+    expect(picksFollowFeed(monza, 'madrid')).toBe(true);
+  });
+
+  it('leaves the picker in place when it is the same weekend', () => {
+    // The card below the recap is then this race's own saved picks, which is
+    // what someone reading about the session wants next.
+    expect(picksFollowFeed(monza, 'monza')).toBe(false);
+  });
+
+  it('leaves the picker in place outside the results-first window', () => {
+    // Null is what `promotedRaceRecap` returns once the window closes, so the
+    // ordering reverts without a second clock of its own.
+    expect(picksFollowFeed(null, 'madrid')).toBe(false);
+  });
+
+  it('demotes the picker while the weekend query has not answered', () => {
+    // No current weekend means no picks card worth leading with either, and
+    // the race being reported on is the only thing on the page.
+    expect(picksFollowFeed(monza, undefined)).toBe(true);
   });
 });
