@@ -19,16 +19,20 @@ const RaceWriteupPicksForm = lazy(() =>
 );
 
 function copyForPhase(phase: RaceWriteupPhase, venueName: string) {
+  // Deliberately says nothing about team-mate battles, even though the section
+  // below carries them for a signed-in player. This copy is server-rendered and
+  // the duels are not offered to a signed-out visitor, so naming them here
+  // would promise a stranger something the page then withholds.
   if (phase === 'race-picks') {
     return {
       heading: 'Make your race picks',
-      body: 'Qualifying is locked. Your race Top 5 and team-mate picks stay open until the race starts.',
+      body: 'Qualifying picks are locked. You can change your race Top 5 until the race locks.',
     };
   }
 
   return {
     heading: `Make your ${venueName} picks`,
-    body: 'Pick your Top 5 and who wins each team-mate battle. Both stay open until that session starts.',
+    body: 'Choose your Top 5 for qualifying and the race. You can change each set until that session locks.',
   };
 }
 
