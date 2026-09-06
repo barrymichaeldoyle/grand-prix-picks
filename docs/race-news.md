@@ -142,6 +142,41 @@ because it is a public page, the grid is what the reader searched for, and a
 crawler does not press buttons. The feed closes on the top ten, because a card
 twenty-two rows tall pushes the sessions either side of it off the screen.
 
+## Why a driver starts where they do
+
+A grid row's `note` says _what_ ("3-place penalty", "Pit lane"). The story
+behind it is usually already published as its own item, so `newsKey` on the
+entry points at it and the write-up turns the note into a link to that card.
+
+```json
+{
+  "position": 6,
+  "code": "PIA",
+  "note": "3-place penalty",
+  "newsKey": "piastri-monza-grid-penalty"
+}
+```
+
+**State it; never match on the driver.** Antonelli had three Monza items, and
+the first one found by code would have captioned his grid slot with the tow he
+was giving Russell. Publishing validates the key against the weekend's active
+items and refuses an unknown one, a retracted one, or the grid pointing at
+itself.
+
+**Only the key is stored.** The headline the reader sees is resolved from the
+item at render, so correcting a penalty story corrects the grid caption with
+it. Monza proved why that matters: the grid went out on Saturday evening and
+Lawson's story changed on Sunday morning.
+
+**A link needs a note**, because the note is what the reader clicks. That also
+covers the case where a driver is exactly where qualifying left them and the
+story is why qualifying went badly: give the row its reason too, e.g.
+`{"code": "VER", "note": "Rear axle problem", "newsKey": "verstappen-rear-axle-monza"}`.
+
+Set it on the rows that raise the question, not on every row. A driver who
+qualified where they start prompts nothing, and a grid where every row is
+underlined is a grid nobody reads.
+
 ## Two dates, two jobs
 
 `publishedAt` is when we published. `sourcePublishedAt` is when the source did,

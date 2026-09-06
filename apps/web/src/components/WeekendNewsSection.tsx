@@ -65,6 +65,11 @@ type NewsItem = {
  * headline cannot say at a glance, and `affectsSessions` is still required when
  * publishing (see `docs/race-news.md`) and still shown in the feed.
  */
+/** Namespaced, so a news key can never collide with another id on the page. */
+function cardId(key: string) {
+  return `news-${key}`;
+}
+
 export function WeekendNewsSection({ items }: { items: NewsItem[] }) {
   if (items.length === 0) {
     return null;
@@ -87,6 +92,19 @@ export function WeekendNewsSection({ items }: { items: NewsItem[] }) {
     (total, item) => total + (item.startingGrid?.length ? 2 : 1),
     0,
   );
+  // The grid's rows link to the cards beside them, which this section already
+  // holds: nothing is fetched and nothing is copied, so correcting a penalty
+  // story corrects the caption on the grid with it. A key with no card left
+  // (retracted after the grid went out) resolves to nothing and the note falls
+  // back to plain text, rather than to a link that goes nowhere.
+  const byKey = new Map(items.map((item) => [item.key, item]));
+  function newsLink(newsKey: string) {
+    const target = byKey.get(newsKey);
+    return target
+      ? { href: `#${cardId(target.key)}`, headline: target.headline }
+      : undefined;
+  }
+
   const spanningKey =
     items.length >= 3 && cells % 2 === 1
       ? items.find((item) => item.writeUpImage && !item.startingGrid?.length)
@@ -126,7 +144,13 @@ export function WeekendNewsSection({ items }: { items: NewsItem[] }) {
             // attribution sit at a different height across the grid.
             <article
               key={item.key}
-              className={`flex flex-col bg-surface p-4 sm:p-6 ${
+              // The anchor a grid row jumps to. `styles.css` gives an
+              // `article[id]` its scroll offset under the sticky header, and
+              // `target:` marks which card answered the question: landing
+              // mid-page in a two-column grid of near-identical cards, the
+              // reader otherwise has to work out which one moved.
+              id={cardId(item.key)}
+              className={`flex flex-col bg-surface p-4 target:outline-2 target:outline-offset-[-2px] target:outline-accent sm:p-6 ${
                 item.startingGrid?.length
                   ? // Both columns. Eleven rows beside eleven only fits if the
                     // card is the full width of the section.
@@ -165,7 +189,11 @@ export function WeekendNewsSection({ items }: { items: NewsItem[] }) {
                   is a grid a reader can take in at once, where twenty-two in a
                   line is a scroll. */}
               {item.startingGrid && item.startingGrid.length > 0 ? (
-                <StartingGridTable entries={item.startingGrid} columns={2} />
+                <StartingGridTable
+                  entries={item.startingGrid}
+                  columns={2}
+                  newsLink={newsLink}
+                />
               ) : null}
               {/* No rule above it. The grid already draws a line between every
                   card, and stacked one column wide that put a second hairline a

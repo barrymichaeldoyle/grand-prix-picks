@@ -164,6 +164,19 @@ the rest a tap away. Both read the one record, so a correction fixes both.
   `3-place penalty`, `Engine penalty`, `Pit lane`. It is a caption beside a
   name, not a sentence, and it is capped at 60 characters. Leave it off for
   anyone starting where they qualified.
+- **`newsKey` links the note to the story behind it**, by the `key` of another
+  item on the same weekend:
+  `{"position": 6, "code": "PIA", "note": "3-place penalty", "newsKey": "piastri-monza-grid-penalty"}`.
+  The write-up turns the note into a link to that card. State it rather than
+  letting anything match on the driver: Antonelli had three Monza items, and
+  the first one found by code would have captioned his grid slot with the tow
+  he was giving Russell. Publishing refuses a key with no active item, and
+  refuses the grid pointing at itself, so publish the stories before the grid.
+  A `newsKey` needs a `note`, because the note is what the reader clicks: that
+  also covers a driver who is where qualifying left them and the story is why
+  qualifying went badly, e.g.
+  `{"code": "VER", "note": "Rear axle problem", "newsKey": "verstappen-rear-axle-monza"}`.
+  Set it on the rows that raise the question, not on every row.
 - **`affectsSessions` is `["race"]`.** A grid is where a race starts from. It
   does not touch the qualifying classification, which is what we score quali
   on: see `/results-policy`.

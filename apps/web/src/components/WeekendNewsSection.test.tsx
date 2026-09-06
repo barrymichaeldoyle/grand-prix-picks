@@ -42,6 +42,63 @@ function render(items: Parameters<typeof WeekendNewsSection>[0]['items']) {
   act(() => root.render(<WeekendNewsSection items={items} />));
 }
 
+const gridItem = {
+  key: 'monza-starting-grid',
+  headline: 'The Monza grid is set',
+  body: 'Gasly starts his maiden pole.',
+  affectsSessions: ['race'],
+  sourceName: 'Formula 1',
+  sourceUrl: 'https://www.formula1.com/en/latest/article/grid',
+  startingGrid: [
+    { position: 1, code: 'GAS', displayName: 'Pierre Gasly', team: 'Alpine' },
+    {
+      position: 2,
+      code: 'PIA',
+      displayName: 'Oscar Piastri',
+      team: 'McLaren',
+      note: '3-place penalty',
+      newsKey: 'piastri-monza-grid-penalty',
+    },
+  ],
+};
+
+const penaltyItem = {
+  ...item,
+  key: 'piastri-monza-grid-penalty',
+  headline: 'Piastri drops to sixth on the Monza grid',
+};
+
+describe('WeekendNewsSection grid links', () => {
+  it('links a row note to the card that explains it', () => {
+    render([gridItem, penaltyItem]);
+    const link = container.querySelector('a[href^="#news-"]');
+    expect(link?.getAttribute('href')).toBe('#news-piastri-monza-grid-penalty');
+    // The visible text stays the caption; the label is what makes the link
+    // make sense read on its own.
+    expect(link?.textContent).toBe('3-place penalty');
+    expect(link?.getAttribute('aria-label')).toBe(
+      'Why Oscar Piastri starts P2: Piastri drops to sixth on the Monza grid',
+    );
+  });
+
+  it('anchors the card the row points at', () => {
+    render([gridItem, penaltyItem]);
+    // The jump target has to exist, or the link scrolls nowhere and the reader
+    // is left on a grid wondering what happened.
+    expect(
+      container.querySelector('#news-piastri-monza-grid-penalty'),
+    ).not.toBeNull();
+  });
+
+  it('falls back to a plain note when the story is no longer there', () => {
+    // A story retracted after the grid went out. A caption that reads normally
+    // beats a link that scrolls to nothing.
+    render([gridItem]);
+    expect(container.querySelector('a[href^="#news-"]')).toBeNull();
+    expect(container.textContent).toContain('3-place penalty');
+  });
+});
+
 describe('WeekendNewsSection source date', () => {
   it('shows when the source published the story', () => {
     render([

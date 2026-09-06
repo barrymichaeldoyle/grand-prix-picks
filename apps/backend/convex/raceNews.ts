@@ -106,6 +106,7 @@ export function resolveStartingGrid(
       displayName: driver?.displayName ?? entry.code,
       team: driver?.team ?? null,
       ...(entry.note !== undefined ? { note: entry.note } : {}),
+      ...(entry.newsKey !== undefined ? { newsKey: entry.newsKey } : {}),
     };
   });
 }
@@ -497,7 +498,12 @@ export const publish = internalMutation({
     // never renders. An agent re-running this needs the failure to be loud.
     const resolved = await resolveDriverCodes(ctx, args.driverCodes);
     const driverCodes = resolved?.codes;
-    const grid = await resolveGridForPublish(ctx, args.startingGrid);
+    const grid = await resolveGridForPublish(
+      ctx,
+      race._id,
+      args.key,
+      args.startingGrid,
+    );
 
     const existing = await newsByKey(ctx, race._id, args.key);
     const now = Date.now();
@@ -525,6 +531,7 @@ export const publish = internalMutation({
         // but well-formed timestamp is the one mistake validation cannot catch,
         // and nobody proof-reads 1788680139597.
         sourcePublished: isoDay(args.sourcePublishedAt),
+        gridNewsLinks: grid?.resolved.filter((entry) => entry.newsKey).length,
         race: { slug: race.slug, name: race.name, round: race.round },
         key: args.key,
         headline: args.headline,
@@ -757,8 +764,56 @@ async function resolveDriverCodes(
  * feed event freezes. Doing it once here is what stops the stored grid and the
  * feed's copy of it disagreeing about who is on it.
  */
+/**
+ * Refuse a grid that points at a story this weekend does not have.
+ *
+ * The same loudness as an unknown driver code, and for the same reason: a row
+ * whose link goes nowhere looks exactly like every other row until somebody
+ * taps it. Checked against active items only, so retracting a penalty story
+ * cannot leave the grid quietly linking to it.
+ */
+async function assertGridNewsKeysExist(
+  ctx: MutationCtx,
+  raceId: Id<'races'>,
+  ownKey: string,
+  entries: StartingGridEntry[],
+) {
+  const wanted = new Set(
+    entries.flatMap((entry) => (entry.newsKey ? [entry.newsKey] : [])),
+  );
+  if (wanted.size === 0) {
+    return;
+  }
+
+  // The grid explaining itself would be a row linking to the page it is on.
+  if (wanted.has(ownKey)) {
+    throw new Error(
+      `A grid row points at "${ownKey}", which is the item carrying the grid. ` +
+        'Point it at the story that explains the row.',
+    );
+  }
+
+  const published = await ctx.db
+    .query('raceNews')
+    .withIndex('by_race', (q) => q.eq('raceId', raceId))
+    .take(MAX_NEWS_PER_RACE);
+  const live = new Set(
+    published.filter((row) => row.active).map((row) => row.key),
+  );
+  const missing = [...wanted].filter((key) => !live.has(key));
+  if (missing.length > 0) {
+    throw new Error(
+      `No active news item on this race for: ${missing.join(', ')}. ` +
+        'Publish the story before the grid that links to it, and check the key ' +
+        'with raceNews:list.',
+    );
+  }
+}
+
 async function resolveGridForPublish(
   ctx: MutationCtx,
+  raceId: Id<'races'>,
+  ownKey: string,
   entries: StartingGridEntry[] | undefined,
 ): Promise<
   | { stored: StartingGridEntry[]; resolved: ResolvedStartingGridEntry[] }
@@ -782,11 +837,14 @@ async function resolveGridForPublish(
   const byCode = new Map(
     (resolved?.drivers ?? []).map((driver) => [driver.code, driver]),
   );
+  await assertGridNewsKeysExist(ctx, raceId, ownKey, entries);
+
   const stored = sortStartingGrid(
     entries.map((entry) => ({
       position: entry.position,
       code: entry.code.toUpperCase(),
       ...(entry.note !== undefined ? { note: entry.note } : {}),
+      ...(entry.newsKey !== undefined ? { newsKey: entry.newsKey } : {}),
     })),
   );
 

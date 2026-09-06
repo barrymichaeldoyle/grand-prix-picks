@@ -9,7 +9,21 @@ export type StartingGridEntry = {
   displayName: string;
   team: string | null;
   note?: string;
+  /** The news item that explains `note`, by key. Never rendered on its own. */
+  newsKey?: string;
 };
+
+/**
+ * Where a row's note should send the reader, and what to call the destination.
+ *
+ * A function rather than a URL on the entry, because the answer belongs to the
+ * surface: the write-up page has the explaining card a few hundred pixels away
+ * and links to it, and any surface that does not carry the item passes nothing
+ * and gets a plain caption back.
+ */
+export type GridNewsLink = (
+  newsKey: string,
+) => { href: string; headline: string } | undefined;
 
 /**
  * The confirmed grid, as published on the news item that announced it.
@@ -28,6 +42,7 @@ export function StartingGridTable({
   entries,
   collapsedRows,
   columns = 1,
+  newsLink,
 }: {
   entries: StartingGridEntry[];
   /**
@@ -41,6 +56,11 @@ export function StartingGridTable({
   collapsedRows?: number;
   /** Split into this many columns from `sm` up. */
   columns?: 1 | 2;
+  /**
+   * Resolves a row's `newsKey` to somewhere the reader can go. Omit on a
+   * surface that has no way to show the story, and the notes stay plain.
+   */
+  newsLink?: GridNewsLink;
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -61,7 +81,7 @@ export function StartingGridTable({
         }`}
       >
         {shown.map((entry) => (
-          <GridRow key={entry.code} entry={entry} />
+          <GridRow key={entry.code} entry={entry} newsLink={newsLink} />
         ))}
       </ol>
 
@@ -81,9 +101,16 @@ export function StartingGridTable({
   );
 }
 
-function GridRow({ entry }: { entry: StartingGridEntry }) {
+function GridRow({
+  entry,
+  newsLink,
+}: {
+  entry: StartingGridEntry;
+  newsLink?: GridNewsLink;
+}) {
   const colour =
     (entry.team ? TEAM_COLORS[entry.team] : null) ?? FALLBACK_TEAM_COLOR;
+  const link = entry.newsKey ? newsLink?.(entry.newsKey) : undefined;
 
   return (
     <li
@@ -101,7 +128,21 @@ function GridRow({ entry }: { entry: StartingGridEntry }) {
       <span className="min-w-0 flex-1 truncate text-sm text-text">
         {entry.displayName}
       </span>
-      {entry.note ? (
+      {/* The note is the caption and, where we published the story behind it,
+          the way to it: "3-place penalty" is exactly the point at which a
+          reader asks why. Linked rather than expanded in place, because a grid
+          is read as a shape and twenty-two rows carrying prose is a list of
+          paragraphs. The label spells out whose row it is, since "Pit lane" on
+          its own tells a screen reader nothing about where it leads. */}
+      {link && entry.note ? (
+        <a
+          href={link.href}
+          aria-label={`Why ${entry.displayName} starts P${entry.position}: ${link.headline}`}
+          className="gpp-touch-target shrink-0 text-xs text-text-muted underline decoration-border-strong underline-offset-4 hover:text-accent"
+        >
+          {entry.note}
+        </a>
+      ) : entry.note ? (
         <span className="shrink-0 text-xs text-text-muted">{entry.note}</span>
       ) : null}
     </li>

@@ -98,6 +98,31 @@ describe('validateStartingGrid', () => {
     expect(problem).toMatch(/3-place penalty/);
   });
 
+  it('refuses a news link on a row with no note', () => {
+    // The note is the link text, so a key without one is a link nobody can
+    // click: the row renders exactly as it did before and the story is lost.
+    const problem = validateStartingGrid([
+      { position: 1, code: 'GAS' },
+      { position: 2, code: 'VER', newsKey: 'verstappen-rear-axle-monza' },
+    ]);
+    expect(problem).toMatch(/P2/);
+    expect(problem).toMatch(/newsKey but no note/);
+  });
+
+  it('accepts a news link beside a note', () => {
+    expect(
+      validateStartingGrid([
+        { position: 1, code: 'GAS' },
+        {
+          position: 2,
+          code: 'PIA',
+          note: '3-place penalty',
+          newsKey: 'piastri-monza-grid-penalty',
+        },
+      ]),
+    ).toBeNull();
+  });
+
   it('refuses more entries than a field can hold', () => {
     const tooMany = grid(Array.from({ length: 31 }, (_, index) => `D${index}`));
     expect(validateStartingGrid(tooMany)).toMatch(/more than the 30/);

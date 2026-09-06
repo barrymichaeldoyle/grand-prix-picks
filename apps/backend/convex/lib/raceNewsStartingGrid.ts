@@ -25,6 +25,22 @@ export const raceNewsStartingGridEntryValidator = v.object({
    * Short: it renders as a caption beside the name, not as a sentence.
    */
   note: v.optional(v.string()),
+  /**
+   * The news item that explains the note, by `key`, e.g. a penalty item or the
+   * car problem that ruined a qualifying lap.
+   *
+   * Stated, never inferred from the driver. Matching on the code would be
+   * ambiguous the moment a driver has more than one story in a weekend:
+   * Antonelli had three at Monza, and the first one found would have captioned
+   * his grid slot with the tow he was giving Russell.
+   *
+   * Only the key is stored. The reader's copy is resolved from the item itself
+   * at render, so correcting a penalty story fixes the grid caption with it.
+   * Freezing the text here would be the same fact in two places, and this
+   * weekend proved it: the grid went out on Saturday evening and Lawson's
+   * story changed on Sunday morning.
+   */
+  newsKey: v.optional(v.string()),
 });
 
 export const raceNewsStartingGridValidator = v.array(
@@ -38,6 +54,7 @@ export const resolvedStartingGridEntryValidator = v.object({
   displayName: v.string(),
   team: v.union(v.string(), v.null()),
   note: v.optional(v.string()),
+  newsKey: v.optional(v.string()),
 });
 
 export const resolvedStartingGridValidator = v.array(
@@ -48,6 +65,7 @@ export type StartingGridEntry = {
   position: number;
   code: string;
   note?: string;
+  newsKey?: string;
 };
 
 export type ResolvedStartingGridEntry = {
@@ -56,6 +74,7 @@ export type ResolvedStartingGridEntry = {
   displayName: string;
   team: string | null;
   note?: string;
+  newsKey?: string;
 };
 
 /** Well above a full field, and still a bound on what a single read can carry. */
@@ -110,6 +129,17 @@ export function validateStartingGrid(
     return (
       `The note on P${longNote.position} is longer than ${MAX_NOTE_LENGTH} characters. ` +
       'A note is a caption beside a name, so keep it to the reason, e.g. "3-place penalty".'
+    );
+  }
+
+  const linkWithoutNote = entries.find(
+    (entry) => entry.newsKey !== undefined && !entry.note,
+  );
+  if (linkWithoutNote) {
+    return (
+      `P${linkWithoutNote.position} has a newsKey but no note. The note is what ` +
+      'the reader clicks, so give the row its reason too, e.g. ' +
+      '"Rear axle problem".'
     );
   }
 
