@@ -3,8 +3,8 @@
  *
  * What survives of it is the primitive the competition section still uses: a
  * points cell. Everything else on the page is plain type on the page colour.
- * The signed rank delta moved to `@/components/RankDelta`, which the dashboard
- * recap shares.
+ * The signed rank delta moved to `@/components/RankDelta`, which the standings
+ * tables share.
  */
 
 /**

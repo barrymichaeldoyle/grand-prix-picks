@@ -7,9 +7,8 @@ import { Minus, Triangle } from 'lucide-react';
  * a different statement from "did not move" and reads as NEW rather than a zero.
  *
  * Lives here rather than beside the landing page's timing tower, which is where
- * it started: the dashboard's race recap shows the same signed delta for the
- * viewer's own season position, and pulling it out of `-home` keeps the landing
- * chunk out of the signed-in bundle.
+ * it started: the standings tables show the same signed delta, and pulling it
+ * out of `-home` keeps the landing chunk out of their bundles.
  */
 export function RankDelta({ delta }: { delta: number | null }) {
   if (delta === null) {

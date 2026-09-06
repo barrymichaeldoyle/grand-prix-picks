@@ -411,7 +411,8 @@ export const RESULTS_FIRST_WINDOW_MS = 8 * 60 * 60 * 1000;
  * itself would keep answering `null` after the window opened and keep answering
  * with a race after it closed. The backend returns the race and the instant the
  * window ends; the client, which does have a clock, decides whether to promote
- * it. See `RaceRecapCard`.
+ * it. See `promotedRaceRecap` in the shared package, and the mobile
+ * `RaceRecapCard`, which is the one surface that still draws this.
  */
 const RECAP_LOOKBACK_MS = 24 * 60 * 60 * 1000;
 

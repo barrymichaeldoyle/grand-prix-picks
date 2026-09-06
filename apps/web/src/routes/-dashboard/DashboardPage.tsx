@@ -14,6 +14,7 @@ import { SuggestedFollowsCard } from '@/components/dashboard/SuggestedFollowsCar
 import type { H2HMatchup } from '@/components/H2HMatchupGrid';
 import { AdSlot } from '@/components/AdSlot';
 import { FeedContent } from '@/components/feed/FeedContent';
+import { sessionGroupKey } from '@/components/feed/groupFeedEvents';
 import { useAuthCurtainGate } from '@/integrations/clerk/auth-curtain';
 import { AD_SLOTS } from '@/lib/adsense';
 import { promotedRaceRecap } from '@grandprixpicks/shared/raceRecap';
@@ -22,7 +23,6 @@ import { useState } from 'react';
 
 import { DashboardPracticeCard } from './DashboardPracticeCard';
 import { DashboardWeekendPicks } from './DashboardWeekendPicks';
-import { RaceRecapCard } from './RaceRecapCard';
 import type { DashboardSsrData } from './ssr';
 import {
   firstSessionLockAt,
@@ -109,6 +109,13 @@ export function DashboardPage({
    * they did, and the calendar advancing the moment results are published took
    * that away from them.
    *
+   * What leads is the feed, not a card of its own. There used to be a recap
+   * card above it reporting the same race — the classified top five, the H2H
+   * winners, the followed players and what they scored — directly above a feed
+   * whose race-result group says all of that with the picks attached. One
+   * report per race: the feed's, because it is the one that shows the picks.
+   * All the recap has left to decide is the order below.
+   *
    * The backend applies no clock of its own — a Convex query re-runs when its
    * data changes, never because time passed — so it returns the race and the
    * instant the window closes, and the boundary is read here. See
@@ -186,22 +193,9 @@ export function DashboardPage({
     currentWeekend?.race._id,
   );
 
-  /*
-   * The recap card, unless a session is on track. The feed below is then
-   * reporting the same race as a live board, and the two were saying different
-   * things about the same player: this card's live numbers were the weekend
-   * total (qualifying included) and the feed's are the session being run. The
-   * race is what is happening, so the feed's board is the one that stays and
-   * this card comes back when the result publishes.
-   */
-  const recapCard =
-    promotedRecap && promotedRecap.status !== 'live' ? (
-      <RaceRecapCard recap={promotedRecap} />
-    ) : null;
-
   const picksCard = (
     <DashboardWeekendPicks
-      leading={recapCard === null}
+      leading={!pickerFollowsFeed}
       weekend={currentWeekend}
       weather={weather}
       weatherNow={weatherNow}
@@ -265,19 +259,17 @@ export function DashboardPage({
           <RailItem order={4}>
             <SuggestedFollowsCard />
           </RailItem>
+          {/* Carries the weekend total and position for the race that just
+              ran. It used to be suppressed while the recap card led the
+              centre column with the same two numbers; the recap card is gone,
+              so this is where they live again. */}
           <RailItem order={3}>
-            {/* Nothing here while the same race is leading the page. Two
-                cards reporting one result, a column apart, is the kind of
-                repetition the rail exists to avoid. */}
-            {promotedRecap !== null &&
-            latestScoredWeekend?.raceId === promotedRecap.race.id ? null : (
-              <LatestResultCard
-                weekend={latestScoredWeekend}
-                leaderboard={latestRaceLeaderboard}
-                loading={!latestResultReady}
-                hideWhenEmpty
-              />
-            )}
+            <LatestResultCard
+              weekend={latestScoredWeekend}
+              leaderboard={latestRaceLeaderboard}
+              loading={!latestResultReady}
+              hideWhenEmpty
+            />
           </RailItem>
           {/* Under the latest result, which is the moment a player has just
               seen how they did and has an opinion about the game. On a phone
@@ -293,8 +285,6 @@ export function DashboardPage({
         </>
       }
     >
-      {recapCard}
-
       {pickerFollowsFeed ? null : picksCard}
 
       {/* Under the picks: practice informs the pick above it but scores
@@ -311,15 +301,24 @@ export function DashboardPage({
         initialPage={initialDashboard?.feedPreview}
         /* The picks card above is spinning on exactly the loads where this
            section has no seed either, so let it do the waiting for both. One
-           spinner on the page, not two. Unless the picks card has moved below
+           spinner on the page, not two. Unless the picks card has moved into
            this one, in which case there is nothing above to wait on its
            behalf. */
         showLoader={pickerFollowsFeed || weekendPicksReady(currentWeekend)}
+        /* Inside the stream for the length of the results-first window, not
+           after it: the picker for the next round belongs directly under the
+           result of the race just run, and everything else in the feed —
+           qualifying, the week's activity, Load more — sits below both. See
+           `pickerFollowsFeed`. */
+        interleaved={
+          pickerFollowsFeed && promotedRecap
+            ? {
+                afterSessionKey: sessionGroupKey(promotedRecap.race.id, 'race'),
+                node: picksCard,
+              }
+            : null
+        }
       />
-
-      {/* Demoted below the feed for the length of the results-first window;
-          see `pickerFollowsFeed`. */}
-      {pickerFollowsFeed ? picksCard : null}
 
       {/* After the lock, below the feed rather than above it. See
           `practiceLeadsFeed`. */}

@@ -3,7 +3,7 @@ import type { FunctionReturnType } from 'convex/server';
 import { Link } from '@tanstack/react-router';
 import { useQuery } from '@/integrations/convex/query';
 import { Gauge, Trophy } from 'lucide-react';
-import { useState } from 'react';
+import { Fragment, type ReactNode, useState } from 'react';
 
 import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/Button/Button';
@@ -30,6 +30,7 @@ const MAX_EXTRA_PAGES = 4;
 export function FeedContent({
   initialPage,
   showLoader = true,
+  interleaved = null,
 }: {
   /**
    * The top of the feed as the server read it, so the section renders with rows
@@ -46,6 +47,26 @@ export function FeedContent({
    * so by the time the spinner above lifts the rows are normally already here.
    */
   showLoader?: boolean;
+  /**
+   * A block to render inside the stream rather than after it, directly under
+   * one session's group.
+   *
+   * The dashboard's picks card during the results-first window. The card
+   * belongs immediately under the race that just ran, and "under the race
+   * result" is a position in this stream, not a position on the page: dropping
+   * it below the whole feed put it after qualifying, after the week's activity
+   * and after the Load more button.
+   *
+   * Rendered exactly once whatever happens. If the named group is not in the
+   * loaded pages — the feed is still loading, the viewer follows nobody, the
+   * result has scrolled past the pages held — it falls to the bottom, which is
+   * where it used to live.
+   */
+  interleaved?: {
+    /** From `sessionGroupKey`, so the format is not spelled out twice. */
+    afterSessionKey: string;
+    node: ReactNode;
+  } | null;
 } = {}) {
   const [extraCursors, setExtraCursors] = useState<(string | null)[]>(
     Array(MAX_EXTRA_PAGES).fill(null),
@@ -113,11 +134,30 @@ export function FeedContent({
     });
   }
 
+  /**
+   * Every return below goes through this, so the interleaved block reaches the
+   * page on the empty and loading paths too — never twice, and never not at
+   * all. The group branch passes `placed` once it has already rendered it.
+   */
+  function withInterleaved(body: ReactNode, placed = false) {
+    if (!interleaved || placed) {
+      return body;
+    }
+    return (
+      <>
+        {body}
+        {interleaved.node}
+      </>
+    );
+  }
+
   if (page0 === undefined) {
     // One spinner, not four row skeletons. The rows that land here vary in
     // height and content, so the skeletons never stood in for anything in
     // particular: they just made the section flicker on every reload.
-    return showLoader ? <InlineLoader label="Loading activity" /> : null;
+    return withInterleaved(
+      showLoader ? <InlineLoader label="Loading activity" /> : null,
+    );
   }
 
   // Keep the merged feed chronological even while reactive pages refresh, and
@@ -135,12 +175,12 @@ export function FeedContent({
       myLeagues === undefined ||
       suggestedLeagueMembers === undefined
     ) {
-      return (
+      return withInterleaved(
         <FeedEmptyState
           icon={Gauge}
           title="Setting up your feed"
           message="Finding players and leagues to show here."
-        />
+        />,
       );
     }
 
@@ -149,7 +189,7 @@ export function FeedContent({
     const followsNobody = (followedIds?.length ?? 0) === 0;
 
     if (hasSuggestions && suggestedLeagueMembers) {
-      return (
+      return withInterleaved(
         <FeedEmptyState
           icon={Gauge}
           title="Start with people in your leagues"
@@ -192,7 +232,7 @@ export function FeedContent({
               </div>
             ))}
           </div>
-        </FeedEmptyState>
+        </FeedEmptyState>,
       );
     }
 
@@ -200,7 +240,7 @@ export function FeedContent({
       const topToFollow = (topPlayersForFollow?.entries ?? [])
         .filter((p) => !p.isViewer)
         .slice(0, 5);
-      return (
+      return withInterleaved(
         <FeedEmptyState
           icon={Gauge}
           title={
@@ -259,22 +299,33 @@ export function FeedContent({
               <Link to="/leaderboard">See full leaderboard</Link>
             </Button>
           </div>
-        </FeedEmptyState>
+        </FeedEmptyState>,
       );
     }
 
-    return (
+    return withInterleaved(
       <FeedEmptyState
         icon={Gauge}
         title="No recent activity yet"
         message="The players and leagues in your feed have not posted any new scores yet."
-      />
+      />,
     );
   }
 
   const groups = groupFeedEvents(allEvents);
 
-  return (
+  // Only when the group is actually here. Otherwise the block keeps its old
+  // place at the bottom, which is a worse position but never a missing card.
+  const slotAfter =
+    interleaved &&
+    groups.some(
+      (group) =>
+        group.kind === 'session' && group.key === interleaved.afterSessionKey,
+    )
+      ? interleaved.afterSessionKey
+      : null;
+
+  return withInterleaved(
     <div className="space-y-4">
       {groups.map((group) => {
         if (group.kind === 'standalone') {
@@ -285,12 +336,14 @@ export function FeedContent({
         }
         const session = allSessions[group.key];
         return (
-          <SessionGroup
-            key={group.key}
-            session={session}
-            events={group.events}
-            viewerId={me?._id}
-          />
+          <Fragment key={group.key}>
+            <SessionGroup
+              session={session}
+              events={group.events}
+              viewerId={me?._id}
+            />
+            {group.key === slotAfter ? interleaved?.node : null}
+          </Fragment>
         );
       })}
       {isLoadingMore && (
@@ -303,6 +356,7 @@ export function FeedContent({
           </Button>
         </div>
       )}
-    </div>
+    </div>,
+    slotAfter !== null,
   );
 }

@@ -38,11 +38,11 @@ const WEEKEND_CARD_BASE =
  * `leading` is whether this card is the first thing under the header.
  *
  * It usually is, and then it takes the negative top margin described above.
- * Inside the results-first window it is not: the race recap takes that place
- * and the picks card follows it, so the offset has to come off or the picks
- * card climbs over the recap. A stacked card also takes its top border back —
- * the leading card borrows the header's, and a card floating in the middle of
- * the page with only a bottom edge reads as unfinished.
+ * Inside the results-first window it is not: the feed leads with the race that
+ * just ran and the picks card follows it, so the offset has to come off or the
+ * picks card climbs over the feed. A stacked card also takes its top border
+ * back — the leading card borrows the header's, and a card floating in the
+ * middle of the page with only a bottom edge reads as unfinished.
  */
 export function weekendCardShell(leading: boolean) {
   return leading

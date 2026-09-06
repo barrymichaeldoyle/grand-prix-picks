@@ -5,6 +5,16 @@ type Groupable = {
   sessionType?: string;
 };
 
+/**
+ * The key a session block is collected under, and the only place its shape is
+ * spelled out. Callers that want to find a particular block in the rendered
+ * stream — the dashboard slots the picks card under the race result — build the
+ * key with this rather than re-deriving the format.
+ */
+export function sessionGroupKey(raceId: string, sessionType: string): string {
+  return `${raceId}_${sessionType}`;
+}
+
 export type FeedGroup<T> =
   | { kind: 'session'; key: string; events: T[] }
   | { kind: 'news'; events: T[] }
@@ -36,7 +46,7 @@ export function groupFeedEvents<T extends Groupable>(
       event.raceId &&
       event.sessionType
     ) {
-      const key = `${event.raceId}_${event.sessionType}`;
+      const key = sessionGroupKey(event.raceId, event.sessionType);
       let group = sessionGroups.get(key);
       if (!group) {
         group = { kind: 'session', key, events: [] };

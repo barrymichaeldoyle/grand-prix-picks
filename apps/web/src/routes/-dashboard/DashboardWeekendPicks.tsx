@@ -115,7 +115,7 @@ export function DashboardWeekendPicks({
    *  card filled in rather than an empty one. See `./ssr`. */
   initialPredictions?: MyWeekendPredictions;
   initialH2H?: MyH2HPredictions;
-  /** False while the race recap sits above this card; see `weekendCardShell`. */
+  /** False while the feed sits above this card; see `weekendCardShell`. */
   leading?: boolean;
 }) {
   // `undefined` (no answer yet) and the pre-auth payload both land here:
