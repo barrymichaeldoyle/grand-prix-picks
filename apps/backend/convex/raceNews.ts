@@ -601,6 +601,7 @@ export const publish = internalMutation({
       driverCodes,
       gridPositions: grid?.resolved.length,
       feedVisibleAt: heldBack ? feedVisibleAt : undefined,
+      gridNewsLinks: grid?.resolved.filter((entry) => entry.newsKey).length,
       sourcePublished: isoDay(
         args.sourcePublishedAt ?? existing?.sourcePublishedAt,
       ),
