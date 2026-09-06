@@ -15,17 +15,21 @@ build (the same way our Vercel projects deploy Convex during their build).
 2. `main` push:
    - `CI` runs again.
    - Cloudflare Pages builds **production** via `scripts/cloudflare-build.sh`,
-     which activates the Convex functions → runs the OpenF1 smoke test → runs
-     prod migrations → builds the web app against that backend → confirms the
+     which activates the Convex functions → runs prod migrations → runs the
+     OpenF1 smoke test → builds the web app against that backend → confirms the
      same Convex revision, then publishes. If a deployment check fails, the
      web build is not published.
 
-Immediately after the backend deploy, the build runs a read-only OpenF1 smoke
-test inside the production Convex environment. It verifies outbound access,
-session discovery, result parsing, DNF handling, and driver-number mappings.
-It does not publish results or write database records. A failure stops the web
-build. Override its historical fixture when necessary with
-`OPENF1_SMOKE_SESSION_KEY`.
+Migrations run before the smoke test on purpose: a driver seeded in the same
+deploy (`seed:seedDrivers`) must exist before the smoke test maps the driver
+numbers a session returns, or the check fails on a number the deploy was about
+to add.
+
+After the migrations, the build runs a read-only OpenF1 smoke test inside the
+production Convex environment. It verifies outbound access, session discovery,
+result parsing, DNF handling, and driver-number mappings. It does not publish
+results or write database records. A failure stops the web build. Override its
+historical fixture when necessary with `OPENF1_SMOKE_SESSION_KEY`.
 
 There is no GitHub Action that deploys Convex — production Convex deploys happen
 only via the Cloudflare Pages build. To deploy Convex by hand (e.g. Cloudflare is

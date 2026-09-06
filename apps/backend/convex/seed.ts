@@ -260,6 +260,54 @@ const F1_DRIVERS_2026 = [
     team: 'Cadillac',
     nationality: 'MX',
   },
+
+  // FP1 reserve drivers.
+  //
+  // These ran Monza FP1 in place of a race driver and carry their own OpenF1
+  // numbers. They are seeded so the post-deploy smoke test can map every
+  // number a session returns, but marked `reserve` so they never enter the
+  // pick pool: a reserve holds no race seat, and `team` is only their
+  // stand-in team for display. See `reserve` in the schema.
+  {
+    code: 'ARO',
+    givenName: 'Paul',
+    familyName: 'Aron',
+    displayName: 'Paul Aron',
+    number: 61,
+    team: 'Alpine',
+    nationality: 'EE',
+    reserve: true,
+  },
+  {
+    code: 'HER',
+    givenName: 'Colton',
+    familyName: 'Herta',
+    displayName: 'Colton Herta',
+    number: 25,
+    team: 'Cadillac',
+    nationality: 'US',
+    reserve: true,
+  },
+  {
+    code: 'IWA',
+    givenName: 'Ayumu',
+    familyName: 'Iwasa',
+    displayName: 'Ayumu Iwasa',
+    number: 36,
+    team: 'Red Bull Racing',
+    nationality: 'JP',
+    reserve: true,
+  },
+  {
+    code: 'BRW',
+    givenName: 'Luke',
+    familyName: 'Browning',
+    displayName: 'Luke Browning',
+    number: 46,
+    team: 'Williams',
+    nationality: 'GB',
+    reserve: true,
+  },
 ];
 
 export const seedDrivers = internalMutation({

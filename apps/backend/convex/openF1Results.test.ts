@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildSessionDiscoveryUrl,
+  DEFAULT_SMOKE_SESSION_KEY,
   getFallbackWindow,
   isLiveSessionRestriction,
+  isOpenF1NoResults,
   parseOpenF1Results,
   parseOpenF1Sessions,
 } from './openF1Results';
@@ -212,5 +214,33 @@ describe('OpenF1 live-session restriction', () => {
     ]) {
       expect(isLiveSessionRestriction(new Error(message)), message).toBe(false);
     }
+  });
+});
+
+describe('OpenF1 no-results response', () => {
+  it('matches the 404 raised before a session result is published', () => {
+    expect(
+      isOpenF1NoResults(
+        new Error(
+          'OpenF1 request failed with HTTP 404: {"detail":"No results found."}',
+        ),
+      ),
+    ).toBe(true);
+  });
+
+  it('does not match an unrelated 404', () => {
+    expect(
+      isOpenF1NoResults(
+        new Error(
+          'OpenF1 request failed with HTTP 404: {"detail":"Not found"}',
+        ),
+      ),
+    ).toBe(false);
+  });
+});
+
+describe('OpenF1 smoke test default session', () => {
+  it('matches the wrapper script default, so a hand-run reads the same session', () => {
+    expect(DEFAULT_SMOKE_SESSION_KEY).toBe(11334);
   });
 });

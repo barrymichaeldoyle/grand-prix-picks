@@ -290,6 +290,12 @@ const RATE_LIMIT_RETRIES = 4;
 const RATE_LIMIT_BACKOFF_MS = 2_000;
 const TOKEN_EXPIRY_SKEW_MS = 30_000;
 
+// The session the post-deploy smoke test reads when none is named. A finished
+// race with a full, stable grid, so the driver-number check has something to
+// verify. Kept in step with the wrapper script's default (smoke-openf1.mjs),
+// so a hand-run of `openF1Results:smokeTest` with no args reads the same one.
+export const DEFAULT_SMOKE_SESSION_KEY = 11334;
+
 let tokenCache: { accessToken: string; expiresAt: number } | null = null;
 
 export class OpenF1AuthenticationError extends Error {
@@ -397,6 +403,18 @@ const LIVE_SESSION_RESTRICTION = /live .*session in progress/i;
 
 export function isLiveSessionRestriction(error: unknown): boolean {
   return LIVE_SESSION_RESTRICTION.test(errorMessage(error));
+}
+
+/**
+ * OpenF1 answers 404 with this body for a session whose result is not published
+ * yet, which is routine right after a session and before its classification
+ * lands. Like the live-session block, it is a "come back later", not the schema
+ * change the smoke test exists to catch.
+ */
+const OPEN_F1_NO_RESULTS = /no results found/i;
+
+export function isOpenF1NoResults(error: unknown): boolean {
+  return OPEN_F1_NO_RESULTS.test(errorMessage(error));
 }
 
 /**
@@ -714,7 +732,7 @@ export const getDuePolls = internalQuery({
 export const getDriverNumberMap = internalQuery({
   args: {},
   handler: async (ctx) => {
-    const drivers = await ctx.db.query('drivers').take(40);
+    const drivers = await ctx.db.query('drivers').take(60);
     return drivers.flatMap((driver) =>
       driver.number === undefined
         ? []
@@ -1052,7 +1070,7 @@ export const adminPreviewLiveResults = action({
 export const getDriverDisplayMap = internalQuery({
   args: {},
   handler: async (ctx) => {
-    const drivers = await ctx.db.query('drivers').take(40);
+    const drivers = await ctx.db.query('drivers').take(60);
     return drivers.flatMap((driver) =>
       driver.number === undefined
         ? []
@@ -1075,10 +1093,11 @@ export const getDriverDisplayMap = internalQuery({
  * validation, and the deployed driver-number mapping without writing data.
  */
 export const smokeTest = internalAction({
-  args: { sessionKey: v.number() },
+  args: { sessionKey: v.optional(v.number()) },
   handler: async (ctx, args) => {
+    const sessionKey = args.sessionKey ?? DEFAULT_SMOKE_SESSION_KEY;
     try {
-      return await runSmokeTest(ctx, args.sessionKey);
+      return await runSmokeTest(ctx, sessionKey);
     } catch (error) {
       // A live-session block is not a failed smoke test, and failing the
       // deploy on it means the app cannot ship on a race weekend -- the one
@@ -1102,6 +1121,14 @@ export const smokeTest = internalAction({
             'Paid access is unavailable; anonymous result polling remains enabled.',
         );
         return { ok: true, skipped: 'authentication_unavailable' as const };
+      }
+      if (isOpenF1NoResults(error)) {
+        console.warn(
+          `OpenF1 smoke test skipped: ${errorMessage(error)}. ` +
+            'The session result is not published yet and lands once it is. ' +
+            'Not treated as a deployment failure.',
+        );
+        return { ok: true, skipped: 'result_not_published' as const };
       }
       throw error;
     }

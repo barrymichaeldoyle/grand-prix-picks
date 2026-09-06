@@ -69,10 +69,13 @@ export async function loadRosterForRound(
   // this season has a row, including ones no longer in a seat, and the round
   // filter below is what narrows it to 20-odd. Truncating here would drop
   // drivers out of the pick pool silently.
-  const drivers = await ctx.db
-    .query('drivers')
-    .withIndex('by_displayName')
-    .take(60);
+  //
+  // Reserves are dropped here rather than by the round filter: an FP1 stand-in
+  // holds no race seat, so it has no stint, and the roster treats a driver
+  // with no stint as racing. Leaving them in would offer a reserve as a pick.
+  const drivers = (
+    await ctx.db.query('drivers').withIndex('by_displayName').take(60)
+  ).filter((driver) => !driver.reserve);
 
   // The roster is resolved as it stood in this round, so an injured driver
   // drops out of the pool for the rounds he misses and his stand-in appears

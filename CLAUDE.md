@@ -84,8 +84,8 @@ Workspace package names:
 ## Deploys
 
 **A push to `main` deploys everything.** Cloudflare Pages runs
-`scripts/cloudflare-build.sh`, which deploys **Convex first**, smoke-tests
-OpenF1, runs prod migrations, then builds the web client against the backend
+`scripts/cloudflare-build.sh`, which deploys **Convex first**, runs prod
+migrations, smoke-tests OpenF1, then builds the web client against the backend
 that is already live. Web and backend ship together from one commit, in the
 right order, with no manual step. Do not tell the user a backend change is
 "still pending" after a normal push, and do not offer to run `pnpm
