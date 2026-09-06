@@ -152,14 +152,56 @@ function mostSignificantCondition(hours: WeatherHour[]): string {
   );
 }
 
+/**
+ * The temperature at one moment, read off the two forecast points either side.
+ *
+ * `temperatureC` is an instantaneous reading taken at `at`, while
+ * `forecastPeriodHours` is the length of the window whose precipitation and
+ * condition the same entry carries. Those are different things, and averaging
+ * the readings of every window a session overlaps treats them as one.
+ *
+ * Inside three days, where the provider sends hourly points, the difference is
+ * a rounding error. Beyond it the points are six hours apart and the error is
+ * the whole morning: Madrid's Saturday practice at 12:30 was labelled 17°C,
+ * which is the 08:00 reading, and Friday practice at 13:30 was labelled 23°C,
+ * the mean of an 08:00 reading of 15° and a 14:00 reading of 30° — a
+ * temperature the forecast predicts for no hour of that day.
+ *
+ * Interpolating between the bracketing readings is an estimate, but it is an
+ * estimate of the right quantity, and it never reports a figure outside the
+ * range the provider actually published for the hours around the session.
+ */
+function temperatureAt(hours: WeatherHour[], at: number): number | null {
+  const sorted = [...hours].sort((a, b) => a.at - b.at);
+  const before = sorted.filter((hour) => hour.at <= at).at(-1);
+  const after = sorted.find((hour) => hour.at >= at);
+  if (!before) {
+    return after?.temperatureC ?? null;
+  }
+  if (!after || after.at === before.at) {
+    return before.temperatureC;
+  }
+  const progress = (at - before.at) / (after.at - before.at);
+  return (
+    before.temperatureC + progress * (after.temperatureC - before.temperatureC)
+  );
+}
+
 function summarizeWeatherHours(
   hours: WeatherHour[],
+  /** The moment the temperature should describe, and the points to read it from. */
+  temperature?: { at: number; from: WeatherHour[] },
 ): WeatherWindowSummary | null {
   if (hours.length === 0) {
     return null;
   }
+  const interpolated = temperature
+    ? temperatureAt(temperature.from, temperature.at)
+    : null;
   return {
-    temperatureC: round(average(hours.map((hour) => hour.temperatureC))),
+    temperatureC: round(
+      interpolated ?? average(hours.map((hour) => hour.temperatureC)),
+    ),
     conditionCode: mostSignificantCondition(hours),
     precipitationAmountMm: hours.reduce(
       (sum, hour) => sum + hour.precipitationAmountMm,
@@ -432,6 +474,14 @@ export function summarizeSessionWindow(
     forecast.hours.filter((hour) =>
       weatherHourOverlaps(hour, session.startsAt, session.endsAt),
     ),
+    // Rain, thunder and the condition describe the windows the session runs
+    // through, so they aggregate those. A temperature describes an instant, so
+    // it is read at the middle of the session: the figure beside "Qualifying"
+    // should be what it is like during qualifying.
+    {
+      at: session.startsAt + (session.endsAt - session.startsAt) / 2,
+      from: forecast.hours,
+    },
   );
 }
 

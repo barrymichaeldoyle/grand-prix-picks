@@ -150,6 +150,75 @@ describe('session weather line', () => {
     ).toBe('Partly cloudy · 21°C · 40% rain');
   });
 
+  /**
+   * The shape the provider sends beyond about three days: instantaneous
+   * readings six hours apart, each carrying a six-hour precipitation window.
+   * These are Madrid's real numbers for 12 September 2026.
+   */
+  function sixHourly(): Partial<WeatherForecast> {
+    return {
+      hours: [8, 14, 20].map((localHour, index) => ({
+        at: Date.UTC(2026, 8, 6, localHour),
+        localDate: '2026-09-06',
+        localHour,
+        forecastPeriodHours: 6,
+        temperatureC: [17, 28.4, 29.8][index]!,
+        conditionCode: 'clearsky_day',
+        precipitationAmountMm: 0,
+        precipitationProbability: 0,
+        windSpeedMps: 3,
+      })),
+    };
+  }
+
+  it('reads a six-hourly forecast at the session, not at the block it falls in', () => {
+    // A session at 12:30 sat inside the block whose reading was taken at 08:00
+    // and was labelled with the morning temperature: 17°C for a lunchtime
+    // practice on a day topping 29°C.
+    const summary = summarizeSessionWindow(forecast(sixHourly()), {
+      key: 'fp3',
+      label: 'Practice 3',
+      startsAt: Date.UTC(2026, 8, 6, 12, 30),
+      endsAt: Date.UTC(2026, 8, 6, 13, 30),
+    });
+
+    expect(summary?.temperatureC).toBe(27);
+  });
+
+  it('never reports a temperature the forecast predicts for no hour', () => {
+    // A session spanning two blocks averaged their readings, which put a
+    // figure on the page that sits between the morning and the afternoon and
+    // matches neither.
+    const summary = summarizeSessionWindow(forecast(sixHourly()), {
+      key: 'fp1',
+      label: 'Practice 1',
+      startsAt: Date.UTC(2026, 8, 6, 13, 30),
+      endsAt: Date.UTC(2026, 8, 6, 14, 30),
+    });
+
+    expect(summary?.temperatureC).toBe(28);
+  });
+
+  it('still aggregates rain across every block the session runs through', () => {
+    const wet = forecast({
+      hours: sixHourly().hours!.map((hour, index) => ({
+        ...hour,
+        conditionCode: index === 1 ? 'rain' : 'clearsky_day',
+        precipitationProbability: index === 1 ? 70 : 0,
+      })),
+    });
+
+    const summary = summarizeSessionWindow(wet, {
+      key: 'fp1',
+      label: 'Practice 1',
+      startsAt: Date.UTC(2026, 8, 6, 13, 30),
+      endsAt: Date.UTC(2026, 8, 6, 14, 30),
+    });
+
+    expect(summary?.conditionCode).toBe('rain');
+    expect(summary?.precipitationProbability).toBe(70);
+  });
+
   it('has nothing to say about a session the forecast no longer covers', () => {
     // The row falls back to the next session on this, so a null here is what
     // keeps a locked tab from showing an empty forecast.
