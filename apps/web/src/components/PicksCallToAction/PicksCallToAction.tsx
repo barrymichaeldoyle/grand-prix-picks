@@ -10,7 +10,7 @@ import { type PicksCtaState, picksCtaCopy } from '@/lib/picksCta';
  * Which public page the panel is closing. Kept finite so the funnel can rank
  * the reference pages against each other rather than reading one merged total.
  */
-export type PicksCtaPlacement =
+type PicksCtaPlacement =
   | 'about'
   | 'circuits_index'
   | 'f1_calendar_2027'
