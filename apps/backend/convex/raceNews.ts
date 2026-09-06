@@ -260,10 +260,14 @@ async function listRaceNews(
 
 /** Active news for public feeds and write-up pages. */
 export const list = query({
-  args: { raceSlug: v.string() },
+  // Optional so a hand-run with no argument returns an empty result rather
+  // than an ArgumentValidationError. A missing slug names no race, which
+  // `listRaceNews` already answers with an empty list.
+  args: { raceSlug: v.optional(v.string()) },
   returns: raceNewsListResultValidator,
   handler: async (ctx, args) => {
-    return await listRaceNews(ctx, await raceBySlug(ctx, args.raceSlug), false);
+    const race = args.raceSlug ? await raceBySlug(ctx, args.raceSlug) : null;
+    return await listRaceNews(ctx, race, false);
   },
 });
 

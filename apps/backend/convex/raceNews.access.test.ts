@@ -111,4 +111,13 @@ describe('race news access boundary', () => {
       } as never),
     ).rejects.toThrow(/includeRetracted/);
   });
+
+  it('returns an empty result when no slug is named', async () => {
+    const t = convexTest(schema, modules);
+
+    expect(await t.query(api.raceNews.list, {})).toEqual({
+      race: null,
+      items: [],
+    });
+  });
 });

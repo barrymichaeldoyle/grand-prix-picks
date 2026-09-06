@@ -111,6 +111,12 @@ export default defineSchema({
     // round-accurate answer and what the championship tables read.
     team: v.optional(v.string()), // "Red Bull Racing", "Ferrari", etc.
     nationality: v.optional(v.string()), // ISO 3166-1 alpha-2: "NL", "GB", etc.
+    // An FP1-only stand-in who never holds a race seat. Kept in this table so
+    // the OpenF1 driver-number map can resolve their practice number, but
+    // filtered out of the pick pool: a reserve has no stint, and the roster
+    // treats a driver with no stint as racing, which would otherwise offer
+    // them as a pick in every round.
+    reserve: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
