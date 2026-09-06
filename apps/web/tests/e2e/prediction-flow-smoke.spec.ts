@@ -66,7 +66,6 @@ test.describe('[flow] smoke', () => {
 
     await expect(page.getByTestId('race-h2h-section')).toBeVisible();
     await expect(page.getByTestId('h2h-edit-button')).toBeVisible();
-    await expect(page.getByTestId('h2h-locked-badge')).toHaveCount(0);
 
     await page.getByTestId('dev-now-trigger').click();
     await expect(page.getByTestId('dev-now-panel-content')).toBeVisible();
@@ -76,8 +75,11 @@ test.describe('[flow] smoke', () => {
       'data-override-active',
       'true',
     );
+    // Locked reads as the absence of the Edit button rather than a badge, so
+    // the section itself has to be asserted alongside it: a Head-to-Head
+    // section that failed to render would satisfy the count on its own.
+    await expect(page.getByTestId('race-h2h-section')).toBeVisible();
     await expect(page.getByTestId('h2h-edit-button')).toHaveCount(0);
-    await expect(page.getByTestId('h2h-locked-badge')).toBeVisible();
   });
 
   test('edits and persists an existing H2H pick before lock', async ({
