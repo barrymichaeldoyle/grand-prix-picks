@@ -494,3 +494,129 @@ export const getActiveSnapshot = query({
     return null;
   },
 });
+
+/** Feed groups are one page of events, so the id list is small by construction. */
+const MAX_FEED_BOARD_PLAYERS = 60;
+
+/**
+ * A running session, scored, for the named players.
+ *
+ * The feed already groups a session's activity under one header and, once the
+ * result publishes, ranks the group as a mini-leaderboard. Before the publish
+ * that same block was a stack of locked picks under the words "Awaiting
+ * results", which is the least interesting version of the most interesting
+ * moment: the cars are on track and every pick in the block is worth something
+ * right now.
+ *
+ * This is the snapshot the race page's live board reads, narrowed to a session
+ * and to the handful of players a feed group holds. Null whenever that session
+ * is not running — no snapshot, a stale one, or a published result — which is
+ * the signal to keep the pre-live rendering rather than show a board of zeroes.
+ *
+ * Per-pick points are computed here rather than in the client, off the same
+ * `scoreTopFive` the publish will eventually use. The feed carries picks as
+ * driver *codes*, so scoring them in the browser would mean a second, parallel
+ * implementation matching on strings.
+ */
+export const getLiveSessionBoard = query({
+  args: {
+    raceId: v.id('races'),
+    sessionType: liveSessionValidator,
+    userIds: v.array(v.id('users')),
+  },
+  returns: v.any(),
+  handler: async (ctx, args) => {
+    const race = await ctx.db.get(args.raceId);
+    if (!race) {
+      return null;
+    }
+    const snapshot = await loadActiveSnapshot(ctx, race);
+    if (!snapshot || snapshot.sessionType !== args.sessionType) {
+      return null;
+    }
+
+    const order = [...snapshot.order].sort((a, b) => a.position - b.position);
+    const classification = order.map((entry) => entry.driverId);
+
+    // Every driver named by the running order's top five or by any pick in the
+    // group, read once. A pick can be for a car outside the top five, and a
+    // slot has to render its code either way.
+    const userIds = args.userIds.slice(0, MAX_FEED_BOARD_PLAYERS);
+    const predictions = await Promise.all(
+      userIds.map((userId) =>
+        ctx.db
+          .query('predictions')
+          .withIndex('by_user_race_session', (q) =>
+            q
+              .eq('userId', userId)
+              .eq('raceId', args.raceId)
+              .eq('sessionType', args.sessionType),
+          )
+          .unique(),
+      ),
+    );
+
+    const driverIds = new Set<Id<'drivers'>>(classification.slice(0, 5));
+    for (const prediction of predictions) {
+      for (const driverId of prediction?.picks ?? []) {
+        driverIds.add(driverId);
+      }
+    }
+    const driverDocs = await Promise.all(
+      [...driverIds].map(
+        async (driverId) => [driverId, await ctx.db.get(driverId)] as const,
+      ),
+    );
+    const driversById = new Map(driverDocs);
+    function describe(driverId: Id<'drivers'>) {
+      const driver = driversById.get(driverId);
+      return {
+        code: driver?.code ?? '???',
+        displayName: driver?.displayName ?? 'Unknown',
+        team: driver?.team ?? null,
+      };
+    }
+
+    const standingByUser = new Map(
+      snapshot.standings.map((row) => [row.userId, row]),
+    );
+
+    const players = userIds.flatMap((userId, index) => {
+      const prediction = predictions[index];
+      if (!prediction) {
+        return [];
+      }
+      const scored = scoreTopFive({
+        picks: prediction.picks,
+        classification,
+      });
+      const standing = standingByUser.get(userId);
+      return [
+        {
+          userId,
+          rank: standing?.rank ?? null,
+          top5Points: scored.total,
+          h2hPoints: standing?.h2h ?? 0,
+          total: scored.total + (standing?.h2h ?? 0),
+          picks: scored.breakdown.map((pick) => ({
+            ...describe(pick.driverId),
+            predictedPosition: pick.predictedPosition,
+            actualPosition: pick.actualPosition,
+            points: pick.points,
+          })),
+        },
+      ];
+    });
+
+    return {
+      sessionType: snapshot.sessionType,
+      updatedAt: snapshot.updatedAt,
+      totalPlayers: snapshot.standings.length,
+      top5: classification.slice(0, 5).map((driverId, index) => ({
+        ...describe(driverId),
+        position: index + 1,
+      })),
+      players,
+    };
+  },
+});

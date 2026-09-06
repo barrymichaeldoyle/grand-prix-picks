@@ -1,5 +1,7 @@
+import { api } from '@convex-generated/api';
 import type { Id } from '@convex-generated/dataModel';
 import { Link } from '@tanstack/react-router';
+import { useQuery } from '@/integrations/convex/query';
 import { Avatar } from '../Avatar';
 import { RaceFlag } from '../RaceFlag';
 import { ReactionButton } from '../ReactionButton';
@@ -21,6 +23,12 @@ import { H2HPicksDialog } from './H2HPicksDialog';
 import { ReactionsModal } from './ReactionsModal';
 import { UserLink } from './UserLink';
 import {
+  type LiveBoard,
+  type LivePlayer,
+  liveSessionType,
+  rankLiveGroup,
+} from '../feed/liveSessionBoard';
+import {
   SESSION_LABELS,
   eventTotalPoints,
   formatRelativeTime,
@@ -33,11 +41,6 @@ import {
  * a column key while you scroll the players.
  */
 const SLOT_GRID = 'grid w-full max-w-[26rem] grid-cols-5 gap-1';
-
-/* `/80`, not `/70`, on both of the muted labels below. At 10px these are
-   body-size text for WCAG, so they owe 4.5:1 and `/70` measured 4.02 on the
-   card surface. `/75` only reaches 4.40; `/80` is the first step that clears
-   it, at 4.81, and is still quiet enough to stay an eyebrow. */
 
 /** Every band in the group reads the same: quiet eyebrow, then the row. */
 function BandLabel({ children }: { children: ReactNode }) {
@@ -111,10 +114,18 @@ function SessionLeaderboardRow({
   event,
   isViewer,
   isLast,
+  live,
 }: {
   event: FeedEvent;
   isViewer: boolean;
   isLast: boolean;
+  /**
+   * This player's score against the running order, when the session is still
+   * out on track. It stands in for the published numbers the row normally
+   * reads off the event, which do not exist yet: the same layout, sourced from
+   * the live snapshot instead of the result.
+   */
+  live?: LivePlayer;
 }) {
   const [h2hOpen, setH2hOpen] = useState(false);
   const [reactionsOpen, setReactionsOpen] = useState(false);
@@ -122,9 +133,9 @@ function SessionLeaderboardRow({
   // before the dialog opens, or its placeholder rows sort by last season and
   // reshuffle when the picks land.
   const teamOrder = useConstructorOrder();
-  const total = eventTotalPoints(event);
+  const total = live ? live.total : eventTotalPoints(event);
 
-  const picks = [...(event.picks ?? [])].sort(
+  const picks = [...(live?.picks ?? event.picks ?? [])].sort(
     (a, b) => a.predictedPosition - b.predictedPosition,
   );
 
@@ -164,13 +175,18 @@ function SessionLeaderboardRow({
               </span>
             )}
           </p>
-          {event.h2hScore && event.raceId && event.sessionType && (
+          {(live ?? event.h2hScore) && event.raceId && event.sessionType && (
             <button
               type="button"
               onClick={() => setH2hOpen(true)}
               className="gpp-mono inline-flex shrink-0 items-center gap-1 rounded-sm border border-border px-1.5 py-0.5 text-[10px] font-semibold tracking-data text-text-muted uppercase transition-colors hover:border-accent/60 hover:text-accent"
             >
-              H2H {event.h2hScore.correctPicks}/{event.h2hScore.totalPicks}
+              {/* Live has no denominator: duels are only settled as the cars
+                  cross the line, so "3/11" would read as eight lost duels when
+                  eight of them are still being raced. */}
+              {live
+                ? `H2H +${live.h2hPoints}`
+                : `H2H ${event.h2hScore?.correctPicks}/${event.h2hScore?.totalPicks}`}
             </button>
           )}
           <span className="gpp-mono shrink-0 text-sm font-semibold text-accent">
@@ -237,8 +253,9 @@ function SessionLeaderboardRow({
   );
 }
 
-// Scored sessions render as a ranked mini-leaderboard; locked/pending ones fall
-// back to the standard stacked rows.
+// Scored sessions render as a ranked mini-leaderboard; a session still out on
+// track renders as the same board against the running order; anything else
+// falls back to the standard stacked rows.
 
 export function SessionGroup({
   session,
@@ -249,6 +266,30 @@ export function SessionGroup({
   events: FeedEvent[];
   viewerId?: Id<'users'>;
 }) {
+  const isScored =
+    session.top5.length > 0 &&
+    events.every((e) => e.type === 'score_published' && e.points !== undefined);
+
+  /*
+   * Every player the group is about, so the board comes back scored for all of
+   * them in one read rather than a subscription per row. Sorted so the args are
+   * stable across renders — the feed's own order is by recency and shuffles as
+   * events arrive, and an unstable arg here is a new cache key each time.
+   */
+  const raceId = events.find((event) => event.raceId)?.raceId;
+  const sessionType = liveSessionType(
+    events.find((event) => event.sessionType)?.sessionType,
+  );
+  const userIds = [
+    ...new Set(events.flatMap((event) => (event.userId ? [event.userId] : []))),
+  ].sort();
+  const liveBoard = useQuery(
+    api.liveScoring.getLiveSessionBoard,
+    !isScored && raceId && sessionType && userIds.length > 0
+      ? { raceId, sessionType, userIds }
+      : 'skip',
+  ) as LiveBoard | null | undefined;
+
   const sessionWithTime = {
     ...session,
     // Feed events arrive newest-first, so the group should inherit its newest
@@ -256,11 +297,47 @@ export function SessionGroup({
     createdAt: events[0]?.createdAt,
   };
 
-  const isScored =
-    session.top5.length > 0 &&
-    events.every((e) => e.type === 'score_published' && e.points !== undefined);
-
   if (!isScored) {
+    const live = rankLiveGroup(events, liveBoard);
+
+    if (live) {
+      return (
+        <div>
+          <SessionSeparator
+            session={{
+              ...sessionWithTime,
+              top5: liveBoard!.top5.map((driver) => ({
+                ...driver,
+                team: driver.team ?? undefined,
+              })),
+              // No live duel band. The header's winners row is a settled
+              // statement about eleven pairs, and a car ahead on lap 30 has
+              // not won anything; each player's own duels are one tap away on
+              // their row instead.
+              h2h: undefined,
+            }}
+            grouped
+            live
+          />
+          {live.events.map((event, i) => (
+            <SessionLeaderboardRow
+              key={event._id}
+              event={event}
+              live={live.playerFor(event)}
+              isViewer={!!viewerId && event.userId === viewerId}
+              isLast={i === live.events.length - 1}
+            />
+          ))}
+          {/* The same sentence the race page's live board carries, for the
+              same reason: every number above this line moves, and a position
+              read as a result is the one misreading to rule out. */}
+          <p className="mt-1.5 text-[11px] text-text-muted">
+            Running order is live and can change, including after the flag.
+          </p>
+        </div>
+      );
+    }
+
     return (
       <div>
         <SessionSeparator session={sessionWithTime} grouped pending />
@@ -303,10 +380,13 @@ function SessionSeparator({
   session,
   grouped,
   pending = false,
+  live = false,
 }: {
   session: SessionHeader;
   grouped?: boolean;
   pending?: boolean;
+  /** The five in `session.top5` are the running order, not the result. */
+  live?: boolean;
 }) {
   const label = SESSION_LABELS[session.sessionType] ?? session.sessionType;
   const hasResult = session.top5.length > 0;
@@ -366,10 +446,22 @@ function SessionSeparator({
               {session.raceName}
             </p>
             <p className="flex items-center gap-1 text-xs text-text-muted">
-              {hasResult && (
+              {live ? (
+                <span
+                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent motion-safe:animate-pulse"
+                  aria-hidden
+                />
+              ) : hasResult ? (
                 <Trophy className="h-3 w-3 shrink-0 text-accent" aria-hidden />
-              )}
-              {hasResult ? `${label} Result` : label}
+              ) : null}
+              {/* "As it stands", not "Result": these five are the order on
+                  track this second, and the same five cells directly above
+                  everyone's picks is exactly where that could be misread. */}
+              {live
+                ? `${label} as it stands`
+                : hasResult
+                  ? `${label} Result`
+                  : label}
             </p>
           </div>
           <div className="shrink-0 text-right">
@@ -381,7 +473,11 @@ function SessionSeparator({
                 {formatRelativeTime(session.createdAt)}
               </span>
             )}
-            {pending ? (
+            {live ? (
+              <span className="block text-[9px] font-semibold tracking-label text-accent uppercase">
+                Live
+              </span>
+            ) : pending ? (
               <span className="block text-[9px] font-semibold tracking-label text-accent uppercase">
                 Awaiting results
               </span>

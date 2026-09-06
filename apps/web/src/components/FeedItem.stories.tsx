@@ -550,3 +550,118 @@ export const FeedStates: Story = {
     </div>
   ),
 };
+
+/**
+ * The same group while the cars are still on track: the header carries the
+ * running order rather than a result, and every row is scored against it.
+ *
+ * Its own mock provider, not the file's: the live board is what turns a group
+ * live, and mocking it once at the top would have made every other pending
+ * story in this file a live one too.
+ */
+export const GroupedSessionLive: Story = {
+  render: () => {
+    const raceId = fakeId<'races'>('race-monza');
+    const players = [
+      {
+        userId: viewer._id,
+        username: viewer.username,
+        displayName: viewer.displayName,
+        avatarUrl: viewer.avatarUrl,
+        picks: ['VER', 'NOR', 'LEC', 'RUS', 'HAM'],
+        points: [5, 5, 3, 3, 0],
+        h2hPoints: 6,
+      },
+      {
+        userId: fakeId<'users'>('user-noah'),
+        username: 'noah',
+        displayName: 'Noah Evans',
+        avatarUrl: 'https://i.pravatar.cc/80?img=20',
+        picks: ['NOR', 'VER', 'HAM', 'PIA', 'LEC'],
+        points: [3, 3, 0, 0, 1],
+        h2hPoints: 4,
+      },
+    ];
+    const teams: Record<string, string> = {
+      VER: 'Red Bull Racing',
+      NOR: 'McLaren',
+      PIA: 'McLaren',
+      LEC: 'Ferrari',
+      HAM: 'Ferrari',
+      RUS: 'Mercedes',
+    };
+
+    const liveBoard = {
+      sessionType: 'race',
+      updatedAt: NOW - 15 * 1000,
+      totalPlayers: 42,
+      top5: ['VER', 'NOR', 'LEC', 'RUS', 'HAM'].map((code) => ({
+        code,
+        displayName: code,
+        team: teams[code] ?? null,
+      })),
+      players: players.map((player) => {
+        const top5Points = player.points.reduce((sum, n) => sum + n, 0);
+        return {
+          userId: player.userId,
+          rank: null,
+          top5Points,
+          h2hPoints: player.h2hPoints,
+          total: top5Points + player.h2hPoints,
+          picks: player.picks.map((code, index) => ({
+            code,
+            displayName: code,
+            team: teams[code] ?? null,
+            predictedPosition: index + 1,
+            points: player.points[index]!,
+          })),
+        };
+      }),
+    };
+
+    const events = players.map((player) =>
+      makeFeedEvent({
+        _id: fakeId<'feedEvents'>(`feed-live-${player.username}`),
+        type: 'session_locked',
+        userId: player.userId,
+        username: player.username,
+        displayName: player.displayName,
+        avatarUrl: player.avatarUrl,
+        raceId,
+        sessionType: 'race',
+        raceName: 'Italian Grand Prix',
+        raceSlug: 'italy-2026',
+        points: undefined,
+        picks: undefined,
+        h2hScore: null,
+        createdAt: NOW - 70 * MINUTE,
+      }),
+    );
+
+    return (
+      <StorybookMockProviders
+        auth={{ isLoaded: true, isSignedIn: true }}
+        convex={buildStorybookConvexMocks({
+          queries: [
+            [api.users.me, viewer],
+            [api.liveScoring.getLiveSessionBoard, liveBoard],
+          ],
+        })}
+      >
+        <div className="w-[min(100%,40rem)]">
+          <SessionGroup
+            session={{
+              raceName: 'Italian Grand Prix',
+              sessionType: 'race',
+              raceSlug: 'italy-2026',
+              createdAt: NOW - 70 * MINUTE,
+              top5: [],
+            }}
+            events={events}
+            viewerId={viewer._id}
+          />
+        </div>
+      </StorybookMockProviders>
+    );
+  },
+};
