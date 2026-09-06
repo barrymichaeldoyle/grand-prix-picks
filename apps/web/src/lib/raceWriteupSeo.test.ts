@@ -1,5 +1,7 @@
+import { readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
+import { listRaceWriteups } from './raceWriteups';
 import { racePageWriteupHeadOptions } from './raceWriteupSeo';
 
 describe('racePageWriteupHeadOptions', () => {
@@ -16,5 +18,36 @@ describe('racePageWriteupHeadOptions', () => {
 
   it('leaves a race page without a write-up self-canonical and indexable', () => {
     expect(racePageWriteupHeadOptions('miami-2026')).toBeNull();
+  });
+});
+
+/**
+ * Every write-up route on disk is in the registry.
+ *
+ * The checks around write-ups all iterate `listRaceWriteups()`, so they read
+ * outward from the registry and a route file that was never registered is
+ * invisible to all of them. That file is the one shape that puts two
+ * indexable pages on the same query: `getRaceWriteup` returns null for the
+ * weekend, so the race page keeps asking to be indexed and stays in the
+ * sitemap, while the new write-up asks to be indexed too. It is also an orphan
+ * on the day it ships, which is the bug `raceWriteups.ts` was written to end.
+ *
+ * Reading the directory is what makes this catch the omission: deriving the
+ * list from the registry would be the same blind spot in a second place.
+ */
+describe('write-up route registration', () => {
+  const ROUTE_FILE = /^f1-\d{4}-.+-grand-prix-predictions\.tsx$/;
+
+  it('registers every write-up route file in RACE_WRITEUPS', () => {
+    const onDisk = readdirSync(`${process.cwd()}/src/routes`)
+      .filter((file) => ROUTE_FILE.test(file))
+      .map((file) => `/${file.replace(/\.tsx$/, '')}`);
+    const registered = new Set(listRaceWriteups().map((writeup) => writeup.to));
+
+    expect(onDisk.length).toBeGreaterThan(0);
+    expect(
+      onDisk.filter((route) => !registered.has(route)),
+      'unregistered write-up routes compete with their own race page',
+    ).toEqual([]);
   });
 });
